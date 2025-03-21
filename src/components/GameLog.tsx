@@ -96,7 +96,7 @@ const getLogMessage = (log: GameLogEntry): string | React.ReactNode => {
     case 'foreign-aid':
       return log.coins ? 'takes Foreign Aid' : 'requests Foreign Aid';
     case 'tax':
-      return formatMessage('takes tax as Duke');
+      return log.coins ? 'collects tax' : 'claims Duke for tax';
     case 'steal':
       return `steals ${log.coins}M from`;
     case 'assassinate':

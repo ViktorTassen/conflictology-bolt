@@ -1,7 +1,6 @@
 import { ActionContext, ActionHandler, ActionResponse, ActionResult } from './types';
-import { CardType } from '../types';
 
-export const foreignAidAction: ActionHandler = {
+export const dukeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
     // Check if player is eliminated
     if (player.eliminated) {
@@ -10,13 +9,13 @@ export const foreignAidAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [{
-        type: 'foreign-aid',
+        type: 'tax',
         player: player.name,
         playerColor: player.color,
         timestamp: Date.now()
       }],
       actionInProgress: {
-        type: 'foreign-aid',
+        type: 'duke',
         player: playerId,
         responseDeadline: Date.now() + 10000,
         responses: {},
@@ -84,87 +83,82 @@ export const foreignAidAction: ActionHandler = {
         }];
       }
 
-      // If this was the blocking player losing influence after a failed block
-      if (game.actionInProgress.blockingPlayer === playerId) {
-        // Original player gets Foreign Aid
-        updatedPlayers[game.actionInProgress.player].coins += 2;
+      // If this was the challenger losing influence (failed challenge)
+      if (game.actionInProgress.losingPlayer === playerId && 
+          playerId !== game.actionInProgress.player) {
+        // Original player gets tax because challenge failed
+        updatedPlayers[game.actionInProgress.player].coins += 3;
         result.logs.push({
-          type: 'foreign-aid',
+          type: 'tax',
           player: actionPlayer.name,
           playerColor: actionPlayer.color,
-          coins: 2,
+          coins: 3,
           timestamp: Date.now()
         });
       }
+      // If this was the Duke player losing influence (successful challenge)
+      // They don't get any coins as they lost the challenge
 
       result.players = updatedPlayers;
       result.actionInProgress = null;
-
-      // Find next valid turn (skip eliminated players)
+      
+      // Find next valid turn
       let nextTurn = (game.currentTurn + 1) % game.players.length;
       while (updatedPlayers[nextTurn].eliminated) {
         nextTurn = (nextTurn + 1) % game.players.length;
       }
       result.currentTurn = nextTurn;
+      
+      return result;
+    }
+
+    // Handle challenge
+    if (response.type === 'challenge') {
+      const hasDuke = actionPlayer.influence.some(i => !i.revealed && i.card === 'Duke');
+
+      if (hasDuke) {
+        // Challenge fails, challenger loses influence
+        result.logs = [{
+          type: 'challenge-fail',
+          player: player.name,
+          playerColor: player.color,
+          target: actionPlayer.name,
+          targetColor: actionPlayer.color,
+          timestamp: Date.now()
+        }];
+
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          losingPlayer: playerId,
+          responses: updatedResponses
+        };
+      } else {
+        // Challenge succeeds, Duke player loses influence
+        result.logs = [{
+          type: 'challenge-success',
+          player: player.name,
+          playerColor: player.color,
+          target: actionPlayer.name,
+          targetColor: actionPlayer.color,
+          timestamp: Date.now()
+        }];
+
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          losingPlayer: game.actionInProgress.player,
+          responses: updatedResponses
+        };
+      }
 
       return result;
     }
 
-    // Handle block with Duke
-    if (response.type === 'block' && response.card === 'Duke') {
-      result.logs = [{
-        type: 'block',
-        player: player.name,
-        playerColor: player.color,
-        target: actionPlayer.name,
-        targetColor: actionPlayer.color,
-        card: 'Duke',
-        timestamp: Date.now()
-      }];
-
-      result.actionInProgress = {
-        ...game.actionInProgress,
-        blockingPlayer: playerId,
-        blockingCard: 'Duke',
-        responses: updatedResponses
-      };
-
-      return result;
-    } 
     // Handle allow responses
-    else if (response.type === 'allow') {
+    if (response.type === 'allow') {
       result.actionInProgress = {
         ...game.actionInProgress,
         responses: updatedResponses
       };
-
-      // If this is accepting a block
-      if (game.actionInProgress.blockingPlayer !== undefined) {
-        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        
-        // If the original player accepts the block
-        if (playerId === game.actionInProgress.player) {
-          result.logs = [{
-            type: 'allow',
-            player: player.name,
-            playerColor: player.color,
-            target: blockingPlayer.name,
-            targetColor: blockingPlayer.color,
-            timestamp: Date.now()
-          }];
-
-          result.actionInProgress = null;
-          
-          // Find next valid turn (skip eliminated players)
-          let nextTurn = (game.currentTurn + 1) % game.players.length;
-          while (game.players[nextTurn].eliminated) {
-            nextTurn = (nextTurn + 1) % game.players.length;
-          }
-          result.currentTurn = nextTurn;
-          
-          return result;
-        }
-      }
 
       // Check if all other non-eliminated players have allowed
       const otherPlayers = game.players.filter(p => 
@@ -175,68 +169,27 @@ export const foreignAidAction: ActionHandler = {
       );
 
       if (allResponded) {
-        // All players allowed - complete Foreign Aid
+        // All players allowed - complete Duke action
         const updatedPlayers = [...game.players];
-        updatedPlayers[game.actionInProgress.player].coins += 2;
+        updatedPlayers[game.actionInProgress.player].coins += 3;
 
         result.logs = [{
-          type: 'foreign-aid',
+          type: 'tax',
           player: actionPlayer.name,
           playerColor: actionPlayer.color,
-          coins: 2,
+          coins: 3,
           timestamp: Date.now()
         }];
 
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
-        // Find next valid turn (skip eliminated players)
+        // Find next valid turn
         let nextTurn = (game.currentTurn + 1) % game.players.length;
         while (updatedPlayers[nextTurn].eliminated) {
           nextTurn = (nextTurn + 1) % game.players.length;
         }
         result.currentTurn = nextTurn;
-      }
-
-      return result;
-    }
-    // Handle challenge of a block
-    else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
-      const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-      const hasDuke = blockingPlayer.influence.some(i => !i.revealed && i.card === 'Duke');
-
-      if (hasDuke) {
-        // Challenge fails, challenger loses influence
-        result.logs = [{
-          type: 'challenge-fail',
-          player: player.name,
-          playerColor: player.color,
-          target: blockingPlayer.name,
-          targetColor: blockingPlayer.color,
-          timestamp: Date.now()
-        }];
-
-        result.actionInProgress = {
-          ...game.actionInProgress,
-          losingPlayer: playerId,
-          responses: updatedResponses
-        };
-      } else {
-        // Challenge succeeds, blocker loses influence
-        result.logs = [{
-          type: 'challenge-success',
-          player: player.name,
-          playerColor: player.color,
-          target: blockingPlayer.name,
-          targetColor: blockingPlayer.color,
-          timestamp: Date.now()
-        }];
-
-        result.actionInProgress = {
-          ...game.actionInProgress,
-          losingPlayer: game.actionInProgress.blockingPlayer,
-          responses: updatedResponses
-        };
       }
 
       return result;

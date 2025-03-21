@@ -61,12 +61,6 @@ function PlayerInstance({ instanceId }: { instanceId: number }) {
       </div>
 
       <div className="relative h-full">
-        <div className="absolute top-0 left-0 right-0 p-2 text-center bg-[#2a2a2a]/80 backdrop-blur-sm">
-          <span className="text-white/80 text-sm">Player {instanceId}</span>
-          {gameId && <span className="text-white/50 text-xs ml-2">Game: {gameId}</span>}
-        </div>
-
-        <div className="pt-10">
           {view === 'lobby' ? (
             <div className="p-4">
               <GameCreation onGameStart={handleGameStart} playerId={instanceId} />
@@ -74,7 +68,7 @@ function PlayerInstance({ instanceId }: { instanceId: number }) {
           ) : (
             <GameView gameId={gameId!} playerId={instanceId} />
           )}
-        </div>
+
       </div>
     </div>
   );

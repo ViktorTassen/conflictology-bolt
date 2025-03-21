@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Skull } from 'lucide-react';
 import { Player } from '../types';
 
 interface PlayerCardProps {
@@ -28,13 +28,14 @@ export function PlayerCard({
     <div 
       className={`
         relative 
-        ${isTargetable ? 'cursor-pointer hover:scale-105' : ''}
+        ${isTargetable && !player.eliminated ? 'cursor-pointer hover:scale-105' : ''}
+        ${player.eliminated ? 'opacity-50' : ''}
         transition-transform duration-200
       `}
-      onClick={isTargetable ? onTargetSelect : undefined}
+      onClick={isTargetable && !player.eliminated ? onTargetSelect : undefined}
     >
       {/* Target selection glow effect */}
-      {(isTargetable || isTargeted) && (
+      {(isTargetable || isTargeted) && !player.eliminated && (
         <div className={`
           absolute -inset-2 rounded-xl
           ${isTargeted ? 'bg-red-500/30 animate-pulse' : 'bg-red-500/0'}
@@ -49,8 +50,9 @@ export function PlayerCard({
         relative z-10 
         bg-[#2a2a2a]/90 backdrop-blur-sm rounded-lg
         ${isActive ? 'ring-1 ring-yellow-500/50' : ''}
-        ${isTargeted ? 'ring-2 ring-red-500/50' : ''}
-        ${isTargetable ? 'hover:ring-2 hover:ring-red-500/30' : ''}
+        ${isTargeted && !player.eliminated ? 'ring-2 ring-red-500/50' : ''}
+        ${isTargetable && !player.eliminated ? 'hover:ring-2 hover:ring-red-500/30' : ''}
+        ${player.eliminated ? 'ring-1 ring-red-900/50' : ''}
         transition-all duration-200
       `}>
         <div className="flex items-center p-1.5 gap-1.5 max-w-[160px]">
@@ -59,7 +61,8 @@ export function PlayerCard({
             <div className={`
               w-6 h-6 rounded-full overflow-hidden
               ${isActive ? 'ring-2 ring-yellow-500/50 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : ''}
-              ${isTargeted ? 'ring-2 ring-red-500/50' : ''}
+              ${isTargeted && !player.eliminated ? 'ring-2 ring-red-500/50' : ''}
+              ${player.eliminated ? 'grayscale' : ''}
             `}>
               <img
                 src={player.avatar}
@@ -67,6 +70,11 @@ export function PlayerCard({
                 className="w-full h-full object-cover"
               />
             </div>
+            {player.eliminated && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                <Skull className="w-2 h-2 text-white" />
+              </div>
+            )}
           </div>
 
           {/* Name and coins container */}
@@ -74,8 +82,11 @@ export function PlayerCard({
             {/* Player name */}
             <div className="w-full">
               <span 
-                className="text-xs font-medium leading-none block truncate" 
-                style={{ color: player.color }}
+                className={`
+                  text-xs font-medium leading-none block truncate
+                  ${player.eliminated ? 'text-gray-500' : ''}
+                `}
+                style={{ color: player.eliminated ? undefined : player.color }}
                 title={player.name}
               >
                 {truncateName(player.name)}
@@ -84,8 +95,8 @@ export function PlayerCard({
 
             {/* Coins */}
             <div className="flex items-center gap-1 bg-black/20 rounded-full px-1.5 py-0.5 w-fit">
-              <DollarSign className="w-3 h-3 text-yellow-500" />
-              <span className="text-[10px] font-bold text-yellow-500">
+              <DollarSign className={`w-3 h-3 ${player.eliminated ? 'text-gray-500' : 'text-yellow-500'}`} />
+              <span className={`text-[10px] font-bold ${player.eliminated ? 'text-gray-500' : 'text-yellow-500'}`}>
                 {player.coins}.0M
               </span>
             </div>
@@ -102,7 +113,8 @@ export function PlayerCard({
               w-5 h-8 rounded 
               bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] border-white/5
               border shadow-sm
-              ${isTargeted ? 'border-red-500/30' : ''}
+              ${isTargeted && !player.eliminated ? 'border-red-500/30' : ''}
+              ${player.eliminated ? 'opacity-50' : ''}
               transition-colors duration-200
             `}
             style={{

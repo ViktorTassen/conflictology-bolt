@@ -1,12 +1,23 @@
 import { ActionContext, ActionHandler, ActionResult } from './types';
 
 export const incomeAction: ActionHandler = {
-  execute: async ({ game, player, playerId, transaction }) => {
+  execute: async ({ game, player, playerId }) => {
+    // Check if player is eliminated
+    if (player.eliminated) {
+      throw new Error('Eliminated players cannot perform actions');
+    }
+
     const updatedPlayers = [...game.players];
     updatedPlayers[playerId] = {
       ...updatedPlayers[playerId],
       coins: updatedPlayers[playerId].coins + 1
     };
+
+    // Find next valid turn (skip eliminated players)
+    let nextTurn = (game.currentTurn + 1) % game.players.length;
+    while (updatedPlayers[nextTurn].eliminated) {
+      nextTurn = (nextTurn + 1) % game.players.length;
+    }
 
     const result: ActionResult = {
       players: updatedPlayers,
@@ -16,7 +27,7 @@ export const incomeAction: ActionHandler = {
         playerColor: player.color,
         timestamp: Date.now()
       }],
-      currentTurn: (game.currentTurn + 1) % game.players.length,
+      currentTurn: nextTurn,
       actionInProgress: null,
       responses: {}
     };
@@ -25,5 +36,6 @@ export const incomeAction: ActionHandler = {
   },
   respond: async () => {
     // Income cannot be responded to
+    return {};
   }
 };

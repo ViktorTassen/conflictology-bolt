@@ -9,13 +9,13 @@ interface ActionMenuProps {
 
 export function ActionMenu({ onClose, onActionSelect }: ActionMenuProps) {
   const actions: GameAction[] = [
-    { icon: DollarSign, name: 'Income', description: 'Take 1 coin', type: 'income' },
-    { icon: DollarSign, name: 'Foreign Aid', description: 'Take 2 coins', type: 'foreign-aid' },
-    { icon: Crown, name: 'Duke', description: 'Take 3 coins', type: 'duke' },
-    { icon: Users, name: 'Ambassador', description: 'Exchange cards with Court', type: 'ambassador' },
-    { icon: Ship, name: 'Captain', description: 'Steal 2 coins', type: 'steal' },
-    { icon: Sword, name: 'Assassin', description: 'Pay 3 coins to assassinate', type: 'assassinate', cost: 3 },
-    { icon: UserX, name: 'Coup', description: 'Pay 7 coins to coup', type: 'coup', cost: 7 },
+    { type: 'income', icon: DollarSign, name: 'Income', description: 'Take 1 coin' },
+    { type: 'foreign-aid', icon: DollarSign, name: 'Foreign Aid', description: 'Take 2 coins' },
+    { type: 'duke', icon: Crown, name: 'Duke', description: 'Take 3 coins as tax' },
+    { type: 'assassinate', icon: Sword, name: 'Assassin', description: 'Pay 3 coins to assassinate', cost: 3 },
+    { type: 'steal', icon: Ship, name: 'Captain', description: 'Steal 2 coins' },
+    { type: 'exchange', icon: Users, name: 'Ambassador', description: 'Exchange cards with Court' },
+    { type: 'coup', icon: UserX, name: 'Coup', description: 'Pay 7 coins to coup', cost: 7 },
   ];
 
   return (

@@ -105,7 +105,7 @@ export function useGame(gameId?: string) {
 
       const game = gameDoc.data() as Game;
       
-      if (game.players.length >= 3) {
+      if (game.players.length >= 6) {
         throw new Error('Game is full');
       }
 
@@ -129,13 +129,9 @@ export function useGame(gameId?: string) {
         }))
       };
 
-      const updateData: Partial<Game> = {
-        players: [...game.players, completePlayer],
-        deck: newDeck
-      };
-
-      // Add connection log
       await updateDoc(gameRef, {
+        players: [...game.players, completePlayer],
+        deck: newDeck,
         logs: arrayUnion({
           type: 'system',
           player: 'System',
@@ -144,24 +140,29 @@ export function useGame(gameId?: string) {
           message: `${player.name} joined the game`
         })
       });
-
-      if (game.players.length === 2) {
-        updateData.status = 'playing';
-        // Add game start log
-        await updateDoc(gameRef, {
-          logs: arrayUnion({
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now(),
-            message: 'Game started'
-          })
-        });
-      }
-
-      await updateDoc(gameRef, updateData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join game');
+      throw err;
+    }
+  };
+
+  const startGame = async () => {
+    if (!gameId) return;
+
+    try {
+      const gameRef = doc(db, 'games', gameId);
+      await updateDoc(gameRef, {
+        status: 'playing',
+        logs: arrayUnion({
+          type: 'system',
+          player: 'System',
+          playerColor: '#9CA3AF',
+          timestamp: Date.now(),
+          message: 'Game started'
+        })
+      });
+    } catch (err) {
+      setError('Failed to start game');
       throw err;
     }
   };
@@ -292,6 +293,7 @@ export function useGame(gameId?: string) {
     createGame,
     joinGame,
     performAction,
-    respondToAction
+    respondToAction,
+    startGame
   };
 }

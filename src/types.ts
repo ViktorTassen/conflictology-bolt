@@ -1,8 +1,7 @@
-import { DivideIcon as LucideIcon } from 'lucide-react';
-
+// Core game types
 export interface Influence {
-  card: string;
-  revealed?: boolean;
+  card: CardType;
+  revealed: boolean;
 }
 
 export interface Player {
@@ -12,50 +11,14 @@ export interface Player {
   color: string;
   avatar: string;
   influence: Influence[];
+  eliminated?: boolean; // New field to track elimination status
 }
 
-export type LogType = 
-  | 'income'
-  | 'foreign-aid'
-  | 'coup'
-  | 'tax'
-  | 'assassinate'
-  | 'steal'
-  | 'exchange'
-  | 'block'
-  | 'challenge'
-  | 'challenge-success'
-  | 'challenge-fail'
-  | 'lose-influence'
-  | 'allow'
-  | 'exchange-complete'
-  | 'system';
+// Game state types
+export const CARDS = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'] as const;
+export type CardType = typeof CARDS[number];
 
-export interface GameLogEntry {
-  type: LogType;
-  player: string;
-  playerColor: string;
-  target?: string;
-  targetColor?: string;
-  card?: string;
-  targetCard?: string;
-  coins?: number;
-  timestamp: number;
-  message?: string;
-}
-
-export type View = 'lobby' | 'game';
-
-export type TargetableAction = 'steal' | 'assassinate' | 'coup';
-
-export interface GameAction {
-  icon: LucideIcon;
-  name: string;
-  description: string;
-  type: 'income' | 'foreign-aid' | TargetableAction | 'duke' | 'ambassador';
-  cost?: number;
-}
-
+export type GameStatus = 'waiting' | 'playing' | 'finished';
 export type GameState = 
   | 'waiting_for_action'
   | 'waiting_for_target'
@@ -65,28 +28,77 @@ export type GameState =
   | 'waiting_for_turn'
   | 'waiting_for_exchange';
 
+// Action types
+export type ActionType = 
+  | 'income'
+  | 'foreign-aid'
+  | 'duke'
+  | 'assassinate'
+  | 'steal'
+  | 'exchange'
+  | 'coup';
+
+export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence';
+
+export interface GameAction {
+  type: ActionType;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  cost?: number;
+}
+
+// Log types
+export type LogType = 
+  | ActionType
+  | 'block'
+  | 'challenge'
+  | 'challenge-success'
+  | 'challenge-fail'
+  | 'lose-influence'
+  | 'allow'
+  | 'exchange-complete'
+  | 'system'
+  | 'eliminated'; // New log type for elimination
+
+export interface GameLogEntry {
+  type: LogType;
+  player: string;
+  playerColor: string;
+  target?: string;
+  targetColor?: string;
+  card?: CardType;
+  targetCard?: CardType;
+  coins?: number;
+  timestamp: number;
+  message?: string;
+}
+
+// Game interface
 export interface Game {
   id: string;
   players: Player[];
   currentTurn: number;
-  deck: string[];
+  deck: CardType[];
   logs: GameLogEntry[];
-  status: 'waiting' | 'playing' | 'finished';
+  status: GameStatus;
   actionInProgress?: {
-    type: string;
+    type: ActionType;
     player: number;
     target?: number;
-    responseDeadline?: number;
+    responseDeadline: number;
     blockingPlayer?: number;
     blockingCard?: CardType;
     losingPlayer?: number;
-    responses: Record<number, { type: string; card?: string }>;
-    resolved?: boolean;
-  };
-  responses: Record<number, { type: string; card?: string }>;
+    challengeDefense?: boolean;
+    responses: Record<number, { 
+      type: ResponseType;
+      card?: CardType;
+    }>;
+    resolved: boolean;
+  } | null;
+  responses: Record<number, {
+    type: ResponseType;
+    card?: CardType;
+  }>;
 }
-
-export type GameResponse = 'allow' | 'block' | 'challenge' | 'lose_influence';
-
-export const CARDS = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'] as const;
-export type CardType = typeof CARDS[number];

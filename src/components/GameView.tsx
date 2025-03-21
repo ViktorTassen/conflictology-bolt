@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, ArrowLeft, Info } from 'lucide-react';
+import { Menu, ArrowLeft, Info, Skull } from 'lucide-react';
 import { Player, GameLogEntry, GameAction, GameState } from '../types';
 import { GameLog } from './GameLog';
 import { PlayerCard } from './PlayerCard';
+import { EmptyPlayerCard } from './EmptyPlayerCard';
 import { ActionMenu } from './ActionMenu';
 import { BottomPlayerInfo } from './BottomPlayerInfo';
 import { InfluenceCards } from './InfluenceCards';
 import { ResponseButtons } from './ResponseButtons';
 import { LoseInfluenceDialog } from './LoseInfluenceDialog';
+import { GameLobby } from './GameLobby';
 import { useGame } from '../hooks/useGame';
 
 interface GameViewProps {
@@ -21,7 +23,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { game, performAction, respondToAction } = useGame(gameId);
+  const { game, performAction, respondToAction, startGame } = useGame(gameId);
   
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -51,11 +53,21 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     );
   }
 
-  const isCurrentTurn = game.currentTurn === (playerId - 1);
+  if (game.status === 'waiting') {
+    return (
+      <GameLobby 
+        game={game}
+        isHost={playerId === 1}
+        onStartGame={startGame}
+      />
+    );
+  }
+
+  const isCurrentTurn = game.currentTurn === (playerId - 1) && !currentPlayer.eliminated;
   const actionInProgress = game.actionInProgress;
 
   const handleActionSelect = async (action: GameAction) => {
-    if (!isCurrentTurn) return;
+    if (!isCurrentTurn || currentPlayer.eliminated) return;
     
     setSelectedAction(action);
     if (['steal', 'assassinate', 'coup'].includes(action.type)) {
@@ -83,7 +95,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   };
 
   const handleResponse = async (response: 'allow' | 'block' | 'challenge', card?: string) => {
-    if (!actionInProgress) return;
+    if (!actionInProgress || currentPlayer.eliminated) return;
     
     try {
       await respondToAction(playerId - 1, { 
@@ -111,12 +123,18 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   };
 
   const isPlayerTargetable = (id: number) => {
+    const targetPlayer = game.players[id];
     return selectedAction && 
            ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && 
-           id !== (playerId - 1);
+           id !== (playerId - 1) &&
+           !targetPlayer.eliminated;
   };
 
   const getGameState = (): GameState => {
+    if (currentPlayer.eliminated) {
+      return 'waiting_for_others';
+    }
+    
     if (actionInProgress) {
       if (actionInProgress.losingPlayer === (playerId - 1)) {
         return 'waiting_for_influence_loss';
@@ -139,61 +157,64 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   };
 
   const shouldShowResponseButtons = () => {
-    if (!actionInProgress) return false;
+    if (!actionInProgress || currentPlayer.eliminated) return false;
     
-    // Don't show response buttons if player has already responded
     if (actionInProgress.responses[playerId - 1]) return false;
 
-    // Don't show response buttons if player needs to lose influence
     if (actionInProgress.losingPlayer === (playerId - 1)) return false;
 
-    // If there's a blocking player
     if (actionInProgress.blockingPlayer !== undefined) {
-      // Original action player can challenge or accept block
       if (actionInProgress.player === (playerId - 1)) {
         return true;
       }
-      // Other players (except blocker) can challenge the block
       if (actionInProgress.blockingPlayer !== (playerId - 1)) {
         return true;
       }
       return false;
     }
 
-    // Show initial response buttons (Block/Allow) to other players
     return actionInProgress.player !== (playerId - 1);
   };
 
   const getResponseButtons = () => {
-    if (!actionInProgress) return null;
+    if (!actionInProgress || currentPlayer.eliminated) return null;
 
-    // If there's a blocking player
     if (actionInProgress.blockingPlayer !== undefined) {
-      // Original action player sees Challenge/Accept block
       if (actionInProgress.player === (playerId - 1)) {
         return {
           showBlock: false,
           showChallenge: true,
           showAllow: true,
           blockText: '',
-          challengeText: 'Challenge Duke',
+          challengeText: 'Challenge',
           allowText: 'Accept block'
         };
       }
-      // Other players (except blocker) can challenge the block
       if (actionInProgress.blockingPlayer !== (playerId - 1)) {
         return {
           showBlock: false,
           showChallenge: true,
           showAllow: true,
           blockText: '',
-          challengeText: 'Challenge Duke',
+          challengeText: 'Challenge',
           allowText: 'Accept block'
         };
       }
     }
 
-    // Initial response buttons for other players
+    // For Duke action, only show Challenge and Allow options
+    if (actionInProgress.type === 'duke' && actionInProgress.player !== (playerId - 1)) {
+      return {
+        showBlock: false,
+        showChallenge: true,
+        showAllow: true,
+        blockText: '',
+        challengeText: 'Challenge',
+        allowText: 'Allow action'
+      };
+    }
+
+    // For other actions
     if (actionInProgress.player !== (playerId - 1)) {
       return {
         showBlock: true,
@@ -208,17 +229,38 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     return null;
   };
 
-  const otherPlayers = game.players
-    .map((player, index) => ({ player, index }))
-    .filter(({ index }) => index !== (playerId - 1))
-    .slice(0, 2);
+  const allPlayerSpots = Array(6).fill(null).map((_, index) => {
+    const player = game.players[index];
+    return {
+      index,
+      player: player || null
+    };
+  }).filter(({ index }) => index !== (playerId - 1));
+
+  const getPlayerPosition = (index: number) => {
+    if (index === 0) {
+      return 'top-0 left-1/2 -translate-x-1/2';
+    }
+    if (index === 1) {
+      return 'top-20 left-8';
+    }
+    if (index === 2) {
+      return 'top-20 right-8';
+    }
+    if (index === 3) {
+      return 'top-44 left-8';
+    }
+    if (index === 4) {
+      return 'top-44 right-8';
+    }
+    return '';
+  };
 
   const responseButtons = getResponseButtons();
   const gameState = getGameState();
 
   return (
     <div className="h-full flex flex-col">
-      {/* Top navigation */}
       <div className="flex justify-between p-4 z-10">
         <button 
           className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors"
@@ -232,33 +274,28 @@ export function GameView({ gameId, playerId }: GameViewProps) {
         </button>
       </div>
 
-      {/* Main game area - using flex for better control */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Top players area - fixed height */}
-        <div className="h-48 relative">
-          {otherPlayers.map(({ player, index }, displayIndex) => (
+        <div className="h-72 relative">
+          {allPlayerSpots.map(({ player, index }, displayIndex) => (
             <div
               key={index}
-              className={`absolute ${
-                displayIndex === 0
-                  ? "left-1/2 -translate-x-1/2 top-0"
-                  : displayIndex === 1
-                  ? "left-4 top-16"
-                  : "right-4 top-16"
-              }`}
+              className={`absolute ${getPlayerPosition(displayIndex)}`}
             >
-              <PlayerCard 
-                player={player}
-                isActive={game.currentTurn === index}
-                isTargetable={isPlayerTargetable(index)}
-                isTargeted={targetedPlayerId === index}
-                onTargetSelect={() => handlePlayerTarget(index)}
-              />
+              {player ? (
+                <PlayerCard 
+                  player={player}
+                  isActive={game.currentTurn === index && !player.eliminated}
+                  isTargetable={isPlayerTargetable(index)}
+                  isTargeted={targetedPlayerId === index}
+                  onTargetSelect={() => handlePlayerTarget(index)}
+                />
+              ) : (
+                <EmptyPlayerCard />
+              )}
             </div>
           ))}
         </div>
 
-        {/* Game log area - flexible height */}
         <div className="flex-1 px-4 overflow-y-auto min-h-0">
           <GameLog 
             logs={game.logs}
@@ -276,7 +313,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
               visible={true}
               showBlock={responseButtons.showBlock}
               showChallenge={responseButtons.showChallenge}
-              showAllow={true}
+              showAllow={responseButtons.showAllow}
               blockText={responseButtons.blockText}
               challengeText={responseButtons.challengeText}
               allowText={responseButtons.allowText}
@@ -284,7 +321,6 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           )}
         </div>
 
-        {/* Bottom player area - fixed height with gradient overlay */}
         <div className="h-32 relative mt-auto">
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 px-6 pb-6">
@@ -293,64 +329,77 @@ export function GameView({ gameId, playerId }: GameViewProps) {
                 <BottomPlayerInfo player={currentPlayer} />
               </div>
 
-              <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 z-10">
+              <div className="absolute left-1/2 bottom-12 transform -translate-x-1/2 z-10">
                 <InfluenceCards influence={currentPlayer.influence} />
               </div>
 
               <div className="z-20 relative">
-                <button
-                  ref={actionButtonRef}
-                  onClick={() => setShowActions(!showActions)}
-                  className="relative group"
-                  disabled={!isCurrentTurn || gameState === 'waiting_for_influence_loss'}
-                >
-                  <div className={`
-                    absolute -inset-2
-                    rounded-full
-                    bg-gradient-to-r from-slate-700 via-slate-500 to-slate-700
-                    ${showActions ? 'pulse-ring opacity-100' : 'opacity-0'}
-                    group-hover:opacity-100
-                    transition-opacity duration-300
-                  `} />
-                  
-                  <div className={`
-                    relative
-                    w-14 h-14
-                    rounded-full
-                    bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a]
-                    flex items-center justify-center
-                    shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_0_20px_rgba(0,0,0,0.5)]
-                    border border-slate-700/50
-                    overflow-hidden
-                    transition-all duration-300
-                    ${showActions ? 'ring-2 ring-slate-400/30' : ''}
-                    ${!isCurrentTurn || gameState === 'waiting_for_influence_loss' ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-300/10 to-transparent transform -rotate-45 gem-shine" />
-                    
-                    <div className="absolute inset-0 bg-gradient-to-tl from-slate-700/20 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-600/10 to-transparent" />
+                {currentPlayer.eliminated ? (
+                  // Red skull icon for eliminated players
+                  <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <Skull className="w-8 h-8 text-red-500" />
+                  </div>
+                ) : (
+                  <button
+                    ref={actionButtonRef}
+                    onClick={() => setShowActions(!showActions)}
+                    className="relative group"
+                    disabled={!isCurrentTurn || gameState === 'waiting_for_influence_loss'}
+                  >
+                    {/* Amber fire ornament circle */}
+                    {isCurrentTurn && (
+                      <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/30 to-amber-500/20 fire-pulse" />
+                    )}
                     
                     <div className={`
-                      absolute -inset-1
-                      bg-slate-400/20
-                      blur-lg
+                      absolute -inset-2
+                      rounded-full
+                      bg-gradient-to-r from-slate-700 via-slate-500 to-slate-700
+                      ${showActions ? 'pulse-ring opacity-100' : 'opacity-0'}
+                      group-hover:opacity-100
                       transition-opacity duration-300
-                      ${showActions ? 'opacity-100' : 'opacity-0'}
                     `} />
-
-                    <Menu className={`
+                    
+                    <div className={`
                       relative
-                      w-6 h-6
+                      w-14 h-14
+                      rounded-full
+                      bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a]
+                      flex items-center justify-center
+                      shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_0_20px_rgba(0,0,0,0.5)]
+                      border border-slate-700/50
+                      overflow-hidden
                       transition-all duration-300
-                      ${showActions ? 'text-slate-300' : 'text-slate-400'}
-                      group-hover:text-slate-300
-                      transform group-hover:scale-110
-                    `} />
-                  </div>
-                </button>
+                      ${showActions ? 'ring-2 ring-slate-400/30' : ''}
+                      ${isCurrentTurn ? 'ring-2 ring-amber-500/30' : ''}
+                      ${!isCurrentTurn || gameState === 'waiting_for_influence_loss' ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/10 to-transparent transform -rotate-45 gem-shine" />
+                      
+                      <div className="absolute inset-0 bg-gradient-to-tl from-amber-700/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-amber-600/10 to-transparent" />
+                      
+                      <div className={`
+                        absolute -inset-1
+                        bg-amber-400/20
+                        blur-lg
+                        transition-opacity duration-300
+                        ${showActions || isCurrentTurn ? 'opacity-100' : 'opacity-0'}
+                      `} />
 
-                {showActions && (
+                      <Menu className={`
+                        relative
+                        w-6 h-6
+                        transition-all duration-300
+                        ${showActions || isCurrentTurn ? 'text-amber-300' : 'text-slate-400'}
+                        group-hover:text-amber-300
+                        transform group-hover:scale-110
+                      `} />
+                    </div>
+                  </button>
+                )}
+
+                {showActions && !currentPlayer.eliminated && (
                   <div 
                     ref={menuRef}
                     className="absolute bottom-full right-0 mb-2"
@@ -370,7 +419,6 @@ export function GameView({ gameId, playerId }: GameViewProps) {
         </div>
       </div>
 
-      {/* Lose influence dialog */}
       {gameState === 'waiting_for_influence_loss' && (
         <LoseInfluenceDialog
           influence={currentPlayer.influence}
