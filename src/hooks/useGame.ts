@@ -26,6 +26,17 @@ function createDeck(): CardType[] {
   return shuffleArray([...CARDS, ...CARDS, ...CARDS].flat());
 }
 
+// Helper to clean objects before sending to Firebase
+// Removes any keys with undefined values
+function cleanFirebaseObject<T>(obj: T | null): T | null {
+  if (obj === null || obj === undefined) return null;
+  
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([_, value]) => value !== undefined)
+  ) as unknown as T;
+}
+
 function dealCards(deck: CardType[], numPlayers: number): [CardType[], CardType[][]] {
   const hands: CardType[][] = [];
   const remainingDeck = [...deck];
@@ -169,11 +180,15 @@ export function useGame(gameId?: string) {
 
   const performAction = async (
     playerId: number,
-    action: GameAction,
-    targetId?: number
+    action: GameAction
   ) => {
     if (!game || !action || playerId < 0 || playerId >= game.players.length) {
       throw new Error('Invalid action parameters');
+    }
+    
+    // Validate target for actions that require one
+    if (['steal', 'assassinate', 'coup'].includes(action.type) && action.target === undefined) {
+      throw new Error(`${action.type} requires a target`);
     }
 
     const gameRef = doc(db, 'games', game.id);
@@ -196,6 +211,18 @@ export function useGame(gameId?: string) {
         if (!actionHandler) {
           throw new Error('Invalid action type');
         }
+        
+        // For targeted actions, set up the actionInProgress with target
+        if (['steal', 'assassinate', 'coup'].includes(action.type) && action.target !== undefined) {
+          currentGame.actionInProgress = {
+            type: action.type,
+            player: playerId,
+            target: action.target,
+            responseDeadline: Date.now() + 10000,
+            responses: {},
+            resolved: false
+          };
+        }
 
         const result = await actionHandler.execute({
           game: currentGame,
@@ -216,7 +243,7 @@ export function useGame(gameId?: string) {
         const updates: Partial<Game> = {};
         if (result.players) updates.players = result.players;
         if (result.currentTurn !== undefined) updates.currentTurn = result.currentTurn;
-        if (result.actionInProgress !== undefined) updates.actionInProgress = result.actionInProgress;
+        if (result.actionInProgress !== undefined) updates.actionInProgress = cleanFirebaseObject(result.actionInProgress);
         if (result.responses !== undefined) updates.responses = result.responses;
 
         transaction.update(gameRef, updates);
@@ -276,7 +303,7 @@ export function useGame(gameId?: string) {
         const updates: Partial<Game> = {};
         if (result.players) updates.players = result.players;
         if (result.currentTurn !== undefined) updates.currentTurn = result.currentTurn;
-        if (result.actionInProgress !== undefined) updates.actionInProgress = result.actionInProgress;
+        if (result.actionInProgress !== undefined) updates.actionInProgress = cleanFirebaseObject(result.actionInProgress);
         if (result.responses !== undefined) updates.responses = result.responses;
 
         transaction.update(gameRef, updates);

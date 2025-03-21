@@ -46,6 +46,7 @@ export interface GameAction {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   cost?: number;
+  target?: number; // Added target property for targeted actions
 }
 
 // Log types

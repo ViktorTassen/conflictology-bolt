@@ -98,13 +98,13 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             
           case 'steal':
             blockCards = ['Captain', 'Ambassador'];
-            blockText = 'Block';
+            blockText = 'Block with Captain/Ambassador';
             showBlock = isTarget; // Only target can block steal
             break;
             
           case 'assassinate':
             blockCards = ['Contessa'];
-            blockText = 'Block';
+            blockText = 'Block with Contessa';
             showBlock = isTarget; // Only target can block assassination
             break;
             
@@ -126,8 +126,11 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           showChallenge,
           showAllow: true,
           blockText,
-          challengeText: "Challenge",
-          allowText: 'Allow',
+          challengeText: `Challenge ${actionType === 'duke' ? 'Duke' : 
+                          actionType === 'steal' ? 'Captain' : 
+                          actionType === 'assassinate' ? 'Assassin' : 
+                          actionType === 'exchange' ? 'Ambassador' : actionType}`,
+          allowText: 'Allow action',
           blockCards
         };
       }

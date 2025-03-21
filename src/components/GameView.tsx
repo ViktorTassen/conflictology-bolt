@@ -73,6 +73,12 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   const handleActionSelect = async (action: GameAction) => {
     if (!isCurrentTurn || currentPlayer.eliminated) return;
     
+    // Check if the player has enough coins for the action
+    if (action.cost && currentPlayer.coins < action.cost) {
+      console.error(`Not enough coins for ${action.type}. Need ${action.cost}, have ${currentPlayer.coins}`);
+      return;
+    }
+    
     setSelectedAction(action);
     setTargetedPlayerId(null); // Reset any previous target
     
@@ -95,7 +101,14 @@ export function GameView({ gameId, playerId }: GameViewProps) {
       setTargetedPlayerId(targetId);
       
       try {
-        await performAction(playerId - 1, selectedAction, targetId);
+        // Create a modified action with target included
+        const actionWithTarget = {
+          ...selectedAction,
+          // Add target to the action object itself
+          target: targetId
+        };
+        
+        await performAction(playerId - 1, actionWithTarget);
         setSelectedAction(null);
         setTargetedPlayerId(null);
       } catch (error) {
@@ -312,7 +325,14 @@ export function GameView({ gameId, playerId }: GameViewProps) {
                 ) : (
                   <button
                     ref={actionButtonRef}
-                    onClick={() => setShowActions(!showActions)}
+                    onClick={() => {
+                      // Cancel any active target selection when opening action menu
+                      if (selectedAction) {
+                        setSelectedAction(null);
+                        setTargetedPlayerId(null);
+                      }
+                      setShowActions(!showActions);
+                    }}
                     className="relative group"
                     disabled={!isCurrentTurn || gameState === 'waiting_for_influence_loss'}
                   >
@@ -380,6 +400,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
                     <ActionMenu 
                       onClose={() => setShowActions(false)}
                       onActionSelect={handleActionSelect}
+                      playerCoins={currentPlayer.coins}
                     />
                   </div>
                 )}
@@ -405,13 +426,15 @@ export function GameView({ gameId, playerId }: GameViewProps) {
         />
       )}
       
-      {/* Target Selection Overlay */}
-      {selectedAction && ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && (
-        <TargetSelectionOverlay 
-          actionType={selectedAction.type} 
-          onCancel={cancelTargetSelection} 
-        />
-      )}
+      {/* Target Selection Overlay - positioned within game container */}
+      <div className="pointer-events-none relative">
+        {selectedAction && ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && (
+          <TargetSelectionOverlay 
+            actionType={selectedAction.type} 
+            onCancel={cancelTargetSelection} 
+          />
+        )}
+      </div>
     </div>
   );
 }

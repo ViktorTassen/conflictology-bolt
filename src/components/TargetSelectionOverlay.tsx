@@ -65,9 +65,9 @@ export function TargetSelectionOverlay({ actionType, onCancel }: TargetSelection
   const actionName = getActionName(actionType);
 
   return (
-    <div className="fixed inset-0 z-40 pointer-events-none">
+    <div className="relative z-40 pointer-events-none">
       {/* Compact target selection bar positioned at bottom */}
-      <div className="absolute bottom-36 left-1/2 -translate-x-1/2 pointer-events-auto">
+      <div className="absolute bottom-36 inset-x-0 flex justify-center pointer-events-auto">
         <div className={`
           ${classes.bgHint} backdrop-blur-md 
           px-4 py-2 rounded-full
@@ -75,6 +75,7 @@ export function TargetSelectionOverlay({ actionType, onCancel }: TargetSelection
           shadow-lg 
           animate-in fade-in slide-in-from-bottom-4
           flex items-center gap-3
+          max-w-[90%]
         `}>
           <div className="flex items-center gap-2">
             <Target className={`w-4 h-4 ${classes.icon}`} />
