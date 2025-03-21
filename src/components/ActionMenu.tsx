@@ -1,4 +1,3 @@
-import React from 'react';
 import { DollarSign, Sword, Crown, UserX, Users, Ship } from 'lucide-react';
 import { GameAction } from '../types';
 
