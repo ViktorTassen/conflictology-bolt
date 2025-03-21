@@ -65,8 +65,8 @@ export function ResponseButtons({
   };
 
   return (
-    <div className="bg-[#2a2a2a]/80 backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden mt-2 animate-in fade-in slide-in-from-bottom-2">
-      <div className="p-2 flex justify-center gap-2 flex-wrap relative">
+    <div className="backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden mt-4 animate-in fade-in slide-in-from-bottom-2 mb-6">
+      <div className="flex justify-center gap-1 flex-wrap relative">
         {showBlock && (
           <div className="relative">
             <button
@@ -79,14 +79,14 @@ export function ResponseButtons({
             </button>
             
             {showBlockOptions && blockCards.length > 1 && (
-              <div className="absolute top-full left-0 mt-1 bg-[#1a1a1a] border border-gray-800 rounded-md shadow-lg z-10 min-w-full">
+              <div className="absolute bottom-full left-0 mb-1 bg-red-500/10 border border-red-500/30 rounded-md shadow-lg z-10 min-w-full">
                 {blockCards.map(card => (
                   <button
                     key={card}
                     onClick={() => handleBlockWithCard(card)}
-                    className="block w-full text-left px-3 py-1.5 hover:bg-gray-800 text-sm"
+                    className="block w-full text-left px-3 py-1.5 hover:bg-red-500/30 text-red-400 text-sm"
                   >
-                    Block with {card}
+                    {card}
                   </button>
                 ))}
               </div>

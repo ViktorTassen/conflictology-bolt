@@ -250,7 +250,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between p-4 z-10">
+      <div className="flex justify-between p-4 z-10 absolute inset-x-0 top-0">
         <button 
           className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors"
         >
@@ -263,7 +263,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 mt-10">
         <div className="h-72 relative">
           {allPlayerSpots.map(({ player, index }, displayIndex) => (
             <div

@@ -72,8 +72,8 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             showChallenge: true,
             showAllow: true,
             blockText: '',
-            challengeText: `Challenge ${blockingCard}`,
-            allowText: 'Accept block'
+            challengeText: 'Challenge',
+            allowText: 'Allow'
           };
         }
       }
@@ -104,7 +104,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             
           case 'assassinate':
             blockCards = ['Contessa'];
-            blockText = 'Block with Contessa';
+            blockText = 'Block';
             showBlock = isTarget; // Only target can block assassination
             break;
             
@@ -123,14 +123,6 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             showBlock = false;
         }
 
-        // Get the claimed role for the challenge text
-        const claimedRole = 
-          actionType === 'duke' ? 'Duke' : 
-          actionType === 'steal' ? 'Captain' : 
-          actionType === 'assassinate' ? 'Assassin' : 
-          actionType === 'exchange' ? 'Ambassador' : 
-          actionType;
-
         // Make sure blockCards is always included for block options
         const validBlockCards = blockCards.length > 0 ? blockCards : ['Duke'] as CardType[];
         
@@ -139,7 +131,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           showChallenge,
           showAllow: true,
           blockText,
-          challengeText: `Challenge ${claimedRole}`,
+          challengeText: 'Challenge',
           allowText: 'Allow',
           blockCards: validBlockCards
         });
@@ -149,7 +141,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           showChallenge,
           showAllow: true,
           blockText,
-          challengeText: `Challenge ${claimedRole}`,
+          challengeText: 'Challenge',
           allowText: 'Allow',
           blockCards: validBlockCards
         };
