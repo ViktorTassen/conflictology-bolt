@@ -86,43 +86,105 @@ export function ExchangeCardsDialog({
             </p>
           </div>
 
-          {/* Cards */}
-          <div className="flex justify-center gap-3 flex-wrap mb-8">
-            {availableCards.map((cardInfo, index) => (
-              <button
-                key={index}
-                onClick={() => handleCardSelect(index)}
-                className={`group relative ${selectedCards.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
-              >
-                <div className={`absolute -inset-2 rounded-xl ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
-                <div className="relative">
-                  {/* Card */}
-                  <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                    <img
-                      src="https://images.unsplash.com/photo-1509460913899-515f1df34fea?w=200&q=80"
-                      alt={cardInfo.card}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                      <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                        {cardInfo.card}
-                      </div>
-                      {cardInfo.isPlayerCard && (
-                        <div className="absolute top-2 right-2 text-white/70 text-xs">
-                          Current
-                        </div>
-                      )}
-                    </div>
+          {/* Cards - Separate into two rows */}
+          <div className="mb-8 space-y-6">
+            {/* Current cards row with header */}
+            <div>
+              <h4 className="text-white/80 text-sm font-semibold mb-3 text-center">Your Current Cards</h4>
+              <div className="flex justify-center gap-3 flex-wrap">
+                {availableCards
+                  .filter(card => card.isPlayerCard)
+                  .map((cardInfo, i) => {
+                    // Calculate the actual index in the combined array
+                    const index = availableCards.findIndex(c => 
+                      c.isPlayerCard && c.originalIndex === cardInfo.originalIndex
+                    );
                     
-                    {/* Hover overlay */}
-                    <div className={`absolute inset-0 ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
-                  </div>
+                    return (
+                      <button
+                        key={`current-${i}`}
+                        onClick={() => handleCardSelect(index)}
+                        className={`group relative ${selectedCards.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                        <div className={`absolute -inset-2 rounded-xl ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
+                        <div className="relative">
+                          {/* Card */}
+                          <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                            <img
+                              src="https://images.unsplash.com/photo-1509460913899-515f1df34fea?w=200&q=80"
+                              alt={cardInfo.card}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                              <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                                {cardInfo.card}
+                              </div>
+                              <div className="absolute top-2 right-2 text-white/70 text-xs">
+                                Current
+                              </div>
+                            </div>
+                            
+                            {/* Hover overlay */}
+                            <div className={`absolute inset-0 ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
+                          </div>
 
-                  {/* Selection indicator */}
-                  <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedCards.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
-                </div>
-              </button>
-            ))}
+                          {/* Selection indicator */}
+                          <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedCards.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+            
+            {/* New drawn cards row with header */}
+            <div>
+              <h4 className="text-white/80 text-sm font-semibold mb-3 text-center">New Cards From Deck</h4>
+              <div className="flex justify-center gap-3 flex-wrap">
+                {availableCards
+                  .filter(card => !card.isPlayerCard)
+                  .map((cardInfo, i) => {
+                    // Calculate the actual index in the combined array
+                    const index = availableCards.findIndex(c => 
+                      !c.isPlayerCard && c.originalIndex === cardInfo.originalIndex
+                    );
+                    
+                    return (
+                      <button
+                        key={`drawn-${i}`}
+                        onClick={() => handleCardSelect(index)}
+                        className={`group relative ${selectedCards.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                        <div className={`absolute -inset-2 rounded-xl ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
+                        <div className="relative">
+                          {/* Card */}
+                          <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                            <img
+                              src="https://images.unsplash.com/photo-1509460913899-515f1df34fea?w=200&q=80"
+                              alt={cardInfo.card}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                              <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                                {cardInfo.card}
+                              </div>
+                              <div className="absolute top-2 right-2 text-blue-400/70 text-xs">
+                                New
+                              </div>
+                            </div>
+                            
+                            {/* Hover overlay */}
+                            <div className={`absolute inset-0 ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
+                          </div>
+
+                          {/* Selection indicator */}
+                          <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedCards.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
           
           {/* Confirm button */}

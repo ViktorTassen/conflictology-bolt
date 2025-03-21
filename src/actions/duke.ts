@@ -130,7 +130,8 @@ export const dukeAction: ActionHandler = {
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
-          responses: updatedResponses
+          responses: updatedResponses,
+          challengeInProgress: true
         };
       } else {
         // Challenge succeeds, Duke player loses influence
@@ -146,7 +147,8 @@ export const dukeAction: ActionHandler = {
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.player,
-          responses: updatedResponses
+          responses: updatedResponses,
+          challengeInProgress: true
         };
       }
 
@@ -161,12 +163,14 @@ export const dukeAction: ActionHandler = {
       };
 
       // Check if all other non-eliminated players have allowed
-      const otherPlayers = game.players.filter(p => 
-        p.id !== game.actionInProgress!.player + 1 && !p.eliminated
+      const otherPlayers = game.players.filter((p, index) => 
+        index !== game.actionInProgress!.player && !p.eliminated
       );
-      const allResponded = otherPlayers.every(p => 
-        updatedResponses[p.id - 1] && updatedResponses[p.id - 1].type === 'allow'
-      );
+      const allResponded = otherPlayers.every((p) => {
+        // Convert from player index to ID for responses object
+        const playerId = p.id - 1;
+        return updatedResponses[playerId] && updatedResponses[playerId].type === 'allow';
+      });
 
       if (allResponded) {
         // All players allowed - complete Duke action

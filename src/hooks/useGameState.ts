@@ -138,6 +138,9 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
     shouldShowResponseButtons: (playerId: number): boolean => {
       if (!game?.actionInProgress) return false;
       
+      // Check if player is eliminated - eliminated players should never see response buttons
+      if (game.players[playerId]?.eliminated) return false;
+      
       const { actionInProgress } = game;
       
       // If already responded or losing influence, don't show buttons
@@ -147,6 +150,11 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       // IMPORTANT: Don't show response buttons during a challenge resolution
       // This prevents UI confusion after a player loses a challenge
       if (actionInProgress.challengeInProgress) {
+        return false;
+      }
+      
+      // Don't show response buttons if ANY player is losing influence
+      if (actionInProgress.losingPlayer !== undefined) {
         return false;
       }
       
