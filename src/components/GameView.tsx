@@ -13,6 +13,7 @@ import { ExchangeCardsDialog } from './ExchangeCardsDialog';
 import { GameLobby } from './GameLobby';
 import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
+import { TargetSelectionOverlay } from './TargetSelectionOverlay';
 
 interface GameViewProps {
   gameId: string;
@@ -73,6 +74,9 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     if (!isCurrentTurn || currentPlayer.eliminated) return;
     
     setSelectedAction(action);
+    setTargetedPlayerId(null); // Reset any previous target
+    
+    // For actions that require a target
     if (['steal', 'assassinate', 'coup'].includes(action.type)) {
       setShowActions(false);
     } else {
@@ -87,14 +91,23 @@ export function GameView({ gameId, playerId }: GameViewProps) {
 
   const handlePlayerTarget = async (targetId: number) => {
     if (selectedAction && ['steal', 'assassinate', 'coup'].includes(selectedAction.type)) {
+      // First set the targeted player to provide visual feedback
+      setTargetedPlayerId(targetId);
+      
       try {
         await performAction(playerId - 1, selectedAction, targetId);
         setSelectedAction(null);
         setTargetedPlayerId(null);
       } catch (error) {
         console.error('Failed to target player:', error);
+        // Keep the selected action so they can try again
       }
     }
+  };
+  
+  const cancelTargetSelection = () => {
+    setSelectedAction(null);
+    setTargetedPlayerId(null);
   };
 
   const handleResponse = async (response: 'allow' | 'block' | 'challenge', card?: string) => {
@@ -389,6 +402,14 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           playerInfluence={currentPlayer.influence}
           drawnCards={actionInProgress.exchangeCards}
           onExchangeComplete={handleExchangeCards}
+        />
+      )}
+      
+      {/* Target Selection Overlay */}
+      {selectedAction && ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && (
+        <TargetSelectionOverlay 
+          actionType={selectedAction.type} 
+          onCancel={cancelTargetSelection} 
         />
       )}
     </div>

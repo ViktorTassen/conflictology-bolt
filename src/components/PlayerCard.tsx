@@ -27,22 +27,33 @@ export function PlayerCard({
   return (
     <div 
       className={`
-        relative 
-        ${isTargetable && !player.eliminated ? 'cursor-pointer hover:scale-105' : ''}
+        relative
+        ${isTargetable && !player.eliminated ? 'cursor-pointer hover:scale-105 group' : ''}
         ${player.eliminated ? 'opacity-50' : ''}
         transition-transform duration-200
       `}
       onClick={isTargetable && !player.eliminated ? onTargetSelect : undefined}
+      role={isTargetable && !player.eliminated ? "button" : undefined}
+      aria-label={isTargetable && !player.eliminated ? `Target ${player.name}` : undefined}
     >
-      {/* Target selection glow effect */}
-      {(isTargetable || isTargeted) && !player.eliminated && (
-        <div className={`
-          absolute -inset-2 rounded-xl
-          ${isTargeted ? 'bg-red-500/30 animate-pulse' : 'bg-red-500/0'}
-          transition-colors duration-300
-          group-hover:bg-red-500/20
-          blur-lg
-        `} />
+      {/* Targetable indicator for improved visibility */}
+      {isTargetable && !player.eliminated && (
+        <div className="absolute inset-0 -m-3 z-0 pointer-events-none">
+          <div className="absolute inset-0 rounded-xl bg-red-500/10 animate-pulse-slow"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-white/80 font-bold bg-red-500/80 px-2 py-0.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            TARGET
+          </div>
+        </div>
+      )}
+      
+      {/* Target selection glow effect when targeted */}
+      {isTargeted && !player.eliminated && (
+        <div className="absolute inset-0 -m-3 z-0 pointer-events-none">
+          <div className="absolute inset-0 rounded-xl bg-red-500/30 animate-pulse"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-white font-bold bg-red-600/90 px-2 py-0.5 rounded-full shadow-lg">
+            TARGETED
+          </div>
+        </div>
       )}
 
       {/* Player info card */}
@@ -50,8 +61,8 @@ export function PlayerCard({
         relative z-10 
         bg-[#2a2a2a]/90 backdrop-blur-sm rounded-lg
         ${isActive ? 'ring-1 ring-yellow-500/50' : ''}
-        ${isTargeted && !player.eliminated ? 'ring-2 ring-red-500/50' : ''}
-        ${isTargetable && !player.eliminated ? 'hover:ring-2 hover:ring-red-500/30' : ''}
+        ${isTargeted && !player.eliminated ? 'ring-2 ring-red-500' : ''}
+        ${isTargetable && !player.eliminated ? 'hover:ring-2 hover:ring-red-500 shadow-lg' : ''}
         ${player.eliminated ? 'ring-1 ring-red-900/50' : ''}
         transition-all duration-200
       `}>
