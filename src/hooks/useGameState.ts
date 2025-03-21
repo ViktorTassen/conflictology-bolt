@@ -95,9 +95,11 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             break;
             
           case 'steal':
+            // For steal, you can block with either Captain or Ambassador
             blockCards = ['Captain', 'Ambassador'];
-            blockText = blockCards.length > 1 ? 'Block' : `Block with ${blockCards[0]}`;
+            blockText = 'Block';  // We'll show options in the dropdown
             showBlock = isTarget; // Only target can block steal
+            console.log('Setting up block cards for steal:', blockCards);
             break;
             
           case 'assassinate':
@@ -129,6 +131,19 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           actionType === 'exchange' ? 'Ambassador' : 
           actionType;
 
+        // Make sure blockCards is always included for block options
+        const validBlockCards = blockCards.length > 0 ? blockCards : ['Duke'] as CardType[];
+        
+        console.log('Providing response options:', {
+          showBlock,
+          showChallenge,
+          showAllow: true,
+          blockText,
+          challengeText: `Challenge ${claimedRole}`,
+          allowText: 'Allow',
+          blockCards: validBlockCards
+        });
+        
         return {
           showBlock,
           showChallenge,
@@ -136,7 +151,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           blockText,
           challengeText: `Challenge ${claimedRole}`,
           allowText: 'Allow',
-          blockCards
+          blockCards: validBlockCards
         };
       }
 
@@ -175,9 +190,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         return false;
       }
       
-      // Special case for targeted actions - only target or others can respond
-      const isTarget = actionInProgress.target === playerId;
-      
+      // If there's a block in progress
       if (actionInProgress.blockingPlayer !== undefined) {
         // For blocks, action player and non-blockers can respond
         return actionInProgress.player === playerId || actionInProgress.blockingPlayer !== playerId;
@@ -186,13 +199,8 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       // Don't show buttons to the player performing the action
       if (actionInProgress.player === playerId) return false;
       
-      // For steal and assassinate, only the target should respond first
-      if ((actionInProgress.type === 'steal' || actionInProgress.type === 'assassinate') && 
-          !isTarget && Object.keys(actionInProgress.responses).length === 0) {
-        // No one has responded yet, wait for target
-        return false;
-      }
-      
+      // FIXED: Allow all players to respond simultaneously
+      // Only limit who can block (handled by getResponseOptions)
       return true;
     },
 

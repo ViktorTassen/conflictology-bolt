@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Swords, Check, ChevronDown } from 'lucide-react';
 import { CardType } from '../types';
 
 interface ResponseButtonsProps {
-  onBlock?: (card?: CardType) => void;
+  onBlock?: (card: CardType) => void;
   onChallenge?: () => void;
   onAllow?: () => void;
   visible?: boolean;
@@ -13,7 +13,7 @@ interface ResponseButtonsProps {
   blockText?: string;
   challengeText?: string;
   allowText?: string;
-  blockCards?: CardType[];
+  blockCards: CardType[];
 }
 
 export function ResponseButtons({ 
@@ -27,22 +27,38 @@ export function ResponseButtons({
   blockText = "Block",
   challengeText = "Challenge",
   allowText = "Allow",
-  blockCards = ['Duke']
+  blockCards = ['Duke'] as CardType[]
 }: ResponseButtonsProps) {
   const [showBlockOptions, setShowBlockOptions] = useState(false);
+  
+  // Log when component receives props
+  useEffect(() => {
+    console.log('ResponseButtons blockCards:', blockCards);
+  }, [blockCards]);
   
   if (!visible) return null;
 
   const handleBlockClick = () => {
-    if (blockCards.length > 1 && onBlock) {
+    console.log('Block button clicked with cards:', blockCards);
+    
+    if (blockCards.length > 1) {
+      // Toggle the dropdown menu for multiple block cards
       setShowBlockOptions(!showBlockOptions);
-    } else if (onBlock) {
-      onBlock(blockCards[0]);
+    } else if (blockCards.length === 1 && onBlock) {
+      // For single card blocks, call the handler directly with the only card option
+      const card = blockCards[0];
+      console.log('Blocking with single card option:', card);
+      onBlock(card);
+    } else {
+      console.error('No block cards available');
     }
   };
   
   const handleBlockWithCard = (card: CardType) => {
+    console.log('Selected block card from dropdown:', card);
+    
     if (onBlock) {
+      console.log('Passing card to parent handler:', card);
       onBlock(card);
       setShowBlockOptions(false);
     }

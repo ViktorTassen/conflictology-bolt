@@ -50,10 +50,12 @@ export const stealAction: ActionHandler = {
     const targetPlayer = game.players[game.actionInProgress.target ?? 0];
     const result: ActionResult = {};
     
+    // Create response data with card if provided
     const responseData = response.card 
       ? { type: response.type, card: response.card }
       : { type: response.type };
       
+    // Update responses
     const updatedResponses = {
       ...game.actionInProgress.responses,
       [playerId]: responseData
@@ -63,10 +65,22 @@ export const stealAction: ActionHandler = {
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
       
+      // Find card index if a specific card was chosen
+      let cardIndex = undefined;
+      if (response.card) {
+        cardIndex = updatedPlayers[playerId].influence.findIndex(
+          i => !i.revealed && i.card === response.card
+        );
+        // If card not found or already revealed, default to first hidden card
+        if (cardIndex === -1) {
+          cardIndex = undefined; // Let applyInfluenceLoss find the first hidden card
+        }
+      }
+      
       // Apply influence loss
       const lossResult = applyInfluenceLoss(
         updatedPlayers[playerId], 
-        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
+        cardIndex,
         updatedPlayers
       );
       
@@ -126,7 +140,7 @@ export const stealAction: ActionHandler = {
         }));
       }
       
-      // Action player lost challenge - no stealing occurs
+      // Complete action
       result.players = updatedPlayers;
       result.actionInProgress = null;
       result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
@@ -135,12 +149,21 @@ export const stealAction: ActionHandler = {
     }
 
     // Handle block with Captain or Ambassador
-    if (response.type === 'block' && (response.card === 'Captain' || response.card === 'Ambassador')) {
+    if (response.type === 'block') {
+      console.log('Processing block response with card:', response.card);
+      
+      // Verify a valid block card is specified
+      if (!response.card || (response.card !== 'Captain' && response.card !== 'Ambassador')) {
+        console.error('Invalid block card:', response.card);
+        throw new Error('Must block with Captain or Ambassador');
+      }
+      
       // Only the target can block a steal
       if (playerId !== game.actionInProgress.target) {
         throw new Error('Only the target can block a steal');
       }
       
+      // Create the block log
       result.logs = [createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
@@ -148,6 +171,7 @@ export const stealAction: ActionHandler = {
         message: `${player.name} blocked stealing with ${response.card}.`
       })];
 
+      // Set up the block in the game state
       result.actionInProgress = {
         ...game.actionInProgress,
         blockingPlayer: playerId,

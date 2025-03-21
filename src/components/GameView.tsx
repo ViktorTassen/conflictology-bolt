@@ -123,15 +123,22 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     setTargetedPlayerId(null);
   };
 
-  const handleResponse = async (response: 'allow' | 'block' | 'challenge', card?: string) => {
+  const handleResponse = async (response: 'allow' | 'block' | 'challenge', card?: CardType) => {
     if (!actionInProgress || currentPlayer.eliminated) return;
     
+    console.log('Sending response:', response, 'with card:', card);
+    
     try {
-      await respondToAction(playerId - 1, { 
+      // Debug the response to see what's happening
+      const responseData = { 
         type: response,
         playerId: playerId - 1,
-        card
-      });
+        card: card as CardType
+      };
+      
+      console.log('Response data:', responseData);
+      
+      await respondToAction(playerId - 1, responseData);
     } catch (error) {
       console.error('Failed to respond:', error);
     }
@@ -289,7 +296,10 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           />
           {responseButtons && shouldShowResponseButtons() && (
             <ResponseButtons 
-              onBlock={(card) => handleResponse('block', card)}
+              onBlock={(card) => {
+                console.log('Block selected with card:', card);
+                handleResponse('block', card);
+              }}
               onChallenge={() => handleResponse('challenge')}
               onAllow={() => handleResponse('allow')}
               visible={true}
@@ -299,7 +309,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
               blockText={responseButtons.blockText}
               challengeText={responseButtons.challengeText}
               allowText={responseButtons.allowText}
-              blockCards={responseButtons.blockCards}
+              blockCards={responseButtons.blockCards || []}
             />
           )}
         </div>
