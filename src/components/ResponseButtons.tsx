@@ -22,7 +22,7 @@ export function ResponseButtons({
   onAllow, 
   visible = true,
   showBlock = true,
-  showChallenge = false,
+  showChallenge = true,
   showAllow = true,
   blockText = "Block",
   challengeText = "Challenge",

@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
 
 export const dukeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -7,13 +7,9 @@ export const dukeAction: ActionHandler = {
       throw new Error('Eliminated players cannot perform actions');
     }
 
+    // Create the initial action state
     const result: ActionResult = {
-      logs: [{
-        type: 'tax',
-        player: player.name,
-        playerColor: player.color,
-        timestamp: Date.now()
-      }],
+      logs: [createLog('duke', player)],
       actionInProgress: {
         type: 'duke',
         player: playerId,
@@ -49,237 +45,113 @@ export const dukeAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
-      const playerInfluence = updatedPlayers[playerId].influence;
       
-      if (response.card !== undefined) {
-        playerInfluence[response.card].revealed = true;
-      }
+      // Apply influence loss
+      const lossResult = applyInfluenceLoss(
+        updatedPlayers[playerId], 
+        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
+        updatedPlayers
+      );
+      
+      result.logs = lossResult.logs;
 
-      // Check if player is eliminated
-      const remainingCards = playerInfluence.filter(card => !card.revealed).length;
-      if (remainingCards === 0) {
-        updatedPlayers[playerId].eliminated = true;
-        result.logs = [
-          {
-            type: 'lose-influence',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now()
-          },
-          {
-            type: 'eliminated',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now(),
-            message: `${player.name} has been eliminated!`
-          }
-        ];
-      } else {
-        result.logs = [{
-          type: 'lose-influence',
-          player: player.name,
-          playerColor: player.color,
-          timestamp: Date.now()
-        }];
-        
-        // Add an explanatory message - no replacement card because player lost influence
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 1,
-          message: `${player.name} loses influence.`
-        });
-      }
-
-      // If this was the challenger losing influence (failed challenge)
-      if (game.actionInProgress.losingPlayer === playerId && 
-          playerId !== game.actionInProgress.player) {
-        // Original player gets tax because challenge failed
-        updatedPlayers[game.actionInProgress.player].coins += 3;
-        result.logs.push({
-          type: 'tax',
-          player: actionPlayer.name,
-          playerColor: actionPlayer.color,
-          coins: 3,
-          timestamp: Date.now()
-        });
-      }
-      // If this was the Duke player losing influence (successful challenge)
-      // They don't get any coins as they lost the challenge
+      // If action player was challenged successfully and lost influence
       if (playerId === game.actionInProgress.player) {
-        // No replacement card for successful challenge - they simply lose influence
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: `${player.name} was caught bluffing and loses influence.`
-        });
+        // Action fails, turn passes
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      } 
+      // Challenger lost influence due to failed challenge
+      else {
+        // Duke action succeeds - action player gains 3 coins
+        updatedPlayers[game.actionInProgress.player].coins += 3;
+        
+        result.logs.push(createLog('duke', actionPlayer, {
+          coins: 3,
+          message: `${actionPlayer.name} successfully claimed Duke and took 3 coins.`
+        }));
+        
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
       }
 
-      result.players = updatedPlayers;
-      result.actionInProgress = null;
-      
-      // Find next valid turn
-      let nextTurn = (game.currentTurn + 1) % game.players.length;
-      while (updatedPlayers[nextTurn].eliminated) {
-        nextTurn = (nextTurn + 1) % game.players.length;
-      }
-      result.currentTurn = nextTurn;
-      
       return result;
     }
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasDuke = actionPlayer.influence.some(i => !i.revealed && i.card === 'Duke');
-
+      const hasDuke = verifyPlayerHasRole(actionPlayer, 'Duke');
+      
       if (hasDuke) {
-        // Challenge fails, challenger loses influence
-        // The action player needs to reveal their Duke
+        // Challenge fails - challenger loses influence
+        result.logs = [createLog('challenge-fail', player, {
+          target: actionPlayer.name,
+          targetColor: actionPlayer.color,
+          card: 'Duke',
+          message: `${player.name} challenged ${actionPlayer.name}'s Duke claim and failed.`
+        })];
         
-        // Find the Duke card index
-        const dukeCardIndex = actionPlayer.influence.findIndex(i => !i.revealed && i.card === 'Duke');
-        
-        if (dukeCardIndex !== -1) {
-          // Add appropriate logs
-          result.logs = [{
-            type: 'challenge-fail',
-            player: player.name,
-            playerColor: player.color,
-            target: actionPlayer.name,
-            targetColor: actionPlayer.color,
-            timestamp: Date.now()
-          }];
-  
-          // Add informative message for all players
-          result.logs.push({
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now() + 1,
-            message: `${player.name}'s challenge failed. ${actionPlayer.name} revealed their Duke, which will be shuffled back into the deck. ${player.name} must lose influence.`
-          });
-          
-          // Step 1: Add the revealed Duke back to the deck
-          const updatedPlayers = [...game.players];
-          const updatedDeck = [...game.deck, 'Duke'];
-          
-          // Step 2: Shuffle the deck
-          updatedDeck.sort(() => Math.random() - 0.5);
-          
-          // Step 3: Draw a replacement card for the revealed Duke
-          if (updatedDeck.length > 0) {
-            const newCard = updatedDeck.pop();
-            
-            // Step 4: Replace the Duke card with the new one
-            updatedPlayers[game.actionInProgress.player].influence[dukeCardIndex].card = newCard;
-            
-            result.logs.push({
-              type: 'system',
-              player: 'System',
-              playerColor: '#9CA3AF',
-              timestamp: Date.now() + 2,
-              message: `${actionPlayer.name} showed Duke and returned it to the deck, drawing a replacement card.`
-            });
-          } else {
-            result.logs.push({
-              type: 'system',
-              player: 'System',
-              playerColor: '#9CA3AF',
-              timestamp: Date.now() + 2,
-              message: `The deck is empty. ${actionPlayer.name} could not draw a replacement card.`
-            });
-          }
-          
-          // Update the deck in the game
-          game.deck = updatedDeck;
-          result.players = updatedPlayers;
-        } else {
-          // This should never happen since we checked hasDuke already
-          result.logs = [{
-            type: 'challenge-fail',
-            player: player.name,
-            playerColor: player.color,
-            target: actionPlayer.name,
-            targetColor: actionPlayer.color,
-            timestamp: Date.now()
-          }];
-        }
-
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
-          responses: updatedResponses,
-          challengeInProgress: true
+          challengeInProgress: true,
+          responses: updatedResponses
         };
       } else {
-        // Challenge succeeds, Duke player loses influence
-        result.logs = [{
-          type: 'challenge-success',
-          player: player.name,
-          playerColor: player.color,
+        // Challenge succeeds - action player loses influence
+        result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          timestamp: Date.now()
-        }];
-
+          message: `${player.name} challenged ${actionPlayer.name}'s Duke claim and succeeded.`
+        })];
+        
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.player,
-          responses: updatedResponses,
-          challengeInProgress: true
+          challengeInProgress: true,
+          responses: updatedResponses
         };
       }
-
+      
       return result;
     }
-
-    // Handle allow responses
+    
+    // Handle allow
     if (response.type === 'allow') {
       result.actionInProgress = {
         ...game.actionInProgress,
         responses: updatedResponses
       };
-
+      
       // Check if all other non-eliminated players have allowed
-      const otherPlayers = game.players.filter((p, index) => 
-        index !== game.actionInProgress!.player && !p.eliminated
+      const otherPlayers = game.players.filter(p => 
+        p.id !== game.actionInProgress!.player + 1 && !p.eliminated
       );
-      const allResponded = otherPlayers.every((p) => {
-        // Convert from player index to ID for responses object
-        const playerId = p.id - 1;
-        return updatedResponses[playerId] && updatedResponses[playerId].type === 'allow';
-      });
-
-      if (allResponded) {
-        // All players allowed - complete Duke action
+      
+      const allResponded = otherPlayers.every(p => 
+        updatedResponses[p.id - 1] !== undefined
+      );
+      
+      // If all players have responded with allow, proceed with Duke action
+      if (allResponded && Object.values(updatedResponses).every(r => r.type === 'allow')) {
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
-
-        result.logs = [{
-          type: 'tax',
-          player: actionPlayer.name,
-          playerColor: actionPlayer.color,
+        
+        result.logs = [createLog('duke', actionPlayer, {
           coins: 3,
-          timestamp: Date.now()
-        }];
-
+          message: `${actionPlayer.name} successfully took 3 coins with Duke.`
+        })];
+        
         result.players = updatedPlayers;
         result.actionInProgress = null;
-        
-        // Find next valid turn
-        let nextTurn = (game.currentTurn + 1) % game.players.length;
-        while (updatedPlayers[nextTurn].eliminated) {
-          nextTurn = (nextTurn + 1) % game.players.length;
-        }
-        result.currentTurn = nextTurn;
+        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
       }
-
+      
       return result;
     }
-
+    
     return result;
   }
 };

@@ -1,17 +1,9 @@
 import { useMemo } from 'react';
-import { Game, GameState, ResponseType, CardType } from '../types';
+import { Game, GameState, ResponseType, CardType, ResponseOptions } from '../types';
 
 interface GameStateHelpers {
   getGameState: (playerId: number) => GameState;
-  getResponseOptions: (playerId: number) => {
-    showBlock: boolean;
-    showChallenge: boolean;
-    showAllow: boolean;
-    blockText: string;
-    challengeText: string;
-    allowText: string;
-    blockCards?: CardType[];
-  } | null;
+  getResponseOptions: (playerId: number) => ResponseOptions | null;
   shouldShowResponseButtons: (playerId: number) => boolean;
   isPlayerTargetable: (playerId: number, targetId: number) => boolean;
 }
@@ -23,6 +15,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       
       const actionInProgress = game.actionInProgress;
       if (actionInProgress) {
+        // Player needs to lose influence
         if (actionInProgress.losingPlayer === playerId) {
           return 'waiting_for_influence_loss';
         }
@@ -40,23 +33,28 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           return 'waiting_for_others';
         }
         
+        // Player who initiated the action waits for others, unless a block happened
         if (actionInProgress.player === playerId) {
           if (actionInProgress.blockingPlayer !== undefined) {
             return 'waiting_for_response';
           }
           return 'waiting_for_others';
         }
+        
+        // All other players are in response mode
         return 'waiting_for_response';
       }
       
+      // Player selected an action that requires target
       if (selectedAction) {
         return 'waiting_for_target';
       }
       
+      // Default states - active player or waiting player
       return game.currentTurn === playerId ? 'waiting_for_action' : 'waiting_for_turn';
     },
 
-    getResponseOptions: (playerId: number) => {
+    getResponseOptions: (playerId: number): ResponseOptions | null => {
       if (!game?.actionInProgress) return null;
 
       const { actionInProgress } = game;
@@ -74,7 +72,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             showChallenge: true,
             showAllow: true,
             blockText: '',
-            challengeText: `Challenge`,
+            challengeText: `Challenge ${blockingCard}`,
             allowText: 'Accept block'
           };
         }
@@ -91,14 +89,14 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         switch (actionType) {
           case 'foreign-aid':
             blockCards = ['Duke'];
-            blockText = 'Block';
+            blockText = 'Block with Duke';
             showBlock = true;
             showChallenge = false; // Foreign Aid can't be challenged
             break;
             
           case 'steal':
             blockCards = ['Captain', 'Ambassador'];
-            blockText = 'Block with Captain/Ambassador';
+            blockText = blockCards.length > 1 ? 'Block' : `Block with ${blockCards[0]}`;
             showBlock = isTarget; // Only target can block steal
             break;
             
@@ -109,28 +107,35 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             break;
             
           case 'duke':
+          case 'exchange':
             showBlock = false;
             break;
 
-
           case 'income':
+          case 'coup':
             showBlock = false;
+            showChallenge = false;
             break;
             
           default:
             showBlock = false;
         }
 
+        // Get the claimed role for the challenge text
+        const claimedRole = 
+          actionType === 'duke' ? 'Duke' : 
+          actionType === 'steal' ? 'Captain' : 
+          actionType === 'assassinate' ? 'Assassin' : 
+          actionType === 'exchange' ? 'Ambassador' : 
+          actionType;
+
         return {
           showBlock,
           showChallenge,
           showAllow: true,
           blockText,
-          challengeText: `Challenge ${actionType === 'duke' ? 'Duke' : 
-                          actionType === 'steal' ? 'Captain' : 
-                          actionType === 'assassinate' ? 'Assassin' : 
-                          actionType === 'exchange' ? 'Ambassador' : actionType}`,
-          allowText: 'Allow action',
+          challengeText: `Challenge ${claimedRole}`,
+          allowText: 'Allow',
           blockCards
         };
       }
@@ -141,7 +146,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
     shouldShowResponseButtons: (playerId: number): boolean => {
       if (!game?.actionInProgress) return false;
       
-      // Check if player is eliminated - eliminated players should never see response buttons
+      // Check if player is eliminated
       if (game.players[playerId]?.eliminated) return false;
       
       const { actionInProgress } = game;
@@ -150,8 +155,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       if (actionInProgress.responses[playerId]) return false;
       if (actionInProgress.losingPlayer === playerId) return false;
       
-      // IMPORTANT: Don't show response buttons during a challenge resolution
-      // This prevents UI confusion after a player loses a challenge
+      // Don't show response buttons during a challenge resolution
       if (actionInProgress.challengeInProgress) {
         return false;
       }
@@ -193,7 +197,10 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
     },
 
     isPlayerTargetable: (playerId: number, targetId: number): boolean => {
-      if (!selectedAction) return false;
+      if (!game || !selectedAction) return false;
+      
+      // Check if target player is eliminated
+      if (game.players[targetId]?.eliminated) return false;
       
       const targetableActions = ['steal', 'assassinate', 'coup'];
       return targetableActions.includes(selectedAction) && targetId !== playerId;

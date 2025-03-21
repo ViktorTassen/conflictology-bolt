@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
 import { CardType } from '../types';
 
 export const exchangeAction: ActionHandler = {
@@ -9,12 +9,9 @@ export const exchangeAction: ActionHandler = {
     }
 
     const result: ActionResult = {
-      logs: [{
-        type: 'exchange',
-        player: player.name,
-        playerColor: player.color,
-        timestamp: Date.now()
-      }],
+      logs: [createLog('exchange', player, {
+        message: `${player.name} initiated an exchange.`
+      })],
       actionInProgress: {
         type: 'exchange',
         player: playerId,
@@ -38,7 +35,7 @@ export const exchangeAction: ActionHandler = {
     const actionPlayer = game.players[game.actionInProgress.player];
     const result: ActionResult = {};
     
-    // Handle exchange selection specially
+    // Handle exchange selection
     if (response.type === 'exchange_selection' && response.selectedIndices) {
       // Make sure this is the player who initiated the exchange
       if (playerId !== game.actionInProgress.player) {
@@ -55,7 +52,7 @@ export const exchangeAction: ActionHandler = {
       const playerInfluence = updatedPlayers[playerId].influence;
       const exchangeCards = game.actionInProgress.exchangeCards;
       
-      // Get all available cards (active player cards + drawn cards)
+      // Get all available cards (player's non-revealed cards + drawn cards)
       const availableCards: { 
         card: CardType; 
         isPlayerCard: boolean;
@@ -105,50 +102,25 @@ export const exchangeAction: ActionHandler = {
       });
       
       // Add the returned cards to the deck and shuffle
-      // IMPORTANT: We need to actually update the game.deck, not just create a local variable
       const returnedDeck = [...game.deck, ...cardsToReturnToDeck];
-      // Simple shuffle - in a real implementation this would use a better shuffle algorithm
       returnedDeck.sort(() => Math.random() - 0.5);
       
-      // Make sure the deck is updated for all players - critical for game consistency
+      // Update the deck in the game
       game.deck = returnedDeck;
       
       // Log the exchange completion
-      result.logs = [{
-        type: 'exchange-complete',
-        player: player.name,
-        playerColor: player.color,
-        timestamp: Date.now(),
+      result.logs = [createLog('exchange-complete', player, {
         message: `${player.name} completed the exchange.`
-      }];
+      })];
       
-      // Add a clearer system message about returning cards to the deck
-      result.logs.push({
-        type: 'system',
-        player: 'System',
-        playerColor: '#9CA3AF',
-        timestamp: Date.now() + 1,
+      result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
         message: `${player.name} returned ${cardsToReturnToDeck.length} card${cardsToReturnToDeck.length !== 1 ? 's' : ''} to the deck.`
-      });
+      }));
       
       // Update the game state
       result.players = updatedPlayers;
-      
-      // Critical: Set the deck with returned cards
-      result.players[0] = {
-        ...result.players[0],
-        // In a real implementation, we would update the game.deck here
-      };
-      
-      // IMPORTANT: Clear the action in progress to reset UI state for all players
       result.actionInProgress = null;
-      
-      // Find next valid turn
-      let nextTurn = (game.currentTurn + 1) % game.players.length;
-      while (updatedPlayers[nextTurn].eliminated) {
-        nextTurn = (nextTurn + 1) % game.players.length;
-      }
-      result.currentTurn = nextTurn;
+      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
       
       return result;
     }
@@ -165,289 +137,99 @@ export const exchangeAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
-      const playerInfluence = updatedPlayers[playerId].influence;
       
-      if (response.card !== undefined) {
-        // Mark the card as revealed
-        playerInfluence[response.card].revealed = true;
-        
-        // Store the revealed card (we'll need this for the deck later if it's due to a successful challenge)
-        const revealedCard = playerInfluence[response.card].card;
-      }
+      // Apply influence loss
+      const lossResult = applyInfluenceLoss(
+        updatedPlayers[playerId], 
+        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
+        updatedPlayers
+      );
+      
+      result.logs = lossResult.logs;
 
-      // Check if player is eliminated
-      const remainingCards = playerInfluence.filter(card => !card.revealed).length;
-      if (remainingCards === 0) {
-        updatedPlayers[playerId].eliminated = true;
-        result.logs = [
-          {
-            type: 'lose-influence',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now()
-          },
-          {
-            type: 'eliminated',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now(),
-            message: `${player.name} has been eliminated!`
-          }
-        ];
-      } else {
-        result.logs = [{
-          type: 'lose-influence',
-          player: player.name,
-          playerColor: player.color,
-          timestamp: Date.now()
-        }];
-        
-        // Add an explanatory message - no replacement card because player lost influence
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 1,
-          message: `${player.name} loses influence.`
-        });
-      }
-
-      // If this was the challenger losing influence after a failed challenge to an exchange action
+      // If challenger lost influence (failed challenge)
       if (game.actionInProgress.losingPlayer === playerId && 
-          playerId !== game.actionInProgress.player && 
-          game.actionInProgress.challengeInProgress && 
-          game.actionInProgress.type === 'exchange') {
-          
-        // After challenger has lost influence, initiator proceeds with exchange
+          playerId !== game.actionInProgress.player) {
+        
+        // Set up for exchange phase
         // Draw 2 cards from the deck for exchange
         const updatedDeck = [...game.deck];
         
         if (updatedDeck.length < 2) {
-          // Not enough cards in deck, skip exchange
-          result.logs.push({
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now(),
+          // Not enough cards in deck
+          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `Not enough cards in the deck for exchange. Exchange canceled.`
-          });
+          }));
           
           result.players = updatedPlayers;
           result.actionInProgress = null;
-          
-          // Find next valid turn
-          let nextTurn = (game.currentTurn + 1) % game.players.length;
-          while (updatedPlayers[nextTurn].eliminated) {
-            nextTurn = (nextTurn + 1) % game.players.length;
-          }
-          result.currentTurn = nextTurn;
+          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
           
           return result;
         }
         
         // Draw 2 cards for exchange
-        const drawnCards = updatedDeck.splice(updatedDeck.length - 2, 2);
+        const drawnCards = updatedDeck.splice(0, 2);
         
-        // Setup for exchange selection
-        // Move to exchange_selection state where player will select cards to keep
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
+        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `${actionPlayer.name} will now exchange cards.`
-        });
+        }));
         
-        // Add a more detailed message for all players
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 1,
-          message: `Challenge resolved. ${actionPlayer.name} is selecting cards for the exchange.`
-        });
+        // Reset action state for exchange phase
+        const { losingPlayer, challengeInProgress, ...restActionProps } = game.actionInProgress;
         
-        // Add a targeted message just for the initiating player
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 2,
-          message: `[To ${actionPlayer.name}] Please select which cards you want to keep.`
-        });
-        
-        // Set up exchange state with clean UI state for all players
-        // Only include the necessary fields, not the ones that should be undefined
         result.actionInProgress = {
-          type: 'exchange',
-          player: game.actionInProgress.player,
-          responseDeadline: Date.now() + 10000,
-          responses: {}, // Clear all previous responses to reset UI
-          exchangeCards: drawnCards, // Set the drawn cards
-          resolved: false
-          // Omit losingPlayer and challengeInProgress to avoid Firebase errors
+          ...restActionProps,
+          exchangeCards: drawnCards,
+          responses: {} // Clear responses for exchange phase
         };
         
         result.players = updatedPlayers;
-        
-        // Update the deck
         game.deck = updatedDeck;
         
         return result;
       }
       
-      // If this was the Ambassador player losing influence (successful challenge)
-      if (playerId === game.actionInProgress.player) {
-        // No replacement card for successful challenge - they simply lose influence
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: `${player.name} was caught bluffing and loses influence.`
-        });
-      }
-      
-      // They don't get to do the exchange
+      // Action player lost influence (successful challenge)
+      // No exchange happens
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      
-      // Find next valid turn
-      let nextTurn = (game.currentTurn + 1) % game.players.length;
-      while (updatedPlayers[nextTurn].eliminated) {
-        nextTurn = (nextTurn + 1) % game.players.length;
-      }
-      result.currentTurn = nextTurn;
+      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
       
       return result;
     }
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasAmbassador = actionPlayer.influence.some(i => !i.revealed && i.card === 'Ambassador');
+      const hasAmbassador = verifyPlayerHasRole(actionPlayer, 'Ambassador');
 
       if (hasAmbassador) {
         // Challenge fails, challenger loses influence
-        // The action player needs to reveal their Ambassador
-        
-        // Find the Ambassador card index
-        const ambassadorCardIndex = actionPlayer.influence.findIndex(i => !i.revealed && i.card === 'Ambassador');
-        
-        if (ambassadorCardIndex !== -1) {
-          // Add appropriate logs
-          result.logs = [{
-            type: 'challenge-fail',
-            player: player.name,
-            playerColor: player.color,
-            target: actionPlayer.name,
-            targetColor: actionPlayer.color,
-            timestamp: Date.now()
-          }];
-  
-          // Add informative message for all players
-          result.logs.push({
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now() + 1,
-            message: `${player.name}'s challenge failed. ${actionPlayer.name} revealed their Ambassador, which will be shuffled back into the deck. ${player.name} must lose influence.`
-          });
-          
-          // Step 1: Add the revealed Ambassador back to the deck
-          const updatedPlayers = [...game.players];
-          const updatedDeck = [...game.deck, 'Ambassador'];
-          
-          // Step 2: Shuffle the deck
-          updatedDeck.sort(() => Math.random() - 0.5);
-          
-          // Step 3: Draw a replacement card for the revealed Ambassador
-          if (updatedDeck.length > 0) {
-            const newCard = updatedDeck.pop();
-            
-            // Step 4: Replace the Ambassador card with the new one
-            updatedPlayers[game.actionInProgress.player].influence[ambassadorCardIndex].card = newCard;
-            
-            result.logs.push({
-              type: 'system',
-              player: 'System',
-              playerColor: '#9CA3AF',
-              timestamp: Date.now() + 2,
-              message: `${actionPlayer.name} showed Ambassador and returned it to the deck, drawing a replacement card.`
-            });
-          } else {
-            result.logs.push({
-              type: 'system',
-              player: 'System',
-              playerColor: '#9CA3AF',
-              timestamp: Date.now() + 2,
-              message: `The deck is empty. ${actionPlayer.name} could not draw a replacement card.`
-            });
-          }
-          
-          // Update the deck in the game
-          game.deck = updatedDeck;
-          result.players = updatedPlayers;
-        } else {
-          // This should never happen since we checked hasAmbassador already
-          result.logs = [{
-            type: 'challenge-fail',
-            player: player.name,
-            playerColor: player.color,
-            target: actionPlayer.name,
-            targetColor: actionPlayer.color,
-            timestamp: Date.now()
-          }];
-  
-          result.logs.push({
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now() + 1,
-            message: `${player.name}'s challenge failed. ${player.name} must lose influence, then ${actionPlayer.name} will proceed with exchange.`
-          });
-        }
-        
-        // When a challenge fails, we need to clear all responses from other players
-        // to prevent UI elements from showing incorrectly
-        const challengeResponses = {};
-        challengeResponses[playerId] = { type: 'challenge' };
+        result.logs = [createLog('challenge-fail', player, {
+          target: actionPlayer.name,
+          targetColor: actionPlayer.color,
+          message: `${player.name} challenged ${actionPlayer.name}'s Ambassador claim and failed.`
+        })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
-          responses: challengeResponses,  // Only keep the challenger's response
-          // Clear any other responses to avoid UI confusion
-          challengeInProgress: true  // Flag to indicate we're in a challenge resolution
+          challengeInProgress: true,
+          responses: updatedResponses
         };
       } else {
         // Challenge succeeds, Ambassador player loses influence
-        result.logs = [{
-          type: 'challenge-success',
-          player: player.name,
-          playerColor: player.color,
+        result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          timestamp: Date.now()
-        }];
-
-        // Add informative message for all players
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 1,
-          message: `${player.name}'s challenge succeeded. ${actionPlayer.name} must lose influence.`
-        });
-
-        // Clear all other responses to prevent UI confusion
-        const challengeResponses = {};
-        challengeResponses[playerId] = { type: 'challenge' };
+          message: `${player.name} challenged ${actionPlayer.name}'s Ambassador claim and succeeded.`
+        })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.player,
-          responses: challengeResponses,  // Only keep the challenger's response
-          challengeInProgress: true  // Flag to indicate we're in a challenge resolution
+          challengeInProgress: true,
+          responses: updatedResponses
         };
       }
 
@@ -465,13 +247,12 @@ export const exchangeAction: ActionHandler = {
       const otherPlayers = game.players.filter((p, index) => 
         index !== game.actionInProgress!.player && !p.eliminated
       );
-      const allResponded = otherPlayers.every((p, index) => {
-        // Convert from player index to ID for responses object
-        const playerId = p.id - 1;
-        return updatedResponses[playerId] && updatedResponses[playerId].type === 'allow';
-      });
+      
+      const allResponded = otherPlayers.every(p => 
+        updatedResponses[p.id - 1] !== undefined
+      );
 
-      if (allResponded) {
+      if (allResponded && Object.values(updatedResponses).every(r => r.type === 'allow')) {
         // All players allowed - process exchange action
         const updatedPlayers = [...game.players];
         const updatedDeck = [...game.deck];
@@ -479,86 +260,36 @@ export const exchangeAction: ActionHandler = {
         // Draw 2 cards from the deck
         if (updatedDeck.length < 2) {
           // Not enough cards, skip exchange
-          result.logs = [{
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now(),
+          result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `Not enough cards in the deck for exchange. Exchange canceled.`
-          }];
+          })];
           
           result.actionInProgress = null;
-          
-          // Find next valid turn
-          let nextTurn = (game.currentTurn + 1) % game.players.length;
-          while (updatedPlayers[nextTurn].eliminated) {
-            nextTurn = (nextTurn + 1) % game.players.length;
-          }
-          result.currentTurn = nextTurn;
+          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
           
           return result;
         }
         
         // Draw 2 cards for the exchange
-        const drawnCards = updatedDeck.splice(updatedDeck.length - 2, 2);
+        const drawnCards = updatedDeck.splice(0, 2);
         
-        // Set up the exchange state
-        result.logs = [{
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
+        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `${actionPlayer.name} will now exchange cards.`
-        }];
+        })];
         
-        // Add a more detailed message for other players to see
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 1, // ensure it appears after the previous message
+        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `All players have allowed the exchange. Waiting for ${actionPlayer.name} to select cards.`
-        });
+        }));
         
-        // Add a targeted message just for the initiating player
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now() + 2,
-          message: `[To ${actionPlayer.name}] Please select which cards you want to keep.`
-        });
-        
-        // Store the drawn cards in the action state for the UI
-        // Add an exchange_selection flag to clearly indicate we're in the exchange phase
+        // Set up for exchange phase
         result.actionInProgress = {
           ...game.actionInProgress,
           exchangeCards: drawnCards,
-          responses: {}, // Clear all previous responses to reset UI state for all players
-          type: 'exchange', // Keep the action type consistent
-          player: game.actionInProgress.player, // Keep the original initiating player, not the responder
-          resolved: false
+          responses: {} // Clear responses for exchange phase
         };
         
         result.players = updatedPlayers;
-        
-        // Update the deck
-        const updatedDeckInResult = [...game.deck];
-        updatedDeckInResult.splice(updatedDeckInResult.length - 2, 2);
-        
-        // Apply this update to result
-        if (!result.players) {
-          result.players = [...game.players];
-        }
-        
-        // Make sure the deck is updated
-        result.players[0] = {
-          ...result.players[0],
-          // This is a trick to update the game state - in a real implementation
-          // we would have a proper deck field in Game
-        }
-        
-        return result;
+        game.deck = updatedDeck;
       }
 
       return result;

@@ -11,7 +11,7 @@ export interface Player {
   color: string;
   avatar: string;
   influence: Influence[];
-  eliminated?: boolean; // New field to track elimination status
+  eliminated?: boolean;
 }
 
 // Game state types
@@ -46,7 +46,19 @@ export interface GameAction {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   cost?: number;
-  target?: number; // Added target property for targeted actions
+  target?: number;
+  requiresTarget?: boolean;
+}
+
+// Response option types
+export interface ResponseOptions {
+  showBlock: boolean;
+  showChallenge: boolean;
+  showAllow: boolean;
+  blockText: string;
+  challengeText: string;
+  allowText: string;
+  blockCards?: CardType[];
 }
 
 // Log types
@@ -60,7 +72,7 @@ export type LogType =
   | 'allow'
   | 'exchange-complete'
   | 'system'
-  | 'eliminated'; // New log type for elimination
+  | 'eliminated';
 
 export interface GameLogEntry {
   type: LogType;
@@ -92,11 +104,12 @@ export interface Game {
     blockingCard?: CardType;
     losingPlayer?: number;
     challengeDefense?: boolean;
-    challengeInProgress?: boolean; // Flag to indicate challenge resolution in progress
-    exchangeCards?: CardType[]; // Cards drawn for exchange
+    challengeInProgress?: boolean;
+    exchangeCards?: CardType[];
     responses: Record<number, { 
       type: ResponseType;
       card?: CardType;
+      selectedIndices?: number[];
     }>;
     resolved: boolean;
   } | null;

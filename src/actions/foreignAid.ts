@@ -1,5 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult } from './types';
-import { CardType } from '../types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing } from './types';
 
 export const foreignAidAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -9,12 +8,7 @@ export const foreignAidAction: ActionHandler = {
     }
 
     const result: ActionResult = {
-      logs: [{
-        type: 'foreign-aid',
-        player: player.name,
-        playerColor: player.color,
-        timestamp: Date.now()
-      }],
+      logs: [createLog('foreign-aid', player)],
       actionInProgress: {
         type: 'foreign-aid',
         player: playerId,
@@ -50,84 +44,55 @@ export const foreignAidAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
-      const playerInfluence = updatedPlayers[playerId].influence;
       
-      if (response.card !== undefined) {
-        playerInfluence[response.card].revealed = true;
+      // Find card index if a specific card was chosen
+      let cardIndex = undefined;
+      if (response.card) {
+        cardIndex = updatedPlayers[playerId].influence.findIndex(
+          i => !i.revealed && i.card === response.card
+        );
+        // If card not found or already revealed, default to first hidden card
+        if (cardIndex === -1) {
+          cardIndex = undefined; // Let applyInfluenceLoss find the first hidden card
+        }
       }
-
-      // Check if player is eliminated
-      const remainingCards = playerInfluence.filter(card => !card.revealed).length;
-      if (remainingCards === 0) {
-        updatedPlayers[playerId].eliminated = true;
-        result.logs = [
-          {
-            type: 'lose-influence',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now()
-          },
-          {
-            type: 'eliminated',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now(),
-            message: `${player.name} has been eliminated!`
-          }
-        ];
-      } else {
-        result.logs = [{
-          type: 'lose-influence',
-          player: player.name,
-          playerColor: player.color,
-          timestamp: Date.now()
-        }];
-      }
+      
+      // Apply influence loss
+      const lossResult = applyInfluenceLoss(
+        updatedPlayers[playerId], 
+        cardIndex,
+        updatedPlayers
+      );
+      
+      result.logs = lossResult.logs;
 
       // If this was the blocking player losing influence after a failed block
       if (game.actionInProgress.blockingPlayer === playerId) {
         // Original player gets Foreign Aid
         updatedPlayers[game.actionInProgress.player].coins += 2;
-        result.logs.push({
-          type: 'foreign-aid',
-          player: actionPlayer.name,
-          playerColor: actionPlayer.color,
+        result.logs.push(createLog('foreign-aid', actionPlayer, {
           coins: 2,
-          timestamp: Date.now(),
           message: `With the block failed, ${actionPlayer.name} takes foreign aid (+2 coins).`
-        });
+        }));
       }
 
       result.players = updatedPlayers;
       result.actionInProgress = null;
-
-      // Find next valid turn (skip eliminated players)
-      let nextTurn = (game.currentTurn + 1) % game.players.length;
-      while (updatedPlayers[nextTurn].eliminated) {
-        nextTurn = (nextTurn + 1) % game.players.length;
-      }
-      result.currentTurn = nextTurn;
+      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
 
       return result;
     }
 
     // Handle block with Duke
     if (response.type === 'block' && response.card === 'Duke') {
-      result.logs = [{
-        type: 'block',
-        player: player.name,
-        playerColor: player.color,
+      result.logs = [createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Duke',
-        timestamp: Date.now(),
         message: `${player.name} blocked Foreign Aid with Duke.`
-      }];
+      })];
 
       // Clear previous responses when a block occurs
-      // Critical for proper Foreign Aid handling - everyone needs to respond to the block
-      const clearResponses = {};
-      
       result.actionInProgress = {
         ...game.actionInProgress,
         blockingPlayer: playerId,
@@ -150,35 +115,23 @@ export const foreignAidAction: ActionHandler = {
       if (game.actionInProgress.blockingPlayer !== undefined) {
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
         
-        // IMPORTANT: If the original player accepts the block, it resolves immediately
-        // This is a key rule for Foreign Aid in the core implementation
+        // If the original player accepts the block, it resolves immediately
         if (playerId === game.actionInProgress.player) {
-          result.logs = [{
-            type: 'allow',
-            player: player.name,
-            playerColor: player.color,
+          result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            timestamp: Date.now(),
             message: `${player.name} accepted the block.`
-          }];
+          })];
           
-          result.logs.push({
-            type: 'system',
-            player: 'System',
-            playerColor: '#9CA3AF',
-            timestamp: Date.now(),
+          result.logs.push(createLog('system', {
+            name: 'System',
+            color: '#9CA3AF'
+          } as any, {
             message: `The block succeeded and the Foreign Aid action failed.`
-          });
+          }));
 
           result.actionInProgress = null;
-          
-          // Find next valid turn (skip eliminated players)
-          let nextTurn = (game.currentTurn + 1) % game.players.length;
-          while (game.players[nextTurn].eliminated) {
-            nextTurn = (nextTurn + 1) % game.players.length;
-          }
-          result.currentTurn = nextTurn;
+          result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
           
           return result;
         }
@@ -197,7 +150,6 @@ export const foreignAidAction: ActionHandler = {
         
         // If all other players have responded, we're just waiting for the action player
         if (allOtherPlayersResponded) {
-          // All other players have responded, but we're still waiting for the action player
           // No state change needed yet
           return result;
         }
@@ -228,24 +180,14 @@ export const foreignAidAction: ActionHandler = {
           const updatedPlayers = [...game.players];
           updatedPlayers[game.actionInProgress.player].coins += 2;
   
-          result.logs = [{
-            type: 'foreign-aid',
-            player: actionPlayer.name,
-            playerColor: actionPlayer.color,
+          result.logs = [createLog('foreign-aid', actionPlayer, {
             coins: 2,
-            timestamp: Date.now(),
             message: `${actionPlayer.name} successfully took foreign aid (+2 coins).`
-          }];
+          })];
   
           result.players = updatedPlayers;
           result.actionInProgress = null;
-          
-          // Find next valid turn (skip eliminated players)
-          let nextTurn = (game.currentTurn + 1) % game.players.length;
-          while (updatedPlayers[nextTurn].eliminated) {
-            nextTurn = (nextTurn + 1) % game.players.length;
-          }
-          result.currentTurn = nextTurn;
+          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
         }
       }
 
@@ -254,19 +196,15 @@ export const foreignAidAction: ActionHandler = {
     // Handle challenge of a block
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
       const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-      const hasDuke = blockingPlayer.influence.some(i => !i.revealed && i.card === 'Duke');
+      const hasDuke = verifyPlayerHasRole(blockingPlayer, 'Duke');
 
       if (hasDuke) {
         // Challenge fails, challenger loses influence
-        result.logs = [{
-          type: 'challenge-fail',
-          player: player.name,
-          playerColor: player.color,
+        result.logs = [createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          timestamp: Date.now(),
           message: `${player.name} challenged ${blockingPlayer.name}'s Duke claim and failed.`
-        }];
+        })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
@@ -275,24 +213,19 @@ export const foreignAidAction: ActionHandler = {
         };
         
         // Add specific message for the Duke block being valid
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
+        result.logs.push(createLog('system', {
+          name: 'System',
+          color: '#9CA3AF'
+        } as any, {
           message: `${blockingPlayer.name} revealed Duke to prove the block. The Foreign Aid is blocked.`
-        });
+        }));
       } else {
         // Challenge succeeds, blocker loses influence
-        result.logs = [{
-          type: 'challenge-success',
-          player: player.name,
-          playerColor: player.color,
+        result.logs = [createLog('challenge-success', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          timestamp: Date.now(),
           message: `${player.name} challenged ${blockingPlayer.name}'s Duke claim and succeeded.`
-        }];
+        })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
@@ -301,13 +234,12 @@ export const foreignAidAction: ActionHandler = {
         };
         
         // Add specific message for the Duke block failing
-        result.logs.push({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
+        result.logs.push(createLog('system', {
+          name: 'System',
+          color: '#9CA3AF'
+        } as any, {
           message: `${blockingPlayer.name} revealed a card that is not Duke. The block fails.`
-        });
+        }));
       }
 
       return result;

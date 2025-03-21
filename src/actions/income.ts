@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResult } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer } from './types';
 
 export const incomeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -7,35 +7,23 @@ export const incomeAction: ActionHandler = {
       throw new Error('Eliminated players cannot perform actions');
     }
 
+    // Perform income action - add 1 coin to player
     const updatedPlayers = [...game.players];
-    updatedPlayers[playerId] = {
-      ...updatedPlayers[playerId],
-      coins: updatedPlayers[playerId].coins + 1
-    };
-
-    // Find next valid turn (skip eliminated players)
-    let nextTurn = (game.currentTurn + 1) % game.players.length;
-    while (updatedPlayers[nextTurn].eliminated) {
-      nextTurn = (nextTurn + 1) % game.players.length;
-    }
+    updatedPlayers[playerId].coins += 1;
 
     const result: ActionResult = {
       players: updatedPlayers,
-      logs: [{
-        type: 'income',
-        player: player.name,
-        playerColor: player.color,
-        timestamp: Date.now()
-      }],
-      currentTurn: nextTurn,
-      actionInProgress: null,
-      responses: {}
+      logs: [
+        createLog('income', player, { coins: 1 })
+      ],
+      currentTurn: advanceToNextLivingPlayer(updatedPlayers, game.currentTurn)
     };
 
     return result;
   },
-  respond: async () => {
-    // Income cannot be responded to
+
+  // Income has no response phase since it can't be blocked or challenged
+  respond: async ({ game, player, playerId }, response: ActionResponse) => {
     return {};
   }
 };

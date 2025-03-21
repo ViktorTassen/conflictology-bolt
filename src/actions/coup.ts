@@ -1,5 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult } from './types';
-import { CardType } from '../types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss } from './types';
 
 export const coupAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -17,26 +16,24 @@ export const coupAction: ActionHandler = {
     if (player.coins < 7) {
       throw new Error('Coup requires 7 coins');
     }
-
-    // Deduct the 7 coins cost and set up for target to lose influence
-    const updatedPlayers = [...game.players];
-    updatedPlayers[playerId] = {
-      ...updatedPlayers[playerId],
-      coins: updatedPlayers[playerId].coins - 7
-    };
-
+    
+    // Verify target player isn't eliminated
     const targetPlayer = game.players[game.actionInProgress.target];
+    if (targetPlayer.eliminated) {
+      throw new Error('Cannot target an eliminated player');
+    }
+
+    // Deduct the 7 coins cost
+    const updatedPlayers = [...game.players];
+    updatedPlayers[playerId].coins -= 7;
 
     const result: ActionResult = {
       players: updatedPlayers,
-      logs: [{
-        type: 'coup',
-        player: player.name,
-        playerColor: player.color,
+      logs: [createLog('coup', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        timestamp: Date.now()
-      }],
+        message: `${player.name} launches a coup against ${targetPlayer.name}.`
+      })],
       actionInProgress: {
         type: 'coup',
         player: playerId,
@@ -60,6 +57,7 @@ export const coupAction: ActionHandler = {
       throw new Error('Eliminated players cannot respond to actions');
     }
 
+    const actionPlayer = game.players[game.actionInProgress.player];
     const result: ActionResult = {};
 
     // Coup can only be responded to by losing influence
@@ -70,50 +68,26 @@ export const coupAction: ActionHandler = {
       }
 
       const updatedPlayers = [...game.players];
-      const playerInfluence = updatedPlayers[playerId].influence;
       
-      if (response.card !== undefined) {
-        playerInfluence[response.card].revealed = true;
-      }
-
-      // Check if player is eliminated
-      const remainingCards = playerInfluence.filter(card => !card.revealed).length;
-      if (remainingCards === 0) {
-        updatedPlayers[playerId].eliminated = true;
-        result.logs = [
-          {
-            type: 'lose-influence',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now()
-          },
-          {
-            type: 'eliminated',
-            player: player.name,
-            playerColor: player.color,
-            timestamp: Date.now(),
-            message: `${player.name} has been eliminated!`
-          }
-        ];
-      } else {
-        result.logs = [{
-          type: 'lose-influence',
-          player: player.name,
-          playerColor: player.color,
-          timestamp: Date.now()
-        }];
-      }
+      // Apply influence loss
+      const lossResult = applyInfluenceLoss(
+        updatedPlayers[playerId], 
+        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
+        updatedPlayers
+      );
+      
+      result.logs = lossResult.logs;
+      
+      result.logs.unshift(createLog('coup', actionPlayer, {
+        target: player.name,
+        targetColor: player.color,
+        message: `${actionPlayer.name}'s coup against ${player.name} succeeded.`
+      }));
 
       // Move to next player's turn
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      
-      // Find next valid turn
-      let nextTurn = (game.currentTurn + 1) % game.players.length;
-      while (updatedPlayers[nextTurn].eliminated) {
-        nextTurn = (nextTurn + 1) % game.players.length;
-      }
-      result.currentTurn = nextTurn;
+      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
     }
 
     return result;
