@@ -26,7 +26,7 @@ export function ResponseButtons({
   showAllow = true,
   blockText = "Block",
   challengeText = "Challenge",
-  allowText = "Allow action",
+  allowText = "Allow",
   blockCards = ['Duke']
 }: ResponseButtonsProps) {
   const [showBlockOptions, setShowBlockOptions] = useState(false);

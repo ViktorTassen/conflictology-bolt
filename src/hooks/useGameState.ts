@@ -74,7 +74,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             showChallenge: true,
             showAllow: true,
             blockText: '',
-            challengeText: `Challenge ${blockingCard}`,
+            challengeText: `Challenge`,
             allowText: 'Accept block'
           };
         }
@@ -91,7 +91,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         switch (actionType) {
           case 'foreign-aid':
             blockCards = ['Duke'];
-            blockText = 'Block with Duke';
+            blockText = 'Block';
             showBlock = true;
             showChallenge = false; // Foreign Aid can't be challenged
             break;
@@ -104,11 +104,15 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             
           case 'assassinate':
             blockCards = ['Contessa'];
-            blockText = 'Block with Contessa';
+            blockText = 'Block';
             showBlock = isTarget; // Only target can block assassination
             break;
             
           case 'duke':
+            showBlock = false;
+            break;
+
+
           case 'income':
             showBlock = false;
             break;
@@ -122,11 +126,8 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           showChallenge,
           showAllow: true,
           blockText,
-          challengeText: `Challenge ${actionType === 'duke' ? 'Duke' : 
-                          actionType === 'steal' ? 'Captain' : 
-                          actionType === 'assassinate' ? 'Assassin' : 
-                          actionType === 'exchange' ? 'Ambassador' : ''}`,
-          allowText: 'Allow action',
+          challengeText: "Challenge",
+          allowText: 'Allow',
           blockCards
         };
       }
