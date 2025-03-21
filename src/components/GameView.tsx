@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, ArrowLeft, Info, Skull } from 'lucide-react';
-import { Player, GameLogEntry, GameAction, GameState } from '../types';
+import { Player, GameLogEntry, GameAction, GameState, CardType } from '../types';
 import { GameLog } from './GameLog';
 import { PlayerCard } from './PlayerCard';
 import { EmptyPlayerCard } from './EmptyPlayerCard';
@@ -9,8 +9,10 @@ import { BottomPlayerInfo } from './BottomPlayerInfo';
 import { InfluenceCards } from './InfluenceCards';
 import { ResponseButtons } from './ResponseButtons';
 import { LoseInfluenceDialog } from './LoseInfluenceDialog';
+import { ExchangeCardsDialog } from './ExchangeCardsDialog';
 import { GameLobby } from './GameLobby';
 import { useGame } from '../hooks/useGame';
+import { useGameState } from '../hooks/useGameState';
 
 interface GameViewProps {
   gameId: string;
@@ -24,6 +26,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { game, performAction, respondToAction, startGame } = useGame(gameId);
+  const gameStateHelpers = useGameState(game, selectedAction?.type);
   
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -121,6 +124,43 @@ export function GameView({ gameId, playerId }: GameViewProps) {
       console.error('Failed to lose influence:', error);
     }
   };
+  
+  const handleExchangeCards = async (keptCardIndices: number[]) => {
+    if (!game || !game.actionInProgress || !game.actionInProgress.exchangeCards) {
+      console.error('Exchange attempted without proper game state');
+      return;
+    }
+    
+    // Make sure the action is properly set up for exchange
+    if (game.actionInProgress.type !== 'exchange' || game.actionInProgress.player !== (playerId - 1)) {
+      console.error('Exchange attempted by the wrong player or with wrong action type');
+      return;
+    }
+    
+    // Make sure the exchangeCards array is actually populated
+    if (!Array.isArray(game.actionInProgress.exchangeCards) || game.actionInProgress.exchangeCards.length === 0) {
+      console.error('Exchange attempted with no cards available');
+      return;
+    }
+    
+    // Validate that we have selected the correct number of cards
+    const activeCardCount = currentPlayer.influence.filter(card => !card.revealed).length;
+    if (keptCardIndices.length !== activeCardCount) {
+      console.error(`Wrong number of cards selected: got ${keptCardIndices.length}, expected ${activeCardCount}`);
+      return;
+    }
+    
+    try {
+      // Process the exchange
+      await respondToAction(playerId - 1, {
+        type: 'exchange_selection',
+        playerId: playerId - 1,
+        selectedIndices: keptCardIndices
+      });
+    } catch (error) {
+      console.error('Failed to exchange cards:', error);
+    }
+  };
 
   const isPlayerTargetable = (id: number) => {
     const targetPlayer = game.players[id];
@@ -131,102 +171,18 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   };
 
   const getGameState = (): GameState => {
-    if (currentPlayer.eliminated) {
-      return 'waiting_for_others';
-    }
-    
-    if (actionInProgress) {
-      if (actionInProgress.losingPlayer === (playerId - 1)) {
-        return 'waiting_for_influence_loss';
-      }
-      if (actionInProgress.player === (playerId - 1)) {
-        if (actionInProgress.blockingPlayer !== undefined) {
-          return 'waiting_for_response';
-        }
-        return 'waiting_for_others';
-      }
-      return 'waiting_for_response';
-    }
-    if (selectedAction) {
-      return 'waiting_for_target';
-    }
-    if (isCurrentTurn) {
-      return 'waiting_for_action';
-    }
-    return 'waiting_for_turn';
+    // Use the gameStateHelpers to get the game state
+    return gameStateHelpers.getGameState(playerId - 1);
   };
 
   const shouldShowResponseButtons = () => {
-    if (!actionInProgress || currentPlayer.eliminated) return false;
-    
-    if (actionInProgress.responses[playerId - 1]) return false;
-
-    if (actionInProgress.losingPlayer === (playerId - 1)) return false;
-
-    if (actionInProgress.blockingPlayer !== undefined) {
-      if (actionInProgress.player === (playerId - 1)) {
-        return true;
-      }
-      if (actionInProgress.blockingPlayer !== (playerId - 1)) {
-        return true;
-      }
-      return false;
-    }
-
-    return actionInProgress.player !== (playerId - 1);
+    // Use the gameStateHelpers to determine if response buttons should be shown
+    return gameStateHelpers.shouldShowResponseButtons(playerId - 1);
   };
 
   const getResponseButtons = () => {
-    if (!actionInProgress || currentPlayer.eliminated) return null;
-
-    if (actionInProgress.blockingPlayer !== undefined) {
-      if (actionInProgress.player === (playerId - 1)) {
-        return {
-          showBlock: false,
-          showChallenge: true,
-          showAllow: true,
-          blockText: '',
-          challengeText: 'Challenge',
-          allowText: 'Accept block'
-        };
-      }
-      if (actionInProgress.blockingPlayer !== (playerId - 1)) {
-        return {
-          showBlock: false,
-          showChallenge: true,
-          showAllow: true,
-          blockText: '',
-          challengeText: 'Challenge',
-          allowText: 'Accept block'
-        };
-      }
-    }
-
-    // For Duke action, only show Challenge and Allow options
-    if (actionInProgress.type === 'duke' && actionInProgress.player !== (playerId - 1)) {
-      return {
-        showBlock: false,
-        showChallenge: true,
-        showAllow: true,
-        blockText: '',
-        challengeText: 'Challenge',
-        allowText: 'Allow action'
-      };
-    }
-
-    // For other actions
-    if (actionInProgress.player !== (playerId - 1)) {
-      return {
-        showBlock: true,
-        showChallenge: false,
-        showAllow: true,
-        blockText: 'Block with Duke',
-        challengeText: '',
-        allowText: 'Allow action'
-      };
-    }
-
-    return null;
+    // Use the gameStateHelpers to get the response options
+    return gameStateHelpers.getResponseOptions(playerId - 1);
   };
 
   const allPlayerSpots = Array(6).fill(null).map((_, index) => {
@@ -307,7 +263,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           />
           {responseButtons && shouldShowResponseButtons() && (
             <ResponseButtons 
-              onBlock={() => handleResponse('block', 'Duke')}
+              onBlock={(card) => handleResponse('block', card)}
               onChallenge={() => handleResponse('challenge')}
               onAllow={() => handleResponse('allow')}
               visible={true}
@@ -317,6 +273,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
               blockText={responseButtons.blockText}
               challengeText={responseButtons.challengeText}
               allowText={responseButtons.allowText}
+              blockCards={responseButtons.blockCards}
             />
           )}
         </div>
@@ -423,6 +380,15 @@ export function GameView({ gameId, playerId }: GameViewProps) {
         <LoseInfluenceDialog
           influence={currentPlayer.influence}
           onCardSelect={handleLoseInfluence}
+        />
+      )}
+      
+      {gameState === 'waiting_for_exchange' && 
+        actionInProgress?.exchangeCards && ( // Fixed: Show dialog to the player in waiting_for_exchange state
+        <ExchangeCardsDialog
+          playerInfluence={currentPlayer.influence}
+          drawnCards={actionInProgress.exchangeCards}
+          onExchangeComplete={handleExchangeCards}
         />
       )}
     </div>

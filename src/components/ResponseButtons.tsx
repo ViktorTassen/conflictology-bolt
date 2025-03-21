@@ -1,8 +1,9 @@
-import React from 'react';
-import { ShieldAlert, Swords, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldAlert, Swords, Check, ChevronDown } from 'lucide-react';
+import { CardType } from '../types';
 
 interface ResponseButtonsProps {
-  onBlock?: () => void;
+  onBlock?: (card?: CardType) => void;
   onChallenge?: () => void;
   onAllow?: () => void;
   visible?: boolean;
@@ -12,6 +13,7 @@ interface ResponseButtonsProps {
   blockText?: string;
   challengeText?: string;
   allowText?: string;
+  blockCards?: CardType[];
 }
 
 export function ResponseButtons({ 
@@ -22,23 +24,58 @@ export function ResponseButtons({
   showBlock = true,
   showChallenge = false,
   showAllow = true,
-  blockText = "Block with Duke",
-  challengeText = "Challenge Duke",
-  allowText = "Allow action"
+  blockText = "Block",
+  challengeText = "Challenge",
+  allowText = "Allow action",
+  blockCards = ['Duke']
 }: ResponseButtonsProps) {
+  const [showBlockOptions, setShowBlockOptions] = useState(false);
+  
   if (!visible) return null;
+
+  const handleBlockClick = () => {
+    if (blockCards.length > 1 && onBlock) {
+      setShowBlockOptions(!showBlockOptions);
+    } else if (onBlock) {
+      onBlock(blockCards[0]);
+    }
+  };
+  
+  const handleBlockWithCard = (card: CardType) => {
+    if (onBlock) {
+      onBlock(card);
+      setShowBlockOptions(false);
+    }
+  };
 
   return (
     <div className="bg-[#2a2a2a]/80 backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden mt-2 animate-in fade-in slide-in-from-bottom-2">
-      <div className="p-2 flex justify-center gap-2">
+      <div className="p-2 flex justify-center gap-2 flex-wrap relative">
         {showBlock && (
-          <button
-            onClick={onBlock}
-            className="flex items-center gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <ShieldAlert className="w-4 h-4" />
-            <span className="text-sm font-medium">{blockText}</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={handleBlockClick}
+              className="flex items-center gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span className="text-sm font-medium">{blockText}</span>
+              {blockCards.length > 1 && <ChevronDown className="w-3 h-3 ml-1" />}
+            </button>
+            
+            {showBlockOptions && blockCards.length > 1 && (
+              <div className="absolute top-full left-0 mt-1 bg-[#1a1a1a] border border-gray-800 rounded-md shadow-lg z-10 min-w-full">
+                {blockCards.map(card => (
+                  <button
+                    key={card}
+                    onClick={() => handleBlockWithCard(card)}
+                    className="block w-full text-left px-3 py-1.5 hover:bg-gray-800 text-sm"
+                  >
+                    Block with {card}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         
         {showChallenge && (

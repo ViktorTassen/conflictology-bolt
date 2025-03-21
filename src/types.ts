@@ -38,7 +38,7 @@ export type ActionType =
   | 'exchange'
   | 'coup';
 
-export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence';
+export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence' | 'exchange_selection';
 
 export interface GameAction {
   type: ActionType;
@@ -91,6 +91,8 @@ export interface Game {
     blockingCard?: CardType;
     losingPlayer?: number;
     challengeDefense?: boolean;
+    challengeInProgress?: boolean; // Flag to indicate challenge resolution in progress
+    exchangeCards?: CardType[]; // Cards drawn for exchange
     responses: Record<number, { 
       type: ResponseType;
       card?: CardType;

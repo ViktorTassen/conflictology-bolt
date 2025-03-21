@@ -13,6 +13,7 @@ export interface ActionResponse {
   type: ResponseType;
   playerId: number;
   card?: CardType;
+  selectedIndices?: number[]; // For exchange_selection
 }
 
 export interface ActionResult {
