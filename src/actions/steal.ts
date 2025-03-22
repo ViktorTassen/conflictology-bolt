@@ -329,6 +329,40 @@ export const stealAction: ActionHandler = {
         return result;
       }
 
+      // Immediately resolve steal if the target player allows it
+      if (playerId === game.actionInProgress.target) {
+        // Target player has allowed - immediately complete steal without waiting for others
+        const updatedPlayers = [...game.players];
+        const targetId = game.actionInProgress.target ?? 0;
+        
+        // Calculate coins to steal (up to 2)
+        const stolenCoins = Math.min(updatedPlayers[targetId].coins, 2);
+        
+        // Transfer coins
+        updatedPlayers[targetId].coins -= stolenCoins;
+        updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
+
+        result.logs = [createLog('allow', player, {
+          target: actionPlayer.name,
+          targetColor: actionPlayer.color,
+          message: `${player.name} allowed the steal.`
+        })];
+
+        result.logs.push(createLog('steal', actionPlayer, {
+          target: targetPlayer.name,
+          targetColor: targetPlayer.color,
+          coins: stolenCoins,
+          message: `steals $${stolenCoins}M from`
+        }));
+
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+        
+        return result;
+      }
+
+      // For non-target players, just record their response
       // Check if all other non-eliminated players have allowed
       const otherPlayers = game.players.filter(p => 
         p.id !== game.actionInProgress!.player + 1 && 

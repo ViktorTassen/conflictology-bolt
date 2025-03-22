@@ -179,9 +179,17 @@ export const assassinateAction: ActionHandler = {
         
         // If the challenge to the Assassin claim failed, and it was from a third party
         // Reset game state to allow target to respond with block
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${targetPlayer.name} may now block with Contessa.`
-        }));
+        
+        // Only show the block message if we haven't already seen the target's Contessa
+        // Check if player has already revealed Contessa previously
+        const targetHasRevealedContessa = updatedPlayers[game.actionInProgress.target ?? 0].influence
+          .some(card => card.revealed && card.card === 'Contessa');
+        
+        if (!targetHasRevealedContessa) {
+          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+            message: `${targetPlayer.name} may now block with Contessa.`
+          }));
+        }
         
         // Remove losingPlayer field to reset action state
         const { losingPlayer, challengeDefense, challengeInProgress, ...restActionProps } = game.actionInProgress;
