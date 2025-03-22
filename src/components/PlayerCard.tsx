@@ -59,7 +59,7 @@ export function PlayerCard({
 
       {/* Player info card */}
       <div className={`
-        relative z-10 
+        relative z-20 
         bg-[#2a2a2a]/90 backdrop-blur-sm rounded-lg
         ${isActive ? 'ring-1 ring-yellow-500/50' : ''}
         ${isTargeted && !player.eliminated ? 'ring-2 ring-red-500' : ''}

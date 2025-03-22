@@ -356,7 +356,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
+         message: `steals $2M from`
         }));
 
         result.players = updatedPlayers;
@@ -404,7 +404,7 @@ export const stealAction: ActionHandler = {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
+            message: `steals $2M from`
           })];
 
           result.players = updatedPlayers;

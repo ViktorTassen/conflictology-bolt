@@ -250,18 +250,19 @@ export function GameView({ gameId, playerId }: GameViewProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between p-4 z-10 absolute inset-x-0 top-0">
-        <button 
-          className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-white/80" />
-        </button>
-        <button 
-          className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors"
-        >
-          <Info className="w-5 h-5 text-white/80" />
-        </button>
-      </div>
+      {/* Independent button - left side */}
+      <button 
+        className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors absolute left-4 top-4 z-20"
+      >
+        <ArrowLeft className="w-5 h-5 text-white/80" />
+      </button>
+      
+      {/* Independent button - right side */}
+      <button 
+        className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors absolute right-4 top-4 z-20"
+      >
+        <Info className="w-5 h-5 text-white/80" />
+      </button>
 
       <div className="flex-1 flex flex-col min-h-0 mt-6">
         <div className="h-72 relative">
