@@ -30,7 +30,7 @@ export const GameMessages = {
     foreignAid: 'claims Foreign Aid',
     steal: 'claims Captain to steal from',
     assassinate: 'pays $3M → assassinate',
-    exchange: 'claims Ambassador (swap cards)',
+    exchange: 'claims Ambassador to exchange',
     coup: 'pays $7M to Coup',
     coupWithExcess: 'has $10M! Must coup'
   },
@@ -41,10 +41,9 @@ export const GameMessages = {
     tax: 'collects Tax with Duke (+$3M)',
     foreignAidSuccess: 'receives Foreign Aid (+$2M)',
     steal: "steals $2M from",
-    exchangeComplete: 'swaps cards with deck',
+    exchangeComplete: 'completes the 2 cards exchange',
     foreignAidBlocked: 'Foreign Aid blocked! Gains 0M',
     stealBlocked: 'Steal blocked! Gains 0M',
-    coupSucceeds: 'Coup succeeds!',
     assassinationBlocked: 'Assassination blocked!',
     assassinationSucceeds: (targetName?: string) => targetName ?
       `assassinates ${targetName}` :

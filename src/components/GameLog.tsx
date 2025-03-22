@@ -107,7 +107,6 @@ const getLogMessage = (log: GameLogEntry): string | React.ReactNode => {
     case 'assassinate':
       return log.coins ? GameMessages.results.assassinationSucceeds(log.target) : GameMessages.claims.assassinate;
     case 'coup':
-      if (log.coins === 0) return GameMessages.results.coupSucceeds;
       return log.coins && log.coins >= 10 ? GameMessages.claims.coupWithExcess : GameMessages.claims.coup;
     case 'exchange':
       return GameMessages.claims.exchange;

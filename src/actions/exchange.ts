@@ -11,7 +11,7 @@ export const exchangeAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [createLog('exchange', player, {
-        message: `initiated an exchange.`
+        message: GameMessages.claims.exchange
       })],
       actionInProgress: {
         type: 'exchange',
@@ -121,7 +121,7 @@ export const exchangeAction: ActionHandler = {
       
       // Log the exchange completion
       result.logs = [createLog('exchange-complete', player, {
-        message: `${player.name} completed the exchange.`
+        message: GameMessages.results.exchangeComplete
       })];
       
       // Update the game state
