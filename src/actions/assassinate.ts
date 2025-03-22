@@ -216,7 +216,7 @@ export const assassinateAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Contessa',
-        message: `${player.name} blocked assassination with Contessa.`
+        message: `claim Contessa to block assassination`
       })];
 
       result.actionInProgress = {

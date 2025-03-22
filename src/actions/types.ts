@@ -167,8 +167,23 @@ export const replaceRevealedCard = (
     return { logs };
   }
   
-  // Add the card back to the deck
-  game.deck.push(revealedCardType);
+  // Count the occurrences of this card in the deck before adding
+  const cardCountInDeck = game.deck.filter(card => card === revealedCardType).length;
+  
+  // If we already have 3 cards of this type in the deck, don't add another
+  // This should never happen, but this ensures we never exceed 3 of each type
+  if (cardCountInDeck < 3) {
+    // Add the card back to the deck
+    game.deck.push(revealedCardType);
+  } else {
+    logs.push({
+      type: 'system',
+      player: 'System',
+      playerColor: '#9CA3AF',
+      timestamp: Date.now(),
+      message: `Warning: Did not return ${revealedCardType} to deck as max count (3) already reached`
+    });
+  }
   
   // Shuffle the deck (Fisher-Yates algorithm)
   for (let i = game.deck.length - 1; i > 0; i--) {

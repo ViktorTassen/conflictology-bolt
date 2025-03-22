@@ -23,9 +23,9 @@ const AVATARS = [
 ];
 
 const PLAYER_NAMES = [
-  'Commander',
-  'Captain',
-  'Admiral',
+  'Player',
+  'Player',
+  'Player',
 ];
 
 export function GameCreation({ onGameStart, playerId }: GameCreationProps) {

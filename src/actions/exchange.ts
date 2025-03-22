@@ -10,7 +10,7 @@ export const exchangeAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [createLog('exchange', player, {
-        message: `${player.name} initiated an exchange.`
+        message: `initiated an exchange.`
       })],
       actionInProgress: {
         type: 'exchange',
@@ -101,12 +101,22 @@ export const exchangeAction: ActionHandler = {
         }
       });
       
-      // Add the returned cards to the deck and shuffle
-      const returnedDeck = [...game.deck, ...cardsToReturnToDeck];
-      returnedDeck.sort(() => Math.random() - 0.5);
+      // Create a new deck ensuring we don't exceed 3 of each card type
+      const updatedDeck = [...game.deck];
+      cardsToReturnToDeck.forEach(card => {
+        // Count current occurrences of this card type in the deck
+        const cardCount = updatedDeck.filter(c => c === card).length;
+        // Only add if we haven't reached the limit of 3
+        if (cardCount < 3) {
+          updatedDeck.push(card);
+        }
+      });
+      
+      // Shuffle the updated deck
+      updatedDeck.sort(() => Math.random() - 0.5);
       
       // Update the deck in the game
-      game.deck = returnedDeck;
+      game.deck = updatedDeck;
       
       // Log the exchange completion
       result.logs = [createLog('exchange-complete', player, {

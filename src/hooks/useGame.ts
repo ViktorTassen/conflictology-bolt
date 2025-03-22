@@ -22,8 +22,16 @@ function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
+// Each card type should have exactly 3 copies in the deck
 function createDeck(): CardType[] {
-  return shuffleArray([...CARDS, ...CARDS, ...CARDS].flat());
+  // Create a deck with exactly 3 copies of each card type
+  const deck: CardType[] = [];
+  CARDS.forEach(card => {
+    for (let i = 0; i < 3; i++) {
+      deck.push(card);
+    }
+  });
+  return shuffleArray(deck);
 }
 
 // Helper to clean objects before sending to Firebase

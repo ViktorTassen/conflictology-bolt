@@ -65,7 +65,7 @@ export function ResponseButtons({
   };
 
   return (
-    <div className="backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden mt-4 animate-in fade-in slide-in-from-bottom-2 mb-6">
+    <div className="rounded-lg w-full overflow-hidden mt-4 animate-in fade-in slide-in-from-bottom-2 mb-6">
       <div className="flex justify-center gap-1 flex-wrap relative">
         {showBlock && (
           <div className="relative">

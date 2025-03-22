@@ -104,7 +104,7 @@ export const foreignAidAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Duke',
-        message: `claims to block Foreign Aid with Duke`
+        message: `claims Duke to block Foreign Aid`
       })];
 
       // Clear previous responses when a block occurs
@@ -142,7 +142,7 @@ export const foreignAidAction: ActionHandler = {
             name: 'System',
             color: '#9CA3AF'
           } as any, {
-            message: `The block succeeded and the Foreign Aid action failed.`
+            message: `Foreign Aid was blocked`
           }));
 
           result.actionInProgress = null;

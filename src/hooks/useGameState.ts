@@ -89,7 +89,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         switch (actionType) {
           case 'foreign-aid':
             blockCards = ['Duke'];
-            blockText = 'Block with Duke';
+            blockText = 'Block';
             showBlock = true;
             showChallenge = false; // Foreign Aid can't be challenged
             break;
