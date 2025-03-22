@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing, replaceRevealedCard } from './types';
 
 export const foreignAidAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -44,6 +44,7 @@ export const foreignAidAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
+      const updatedGame = {...game, players: updatedPlayers};
       
       // Find card index if a specific card was chosen
       let cardIndex = undefined;
@@ -65,6 +66,20 @@ export const foreignAidAction: ActionHandler = {
       );
       
       result.logs = lossResult.logs;
+      
+      // If a blocking player won a challenge and needs to replace their Duke card
+      if (game.actionInProgress.blockingPlayer !== undefined && 
+          playerId !== game.actionInProgress.blockingPlayer && 
+          game.actionInProgress.challengeDefense) {
+        
+        // If this was a challenger losing influence (failed challenge to Duke)
+        const replaceResult = replaceRevealedCard(
+          updatedPlayers[game.actionInProgress.blockingPlayer],
+          'Duke',
+          updatedGame
+        );
+        result.logs = result.logs.concat(replaceResult.logs);
+      }
 
       // If this was the blocking player losing influence after a failed block
       if (game.actionInProgress.blockingPlayer === playerId) {
@@ -120,7 +135,7 @@ export const foreignAidAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `${player.name} accepted the block.`
+            message: `accepted the block`
           })];
           
           result.logs.push(createLog('system', {
@@ -209,6 +224,8 @@ export const foreignAidAction: ActionHandler = {
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
+          challengeInProgress: true,
+          challengeDefense: true, // Flag to indicate the blocking player successfully defended and needs to replace their card
           responses: updatedResponses
         };
         
@@ -230,6 +247,7 @@ export const foreignAidAction: ActionHandler = {
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.blockingPlayer,
+          challengeInProgress: true,
           responses: updatedResponses
         };
         

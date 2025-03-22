@@ -103,7 +103,7 @@ export interface Game {
     blockingPlayer?: number;
     blockingCard?: CardType;
     losingPlayer?: number;
-    challengeDefense?: boolean;
+    challengeDefense?: boolean; // Indicates if a player successfully defended a challenge and should replace their card
     challengeInProgress?: boolean;
     exchangeCards?: CardType[];
     responses: Record<number, { 

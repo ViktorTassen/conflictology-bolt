@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 
 export const dukeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -10,7 +10,7 @@ export const dukeAction: ActionHandler = {
     // Create the initial action state
     const result: ActionResult = {
       logs: [createLog('duke', player, {
-        message: `$claims Duke to collect Tax.`
+        message: `claims Duke to collect Tax.`
       })],
       actionInProgress: {
         type: 'duke',
@@ -47,6 +47,7 @@ export const dukeAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
+      const updatedGame = {...game, players: updatedPlayers};
       
       // Apply influence loss
       const lossResult = applyInfluenceLoss(
@@ -66,6 +67,23 @@ export const dukeAction: ActionHandler = {
       } 
       // Challenger lost influence due to failed challenge
       else {
+        // If this was a failed challenge and action player needs to replace their revealed Duke
+        if (game.actionInProgress.challengeInProgress && game.actionInProgress.challengeDefense) {
+          const replaceResult = replaceRevealedCard(
+            updatedPlayers[game.actionInProgress.player],
+            'Duke',
+            updatedGame
+          );
+          result.logs = result.logs.concat(replaceResult.logs);
+          
+          // Update the deck in the game
+          result.actionInProgress = {
+            ...game.actionInProgress,
+            challengeInProgress: false,
+            challengeDefense: false
+          };
+        }
+        
         // Duke action succeeds - action player gains 3 coins
         updatedPlayers[game.actionInProgress.player].coins += 3;
         
@@ -87,7 +105,7 @@ export const dukeAction: ActionHandler = {
       const hasDuke = verifyPlayerHasRole(actionPlayer, 'Duke');
       
       if (hasDuke) {
-        // Challenge fails - challenger loses influence
+        // Challenge fails - challenger loses influence and action player will replace their card
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
@@ -99,6 +117,7 @@ export const dukeAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
+          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
           responses: updatedResponses
         };
       } else {
@@ -143,7 +162,7 @@ export const dukeAction: ActionHandler = {
         
         result.logs = [createLog('duke', actionPlayer, {
           coins: 3,
-          message: `collect $3M Tax with Duke.`
+          message: `collected $3M Tax with Duke`
         })];
         
         result.players = updatedPlayers;

@@ -263,7 +263,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0 mt-10">
+      <div className="flex-1 flex flex-col min-h-0 mt-6">
         <div className="h-72 relative">
           {allPlayerSpots.map(({ player, index }, displayIndex) => (
             <div
@@ -322,8 +322,8 @@ export function GameView({ gameId, playerId }: GameViewProps) {
                 <BottomPlayerInfo player={currentPlayer} />
               </div>
 
-              <div className="absolute left-1/2 bottom-12 transform -translate-x-1/2 z-10">
-                <InfluenceCards influence={currentPlayer.influence} />
+              <div className="absolute left-[58.333%] bottom-6 transform -translate-x-1/2 z-10">
+                <InfluenceCards influence={currentPlayer.influence} showFaceUp={true} />
               </div>
 
               <div className="z-20 relative">

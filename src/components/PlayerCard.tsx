@@ -1,6 +1,7 @@
 import React from 'react';
 import { DollarSign, Skull } from 'lucide-react';
 import { Player } from '../types';
+import backImage from '../assets/images/back.png';
 
 interface PlayerCardProps {
   player: Player;
@@ -108,7 +109,7 @@ export function PlayerCard({
             <div className="flex items-center gap-1 bg-black/20 rounded-full px-1.5 py-0.5 w-fit">
               <DollarSign className={`w-3 h-3 ${player.eliminated ? 'text-gray-500' : 'text-yellow-500'}`} />
               <span className={`text-[10px] font-bold ${player.eliminated ? 'text-gray-500' : 'text-yellow-500'}`}>
-                {player.coins}.0M
+                {player.coins}M
               </span>
             </div>
           </div>
@@ -117,21 +118,27 @@ export function PlayerCard({
 
       {/* Influence cards */}
       <div className="flex gap-0.5 -mt-2 justify-center">
-        {activeCards.map((_, index) => (
+        {activeCards.map((card, index) => (
           <div
             key={index}
             className={`
-              w-5 h-8 rounded 
-              bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] border-white/5
-              border shadow-sm
-              ${isTargeted && !player.eliminated ? 'border-red-500/30' : ''}
+              w-7 h-10 rounded 
+              overflow-hidden
+              ${isTargeted && !player.eliminated ? 'ring-1 ring-red-500/30' : ''}
               ${player.eliminated ? 'opacity-50' : ''}
               transition-colors duration-200
+              shadow-sm
             `}
             style={{
               transform: `translateY(${index * 2}px) rotate(${index * 5}deg)`,
             }}
-          />
+          >
+            <img 
+              src={backImage}
+              alt="Card back"
+              className="w-full h-full object-cover"
+            />
+          </div>
         ))}
       </div>
     </div>

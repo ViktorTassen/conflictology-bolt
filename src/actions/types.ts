@@ -141,3 +141,63 @@ export const applyInfluenceLoss = (
   
   return { logs, eliminated: false };
 };
+
+export const replaceRevealedCard = (
+  player: Player,
+  revealedCardType: CardType,
+  game: Game
+): {
+  logs: GameLogEntry[]
+} => {
+  const logs: GameLogEntry[] = [];
+  
+  // Find the index of the revealed card
+  const revealedCardIndex = player.influence.findIndex(
+    i => !i.revealed && i.card === revealedCardType
+  );
+  
+  if (revealedCardIndex === -1) {
+    logs.push({
+      type: 'system',
+      player: 'System',
+      playerColor: '#9CA3AF',
+      timestamp: Date.now(),
+      message: `Error: Could not find the revealed card in player's influence`
+    });
+    return { logs };
+  }
+  
+  // Add the card back to the deck
+  game.deck.push(revealedCardType);
+  
+  // Shuffle the deck (Fisher-Yates algorithm)
+  for (let i = game.deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+  }
+  
+  // Draw a new card for the player
+  if (game.deck.length === 0) {
+    logs.push({
+      type: 'system',
+      player: 'System',
+      playerColor: '#9CA3AF',
+      timestamp: Date.now(),
+      message: `Error: No cards left in the deck to draw`
+    });
+    return { logs };
+  }
+  
+  const newCard = game.deck.pop()!;
+  player.influence[revealedCardIndex].card = newCard;
+  
+  logs.push({
+    type: 'system',
+    player: player.name,
+    playerColor: player.color,
+    timestamp: Date.now(),
+    message: `${player.name} revealed ${revealedCardType}, returned it to the deck, and drew a new card.`
+  });
+  
+  return { logs };
+};

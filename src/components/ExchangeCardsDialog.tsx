@@ -2,6 +2,22 @@ import React, { useState } from 'react';
 import { CardType, Influence } from '../types';
 import { Shuffle } from 'lucide-react';
 
+// Import card images
+import ambassadorImg from '../assets/images/ambassador.png';
+import assassinImg from '../assets/images/assassin.png';
+import captainImg from '../assets/images/captain.png';
+import contessaImg from '../assets/images/contessa.png';
+import dukeImg from '../assets/images/duke.png';
+
+// Card image mapping
+const cardImages: Record<CardType, string> = {
+  'Ambassador': ambassadorImg,
+  'Assassin': assassinImg,
+  'Captain': captainImg,
+  'Contessa': contessaImg,
+  'Duke': dukeImg
+};
+
 interface ExchangeCardsDialogProps {
   playerInfluence: Influence[];
   drawnCards: CardType[];
@@ -111,11 +127,11 @@ export function ExchangeCardsDialog({
                           {/* Card */}
                           <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
                             <img
-                              src="https://images.unsplash.com/photo-1509460913899-515f1df34fea?w=200&q=80"
+                              src={cardImages[cardInfo.card]}
                               alt={cardInfo.card}
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
                               <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
                                 {cardInfo.card}
                               </div>
@@ -160,11 +176,11 @@ export function ExchangeCardsDialog({
                           {/* Card */}
                           <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
                             <img
-                              src="https://images.unsplash.com/photo-1509460913899-515f1df34fea?w=200&q=80"
+                              src={cardImages[cardInfo.card]}
                               alt={cardInfo.card}
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
                               <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
                                 {cardInfo.card}
                               </div>

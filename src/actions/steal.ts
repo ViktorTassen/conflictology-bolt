@@ -1,4 +1,4 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { CardType } from '../types';
 
 export const stealAction: ActionHandler = {
@@ -64,6 +64,7 @@ export const stealAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
+      const updatedGame = {...game, players: updatedPlayers};
       
       // Find card index if a specific card was chosen
       let cardIndex = undefined;
@@ -85,6 +86,40 @@ export const stealAction: ActionHandler = {
       );
       
       result.logs = lossResult.logs;
+      
+      // If the action player was challenged regarding Captain and won
+      if (playerId !== game.actionInProgress.player && 
+          game.actionInProgress.challengeInProgress && 
+          !game.actionInProgress.blockingPlayer &&
+          game.actionInProgress.player !== game.actionInProgress.losingPlayer &&
+          game.actionInProgress.challengeDefense) {
+        
+        // Replace the revealed Captain card
+        const replaceResult = replaceRevealedCard(
+          updatedPlayers[game.actionInProgress.player],
+          'Captain',
+          updatedGame
+        );
+        result.logs = result.logs.concat(replaceResult.logs);
+      }
+      
+      // If a blocking player was challenged regarding their blocking card and won
+      if (game.actionInProgress.blockingPlayer !== undefined && 
+          game.actionInProgress.challengeInProgress && 
+          game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
+          game.actionInProgress.challengeDefense) {
+        
+        // If this was the challenger losing influence (failed challenge to blocking card)
+        if (playerId === game.actionInProgress.losingPlayer) {
+          // Replace the revealed blocking card
+          const replaceResult = replaceRevealedCard(
+            updatedPlayers[game.actionInProgress.blockingPlayer],
+            game.actionInProgress.blockingCard as CardType,
+            updatedGame
+          );
+          result.logs = result.logs.concat(replaceResult.logs);
+        }
+      }
 
       // If this was the blocking player losing influence (failed block)
       if (game.actionInProgress.blockingPlayer === playerId) {
@@ -200,6 +235,7 @@ export const stealAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
+          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
           responses: updatedResponses
         };
       } else {
@@ -238,6 +274,7 @@ export const stealAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
+          challengeDefense: true, // Flag to indicate the blocking player successfully defended and needs to replace their card
           responses: updatedResponses
         };
       } else {

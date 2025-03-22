@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { CardType } from '../types';
 
 export const exchangeAction: ActionHandler = {
@@ -137,6 +137,7 @@ export const exchangeAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
+      const updatedGame = {...game, players: updatedPlayers};
       
       // Apply influence loss
       const lossResult = applyInfluenceLoss(
@@ -147,13 +148,23 @@ export const exchangeAction: ActionHandler = {
       
       result.logs = lossResult.logs;
 
-      // If challenger lost influence (failed challenge)
+      // If challenger lost influence (failed challenge) and action player should replace their card
       if (game.actionInProgress.losingPlayer === playerId && 
-          playerId !== game.actionInProgress.player) {
+          playerId !== game.actionInProgress.player &&
+          game.actionInProgress.challengeDefense) {
+        
+        // First, replace the Ambassador card that was revealed during challenge
+        const replaceResult = replaceRevealedCard(
+          updatedPlayers[game.actionInProgress.player],
+          'Ambassador',
+          updatedGame
+        );
+        result.logs = result.logs.concat(replaceResult.logs);
         
         // Set up for exchange phase
-        // Draw 2 cards from the deck for exchange
-        const updatedDeck = [...game.deck];
+        // Draw 2 cards from the deck for exchange - using the updated deck from replaceRevealedCard
+        // Make sure we're using the updated deck from updatedGame, which contains changes from replaceRevealedCard
+        const updatedDeck = [...updatedGame.deck]; 
         
         if (updatedDeck.length < 2) {
           // Not enough cards in deck
@@ -176,7 +187,7 @@ export const exchangeAction: ActionHandler = {
         }));
         
         // Reset action state for exchange phase
-        const { losingPlayer, challengeInProgress, ...restActionProps } = game.actionInProgress;
+        const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
         
         result.actionInProgress = {
           ...restActionProps,
@@ -184,7 +195,9 @@ export const exchangeAction: ActionHandler = {
           responses: {} // Clear responses for exchange phase
         };
         
+        // Use the updated game state with the replaced card and updated deck
         result.players = updatedPlayers;
+        // Update the game's deck
         game.deck = updatedDeck;
         
         return result;
@@ -215,6 +228,7 @@ export const exchangeAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
+          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
           responses: updatedResponses
         };
       } else {

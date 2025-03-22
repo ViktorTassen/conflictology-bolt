@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 
 export const assassinateAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -73,6 +73,7 @@ export const assassinateAction: ActionHandler = {
     // Handle losing influence after a challenge or as a result of assassination
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
+      const updatedGame = {...game, players: updatedPlayers};
       
       // Find card index if a specific card was chosen
       let cardIndex = undefined;
@@ -95,6 +96,38 @@ export const assassinateAction: ActionHandler = {
       
       result.logs = lossResult.logs;
 
+      // If the action player was challenged regarding Assassin and won
+      if (playerId !== game.actionInProgress.player && 
+          game.actionInProgress.challengeInProgress && 
+          !game.actionInProgress.blockingPlayer &&
+          game.actionInProgress.player !== game.actionInProgress.losingPlayer) {
+        
+        // Replace the revealed Assassin card
+        const replaceResult = replaceRevealedCard(
+          updatedPlayers[game.actionInProgress.player],
+          'Assassin',
+          updatedGame
+        );
+        result.logs = result.logs.concat(replaceResult.logs);
+      }
+      
+      // If a blocking player was challenged regarding Contessa and won
+      if (game.actionInProgress.blockingPlayer !== undefined && 
+          game.actionInProgress.challengeInProgress && 
+          game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer) {
+        
+        // If this was the challenger losing influence (failed challenge to Contessa)
+        if (playerId === game.actionInProgress.losingPlayer) {
+          // Replace the revealed Contessa card
+          const replaceResult = replaceRevealedCard(
+            updatedPlayers[game.actionInProgress.blockingPlayer],
+            'Contessa',
+            updatedGame
+          );
+          result.logs = result.logs.concat(replaceResult.logs);
+        }
+      }
+      
       // SPECIAL CASE: If target challenged the Assassin and lost
       const specialCase = playerId === game.actionInProgress.target && 
                          game.actionInProgress.challengeDefense === true;
@@ -255,6 +288,7 @@ export const assassinateAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
+          challengeDefense: true, // Add flag to indicate card should be replaced
           responses: updatedResponses
         };
       } else {
@@ -292,7 +326,7 @@ export const assassinateAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `${player.name} accepted the Contessa block.`
+            message: `accepted the Contessa block`
           })];
           
           result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
@@ -323,7 +357,7 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('allow', targetPlayer, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${targetPlayer.name} accepted the assassination.`
+          message: `accepted the assassination.`
         })];
       }
 
