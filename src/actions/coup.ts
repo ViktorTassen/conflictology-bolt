@@ -33,7 +33,7 @@ export const coupAction: ActionHandler = {
       logs: [createLog('coup', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.claims.coup(targetPlayer.name)
+        message: GameMessages.claims.coup
       })],
       actionInProgress: {
         type: 'coup',

@@ -24,7 +24,8 @@ export const stealAction: ActionHandler = {
     const result: ActionResult = {
       logs: [createLog('steal', player, {
         target: targetPlayer.name,
-        targetColor: targetPlayer.color
+        targetColor: targetPlayer.color,
+        message: GameMessages.claims.steal
       })],
       actionInProgress: {
         type: 'steal',
@@ -135,7 +136,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `Steal: → ${stolenCoins}M`
+          message: `steals $2M from`
         }));
       }
       // If this was the challenger losing influence (failed challenge)
@@ -171,7 +172,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `Steal: → ${stolenCoins}M`
+          message: `steals $2M from`
         }));
       }
       
@@ -203,7 +204,7 @@ export const stealAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: response.card,
-        message: `blocks with ${response.card}!`
+        message: `claims ${response.card} to block steal`
       })];
 
       // Set up the block in the game state

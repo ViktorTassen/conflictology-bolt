@@ -14,7 +14,6 @@ export const GameMessages = {
     playerEliminated: (name: string) => `${name} has been eliminated!`,
     noMoreCards: (name: string) => `${name} has no more cards to lose.`,
     stealBlocked: 'The steal was blocked.',
-    dukeRevealedSuccess: (name: string) => `${name} revealed Duke. Block succeeds.`,
     dukeBluffExposed: (name: string) => `${name} bluff! Block fails.`,
     assassinationBlocked: 'The assassination was blocked.',
     contessaBlock: (name: string) => `${name} may now block with Contessa.`,
@@ -29,7 +28,7 @@ export const GameMessages = {
   claims: {
     tax: 'claims Duke to collect Tax',
     foreignAid: 'claims Foreign Aid',
-    steal: 'claims Captain to steal $2M from',
+    steal: 'claims Captain to steal from',
     assassinate: 'pays $3M → assassinate',
     exchange: 'claims Ambassador (swap cards)',
     coup: 'pays $7M to Coup',
@@ -41,9 +40,7 @@ export const GameMessages = {
     income: 'takes Income (+$1M)',
     tax: 'collects Tax with Duke (+$3M)',
     foreignAidSuccess: 'receives Foreign Aid (+$2M)',
-    steal: (coins: number, targetName?: string) => targetName ? 
-      `steals $${coins}M from ${targetName}` : 
-      `Steal: → $${coins}M`,
+    steal: "steals $2M from",
     exchangeComplete: 'swaps cards with deck',
     foreignAidBlocked: 'Foreign Aid blocked! Gains 0M',
     stealBlocked: 'Steal blocked! Gains 0M',
@@ -56,11 +53,11 @@ export const GameMessages = {
 
   // Blocks
   blocks: {
-    generic: (card: string) => `blocks with ${card}`,
+    generic: (card: string) => `claims ${card} to block`,
     duke: 'blocks with Duke',
     dukeBlockForeignAid: 'blocks Foreign Aid with Duke',
-    captain: 'blocks with Captain',
-    ambassador: 'blocks with Ambassador',
+    captain: 'claims Captain to block steal',
+    ambassador: 'claims Ambassador to block steal',
     contessa: 'blocks with Contessa'
   },
 

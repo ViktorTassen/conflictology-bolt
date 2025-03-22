@@ -226,8 +226,8 @@ export const foreignAidAction: ActionHandler = {
           responses: updatedResponses
         };
         
-        // Add specific message for the Duke block being valid using createSystemLog
-        result.logs.push(createSystemLog(GameMessages.system.dukeRevealedSuccess(blockingPlayer.name)));
+        // // Add specific message for the Duke block being valid using createSystemLog
+        // result.logs.push(createSystemLog(GameMessages.system.dukeRevealedSuccess(blockingPlayer.name)));
       } else {
         // Challenge succeeds, blocker loses influence
         result.logs = [createLog('challenge-success', player, {

@@ -108,7 +108,7 @@ const getLogMessage = (log: GameLogEntry): string | React.ReactNode => {
       return log.coins ? GameMessages.results.assassinationSucceeds(log.target) : GameMessages.claims.assassinate;
     case 'coup':
       if (log.coins === 0) return GameMessages.results.coupSucceeds;
-      return log.coins && log.coins >= 10 ? GameMessages.claims.coupWithExcess : GameMessages.claims.coup(log.target);
+      return log.coins && log.coins >= 10 ? GameMessages.claims.coupWithExcess : GameMessages.claims.coup;
     case 'exchange':
       return GameMessages.claims.exchange;
     case 'exchange-complete':
@@ -229,8 +229,8 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
                 <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
                   {getLogMessage(log)}
                 </span>
-                {/* Only show target name for specific action types that need it */}
-                {log.target && log.type !== 'system' && ['assassinate', 'coup'].includes(log.type) && (
+                {/* Show target name for all action types that have targets */}
+                {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup'].includes(log.type) && (
                   <span 
                     className="font-semibold whitespace-nowrap" 
                     style={{ color: log.targetColor ?? '#FFFFFF' }}

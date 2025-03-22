@@ -35,7 +35,8 @@ export const assassinateAction: ActionHandler = {
       players: updatedPlayers,
       logs: [createLog('assassinate', player, {
         target: targetPlayer.name,
-        targetColor: targetPlayer.color
+        targetColor: targetPlayer.color,
+        message: GameMessages.claims.assassinate
       })],
       actionInProgress: {
         type: 'assassinate',

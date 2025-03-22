@@ -136,7 +136,7 @@ function generateStandardMessage(type: GameLogEntry['type'], options: LogMessage
       if (!options.result) {
         return GameMessages.claims.steal;
       } else if (options.result === 'success' && options.coins !== undefined) {
-        return GameMessages.results.steal(options.coins);
+        return GameMessages.results.steal(options.coins, options.target);
       } else if (options.result === 'blocked') {
         return GameMessages.results.stealBlocked;
       }
@@ -148,7 +148,7 @@ function generateStandardMessage(type: GameLogEntry['type'], options: LogMessage
       } else if (options.result === 'blocked') {
         return GameMessages.results.assassinationBlocked;
       } else if (options.result === 'success') {
-        return GameMessages.results.assassinationSucceeds;
+        return GameMessages.results.assassinationSucceeds(options.target);
       }
       break;
       
