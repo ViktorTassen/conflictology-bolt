@@ -1,4 +1,5 @@
 import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { GameMessages } from '../messages';
 import { CardType } from '../types';
 
 export const exchangeAction: ActionHandler = {
@@ -122,10 +123,6 @@ export const exchangeAction: ActionHandler = {
       result.logs = [createLog('exchange-complete', player, {
         message: `${player.name} completed the exchange.`
       })];
-      
-      result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-        message: `${player.name} returned ${cardsToReturnToDeck.length} card${cardsToReturnToDeck.length !== 1 ? 's' : ''} to the deck.`
-      }));
       
       // Update the game state
       result.players = updatedPlayers;
@@ -281,29 +278,14 @@ export const exchangeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         const updatedDeck = [...game.deck];
         
-        // Draw 2 cards from the deck
-        if (updatedDeck.length < 2) {
-          // Not enough cards, skip exchange
-          result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `Not enough cards in the deck for exchange. Exchange canceled.`
-          })];
-          
-          result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
-          
-          return result;
-        }
         
         // Draw 2 cards for the exchange
         const drawnCards = updatedDeck.splice(0, 2);
         
         result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${actionPlayer.name} will now exchange cards.`
+          message: `Exchange allowed. ${actionPlayer.name} selecting cards.`
         })];
         
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `All players have allowed the exchange. Waiting for ${actionPlayer.name} to select cards.`
-        }));
         
         // Set up for exchange phase
         result.actionInProgress = {

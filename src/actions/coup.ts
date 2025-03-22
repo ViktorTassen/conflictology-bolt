@@ -1,4 +1,5 @@
 import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss } from './types';
+import { GameMessages } from '../messages';
 
 export const coupAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -32,7 +33,7 @@ export const coupAction: ActionHandler = {
       logs: [createLog('coup', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: `${player.name} launches a coup against ${targetPlayer.name}.`
+        message: GameMessages.claims.coup(targetPlayer.name)
       })],
       actionInProgress: {
         type: 'coup',
@@ -78,10 +79,11 @@ export const coupAction: ActionHandler = {
       
       result.logs = lossResult.logs;
       
+      // Add a simple success message for the coup
       result.logs.unshift(createLog('coup', actionPlayer, {
         target: player.name,
         targetColor: player.color,
-        message: `${actionPlayer.name}'s coup against ${player.name} succeeded.`
+        message: GameMessages.results.coupSucceeds
       }));
 
       // Move to next player's turn

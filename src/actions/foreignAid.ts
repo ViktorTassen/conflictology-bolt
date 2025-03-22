@@ -1,4 +1,5 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing, replaceRevealedCard } from './types';
+import { GameMessages } from '../messages';
 
 export const foreignAidAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -85,9 +86,10 @@ export const foreignAidAction: ActionHandler = {
       if (game.actionInProgress.blockingPlayer === playerId) {
         // Original player gets Foreign Aid
         updatedPlayers[game.actionInProgress.player].coins += 2;
+        // Create a player-specific message showing who got the Foreign Aid
         result.logs.push(createLog('foreign-aid', actionPlayer, {
-          coins: 2,
-          message: `With the block failed, ${actionPlayer.name} takes foreign aid (+2 coins).`
+          coins: 2, 
+          message: GameMessages.results.foreignAidSuccess
         }));
       }
 
@@ -104,7 +106,7 @@ export const foreignAidAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Duke',
-        message: `claims Duke to block Foreign Aid`
+        message: GameMessages.blocks.dukeBlockForeignAid
       })];
 
       // Clear previous responses when a block occurs
@@ -135,15 +137,9 @@ export const foreignAidAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `accepted the block`
+            message: GameMessages.responses.allowBlock
           })];
           
-          result.logs.push(createLog('system', {
-            name: 'System',
-            color: '#9CA3AF'
-          } as any, {
-            message: `Foreign Aid was blocked`
-          }));
 
           result.actionInProgress = null;
           result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
@@ -197,7 +193,7 @@ export const foreignAidAction: ActionHandler = {
   
           result.logs = [createLog('foreign-aid', actionPlayer, {
             coins: 2,
-            message: `took Foreign Aid +2M`
+            message: GameMessages.results.foreignAidSuccess
           })];
   
           result.players = updatedPlayers;
@@ -218,7 +214,8 @@ export const foreignAidAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `challenged Duke and failed.`
+          card: 'Duke',
+          message: GameMessages.challenges.failDuke
         })];
 
         result.actionInProgress = {
@@ -229,19 +226,15 @@ export const foreignAidAction: ActionHandler = {
           responses: updatedResponses
         };
         
-        // Add specific message for the Duke block being valid
-        result.logs.push(createLog('system', {
-          name: 'System',
-          color: '#9CA3AF'
-        } as any, {
-          message: `${blockingPlayer.name} revealed Duke to prove the block. The Foreign Aid is blocked.`
-        }));
+        // Add specific message for the Duke block being valid using createSystemLog
+        result.logs.push(createSystemLog(GameMessages.system.dukeRevealedSuccess(blockingPlayer.name)));
       } else {
         // Challenge succeeds, blocker loses influence
         result.logs = [createLog('challenge-success', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `${player.name} challenged ${blockingPlayer.name}'s Duke claim and succeeded.`
+          card: 'Duke',
+          message: GameMessages.challenges.succeedDuke
         })];
 
         result.actionInProgress = {
@@ -251,13 +244,6 @@ export const foreignAidAction: ActionHandler = {
           responses: updatedResponses
         };
         
-        // Add specific message for the Duke block failing
-        result.logs.push(createLog('system', {
-          name: 'System',
-          color: '#9CA3AF'
-        } as any, {
-          message: `${blockingPlayer.name} revealed a card that is not Duke. The block fails.`
-        }));
       }
 
       return result;

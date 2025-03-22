@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameLogEntry, LogType, GameState } from '../types';
+import { GameMessages } from '../messages';
 import { DollarSign, Swords, ShieldAlert, Check, RefreshCcw, Skull, Clock, Crown, User } from 'lucide-react';
 
 interface GameLogProps {
@@ -46,19 +47,26 @@ const LogIcon = ({ type }: { type: LogType }) => {
 };
 
 const CardIcon = ({ card }: { card: string }) => {
-  const className = "w-2.5 h-2.5 inline-block mx-0.5";
+  const baseClass = "inline-block mx-0.5";
+  let className = "w-3 h-3";
+  let color = "";
   
   switch (card) {
     case 'Duke':
-      return <Crown className={className} />;
+      color = "text-blue-400";
+      return <Crown className={`${baseClass} ${className} ${color}`} />;
     case 'Assassin':
-      return <Skull className={className} />;
+      color = "text-black";
+      return <Skull className={`${baseClass} ${className} ${color}`} />;
     case 'Captain':
-      return <User className={className} />;
+      color = "text-green-400";
+      return <User className={`${baseClass} ${className} ${color}`} />;
     case 'Ambassador':
-      return <RefreshCcw className={className} />;
+      color = "text-emerald-400";
+      return <RefreshCcw className={`${baseClass} ${className} ${color}`} />;
     case 'Contessa':
-      return <ShieldAlert className={className} />;
+      color = "text-red-400";
+      return <ShieldAlert className={`${baseClass} ${className} ${color}`} />;
     default:
       return null;
   }
@@ -71,8 +79,7 @@ const formatMessage = (message: string, isSystem: boolean = false) => {
   return parts.map((part, index) => {
     if (['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'].includes(part)) {
       return (
-        <span key={index} className="inline-flex items-center font-medium">
-          <CardIcon card={part} />
+        <span key={index} className="font-bold">
           {part}
         </span>
       );
@@ -82,43 +89,58 @@ const formatMessage = (message: string, isSystem: boolean = false) => {
 };
 
 const getLogMessage = (log: GameLogEntry): string | React.ReactNode => {
-  if (log.type === 'system' && log.message) {
-    return formatMessage(log.message, true);
-  }
-
+  // Priority 1: Use formatted message if available
   if (log.message) {
-    return formatMessage(log.message);
+    return formatMessage(log.message, log.type === 'system');
   }
 
+  // Priority 2: Use message from GameMessages based on type
   switch (log.type) {
     case 'income':
-      return 'takes Income +$1M';
+      return GameMessages.results.income;
     case 'foreign-aid':
-      return log.coins ? 'takes Foreign Aid' : 'requests Foreign Aid';
-    case 'tax':
-      return log.coins ? 'collects tax' : 'claims Duke for tax';
+      return log.coins ? GameMessages.results.foreignAid : GameMessages.claims.foreignAid;
+    case 'duke': // Tax
+      return log.coins ? GameMessages.results.tax : GameMessages.claims.tax;
     case 'steal':
-      return log.coins ? `steals ${log.coins}0.M from` : 'claims Captain to steal from';
+      return log.coins ? GameMessages.results.steal(log.coins, log.target) : GameMessages.claims.steal;
     case 'assassinate':
-      return 'assassinates';
+      return log.coins ? GameMessages.results.assassinationSucceeds(log.target) : GameMessages.claims.assassinate;
     case 'coup':
-      return 'launches coup against';
+      if (log.coins === 0) return GameMessages.results.coupSucceeds;
+      return log.coins && log.coins >= 10 ? GameMessages.claims.coupWithExcess : GameMessages.claims.coup(log.target);
     case 'exchange':
-      return 'exchanges cards with the court';
+      return GameMessages.claims.exchange;
     case 'exchange-complete':
-      return 'completes exchange';
+      return GameMessages.results.exchangeComplete;
     case 'block':
-      return formatMessage(`blocks with ${log.card}`);
+      if (log.card === 'Duke') return formatMessage(GameMessages.blocks.duke);
+      if (log.card === 'Captain') return formatMessage(GameMessages.blocks.captain);
+      if (log.card === 'Ambassador') return formatMessage(GameMessages.blocks.ambassador);
+      if (log.card === 'Contessa') return formatMessage(GameMessages.blocks.contessa);
+      return formatMessage(GameMessages.blocks.generic(log.card || ''));
     case 'challenge':
-      return 'challenges';
+      return GameMessages.challenges.generic;
     case 'challenge-success':
-      return 'successfully challenges';
+      if (log.card === 'Duke') return formatMessage(GameMessages.challenges.succeedDuke);
+      if (log.card === 'Captain') return formatMessage(GameMessages.challenges.succeedCaptain);
+      if (log.card === 'Ambassador') return formatMessage(GameMessages.challenges.succeedAmbassador);
+      if (log.card === 'Contessa') return formatMessage(GameMessages.challenges.succeedContessa);
+      if (log.card) return formatMessage(GameMessages.challenges.challengeBlockSuccess(log.card));
+      return 'challenge succeeds';
     case 'challenge-fail':
-      return 'fails to challenge';
+      if (log.card === 'Duke') return formatMessage(GameMessages.challenges.failDuke);
+      if (log.card === 'Captain') return formatMessage(GameMessages.challenges.failCaptain);
+      if (log.card === 'Ambassador') return formatMessage(GameMessages.challenges.failAmbassador);
+      if (log.card === 'Contessa') return formatMessage(GameMessages.challenges.failContessa);
+      if (log.card) return formatMessage(GameMessages.challenges.challengeBlockFail(log.card));
+      return 'challenge fails';
     case 'lose-influence':
-      return 'loses influence';
+      return GameMessages.responses.loseInfluence;
     case 'allow':
-      return 'allows action';
+      return GameMessages.responses.allow;
+    case 'eliminated':
+      return GameMessages.responses.eliminated;
     default:
       return '';
   }
@@ -198,7 +220,7 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
               <div className="flex flex-wrap items-center gap-1 text-[11px] min-w-0 flex-1">
                 {log.type !== 'system' && (
                   <span 
-                    className="font-medium whitespace-nowrap" 
+                    className="font-semibold whitespace-nowrap" 
                     style={{ color: log.playerColor }}
                   >
                     {truncateName(log.player)}
@@ -207,10 +229,11 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
                 <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
                   {getLogMessage(log)}
                 </span>
-                {log.target && log.type !== 'system' && (
+                {/* Only show target name for specific action types that need it */}
+                {log.target && log.type !== 'system' && ['assassinate', 'coup'].includes(log.type) && (
                   <span 
-                    className="font-medium whitespace-nowrap" 
-                    style={{ color: log.targetColor }}
+                    className="font-semibold whitespace-nowrap" 
+                    style={{ color: log.targetColor ?? '#FFFFFF' }}
                   >
                     {truncateName(log.target)}
                   </span>

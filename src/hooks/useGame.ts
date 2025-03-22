@@ -9,6 +9,7 @@ import {
   getDoc,
   runTransaction
 } from 'firebase/firestore';
+import { GameMessages } from '../messages';
 import { nanoid } from 'nanoid';
 import { Game, Player, CARDS, CardType, GameAction } from '../types';
 import { actions, ActionResponse } from '../actions';
@@ -90,7 +91,7 @@ export function useGame(gameId?: string) {
           player: 'System',
           playerColor: '#9CA3AF',
           timestamp: Date.now(),
-          message: 'Game room created'
+          message: GameMessages.system.gameCreated
         }],
         status: 'waiting',
         actionInProgress: null,
@@ -156,7 +157,7 @@ export function useGame(gameId?: string) {
           player: 'System',
           playerColor: '#9CA3AF',
           timestamp: Date.now(),
-          message: `${player.name} joined the game`
+          message: GameMessages.system.playerJoined(player.name)
         })
       });
     } catch (err) {
@@ -177,7 +178,7 @@ export function useGame(gameId?: string) {
           player: 'System',
           playerColor: '#9CA3AF',
           timestamp: Date.now(),
-          message: 'Game started'
+          message: GameMessages.system.gameStarted
         })
       });
     } catch (err) {
@@ -242,9 +243,13 @@ export function useGame(gameId?: string) {
 
         if (result.logs) {
           result.logs.forEach(log => {
-            transaction.update(gameRef, {
-              logs: arrayUnion(log)
-            });
+            // Clean log object before using arrayUnion to prevent undefined values
+            const cleanedLog = cleanFirebaseObject(log);
+            if (cleanedLog) {
+              transaction.update(gameRef, {
+                logs: arrayUnion(cleanedLog)
+              });
+            }
           });
         }
 
@@ -302,9 +307,13 @@ export function useGame(gameId?: string) {
 
         if (result.logs) {
           result.logs.forEach(log => {
-            transaction.update(gameRef, {
-              logs: arrayUnion(log)
-            });
+            // Clean log object before using arrayUnion to prevent undefined values
+            const cleanedLog = cleanFirebaseObject(log);
+            if (cleanedLog) {
+              transaction.update(gameRef, {
+                logs: arrayUnion(cleanedLog)
+              });
+            }
           });
         }
 

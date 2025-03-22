@@ -1,4 +1,5 @@
 import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { GameMessages } from '../messages';
 
 export const dukeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -10,7 +11,7 @@ export const dukeAction: ActionHandler = {
     // Create the initial action state
     const result: ActionResult = {
       logs: [createLog('duke', player, {
-        message: `claims Duke to collect Tax.`
+        message: GameMessages.claims.tax
       })],
       actionInProgress: {
         type: 'duke',
@@ -89,7 +90,7 @@ export const dukeAction: ActionHandler = {
         
         result.logs.push(createLog('duke', actionPlayer, {
           coins: 3,
-          message: `${actionPlayer.name} successfully claimed Duke and took 3 coins.`
+          message: GameMessages.results.tax
         }));
         
         result.players = updatedPlayers;
@@ -110,7 +111,7 @@ export const dukeAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Duke',
-          message: `${player.name} challenged ${actionPlayer.name}'s Duke claim and failed.`
+          message: GameMessages.challenges.failDuke
         })];
         
         result.actionInProgress = {
@@ -125,7 +126,8 @@ export const dukeAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Duke claim and succeeded.`
+          card: 'Duke',
+          message: GameMessages.challenges.succeedDuke
         })];
         
         result.actionInProgress = {
@@ -162,7 +164,7 @@ export const dukeAction: ActionHandler = {
         
         result.logs = [createLog('duke', actionPlayer, {
           coins: 3,
-          message: `collected $3M Tax with Duke`
+          message: GameMessages.results.tax
         })];
         
         result.players = updatedPlayers;

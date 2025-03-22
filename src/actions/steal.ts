@@ -1,5 +1,6 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { CardType } from '../types';
+import { GameMessages } from '../messages';
 
 export const stealAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -134,7 +135,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $${stolenCoins}M from`
+          message: `Steal: → ${stolenCoins}M`
         }));
       }
       // If this was the challenger losing influence (failed challenge)
@@ -144,9 +145,8 @@ export const stealAction: ActionHandler = {
         // If this was a challenge to the Captain claim, and target hasn't blocked yet
         if (playerId !== game.actionInProgress.target) {
           // Reset game state to action_response to allow target to block
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${targetPlayer.name} may now block with Captain or Ambassador.`
-          }));
+          // Use the GameMessages for consistent system messages
+          result.logs.push(createSystemLog(GameMessages.system.blockingOptions(targetPlayer.name)));
           
           // Reset state by removing specific properties
           const { losingPlayer, challengeInProgress, ...restActionProps } = game.actionInProgress;
@@ -171,7 +171,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $${stolenCoins}M from`
+          message: `Steal: → ${stolenCoins}M`
         }));
       }
       
@@ -203,7 +203,7 @@ export const stealAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: response.card,
-        message: `${player.name} blocked stealing with ${response.card}.`
+        message: `blocks with ${response.card}!`
       })];
 
       // Set up the block in the game state
@@ -228,7 +228,8 @@ export const stealAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Captain claim and failed.`
+          card: 'Captain',
+          message: `challenges Captain claim! Fails`
         })];
 
         result.actionInProgress = {
@@ -243,7 +244,8 @@ export const stealAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Captain claim and succeeded.`
+          card: 'Captain',
+          message: `challenges Captain claim! Success`
         })];
 
         result.actionInProgress = {
@@ -267,7 +269,8 @@ export const stealAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `${player.name} challenged ${blockingPlayer.name}'s ${blockingCard} claim and failed.`
+          card: blockingCard,
+          message: `challenges ${blockingCard} block! Fails`
         })];
 
         result.actionInProgress = {
@@ -282,7 +285,8 @@ export const stealAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `${player.name} challenged ${blockingPlayer.name}'s ${blockingCard} claim and succeeded.`
+          card: blockingCard,
+          message: `challenges ${blockingCard} block! Success`
         })];
 
         result.actionInProgress = {
@@ -312,12 +316,11 @@ export const stealAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `${player.name} accepted the block.`
+            message: `allows block`
           })];
           
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `The steal was blocked.`
-          }));
+          // Use the GameMessages for consistent system messages
+          result.logs.push(createSystemLog(GameMessages.system.stealBlocked));
 
           result.actionInProgress = null;
           result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
@@ -345,14 +348,14 @@ export const stealAction: ActionHandler = {
         result.logs = [createLog('allow', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} allowed the steal.`
+          message: `allows steal`
         })];
 
         result.logs.push(createLog('steal', actionPlayer, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $${stolenCoins}M from`
+          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
         }));
 
         result.players = updatedPlayers;
@@ -400,7 +403,7 @@ export const stealAction: ActionHandler = {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: `steals $${stolenCoins}M from`
+            message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
           })];
 
           result.players = updatedPlayers;

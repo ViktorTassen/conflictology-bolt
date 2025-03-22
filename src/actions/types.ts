@@ -1,5 +1,6 @@
 import { Game, Player, GameLogEntry, CardType, ResponseType } from '../types';
 import { Firestore, Transaction } from 'firebase/firestore';
+import { GameMessages } from '../messages';
 
 export interface ActionContext {
   game: Game;
@@ -65,19 +66,147 @@ export const markPlayerAsLosing = (game: Game, playerId: number): ActionResult =
   };
 };
 
+export interface LogMessageOptions {
+  action?: string;
+  result?: 'success' | 'fail' | 'blocked';
+  coins?: number;
+  card?: CardType;
+  targetCard?: CardType;
+  isBluff?: boolean;
+  isChallenge?: boolean;
+  isBlock?: boolean;
+}
+
 export const createLog = (
   type: GameLogEntry['type'],
   player: Player,
-  data?: Partial<Omit<GameLogEntry, 'type' | 'player' | 'playerColor' | 'timestamp'>>
+  data?: Partial<Omit<GameLogEntry, 'type' | 'player' | 'playerColor' | 'timestamp'>> & LogMessageOptions
 ): GameLogEntry => {
+  // Format message according to standardized pattern
+  let formattedMessage = data?.message;
+  
+  if (!formattedMessage && data) {
+    formattedMessage = generateStandardMessage(type, data);
+  }
+  
   return {
     type,
     player: player.name,
     playerColor: player.color,
     timestamp: Date.now(),
-    ...data
+    ...data,
+    message: formattedMessage
   };
 };
+
+// Helper function to create system logs consistently
+export const createSystemLog = (message: string): GameLogEntry => {
+  return {
+    type: 'system',
+    player: 'System',
+    playerColor: '#9CA3AF',
+    timestamp: Date.now(),
+    message
+  };
+};
+
+// Helper function to generate standardized messages
+function generateStandardMessage(type: GameLogEntry['type'], options: LogMessageOptions): string | undefined {
+  // Standard message patterns based on the examples and messages file
+  switch (type) {
+    case 'duke': // Tax
+      if (options.isChallenge && options.result === 'success') {
+        return GameMessages.responses.taxBluffExposed;
+      } else if (!options.result) {
+        return GameMessages.claims.tax;
+      } else if (options.result === 'success') {
+        return GameMessages.results.tax;
+      }
+      break;
+      
+    case 'foreign-aid':
+      if (!options.result) {
+        return GameMessages.claims.foreignAid;
+      } else if (options.result === 'success') {
+        return GameMessages.results.foreignAid;
+      }
+      break;
+      
+    case 'steal':
+      if (!options.result) {
+        return GameMessages.claims.steal;
+      } else if (options.result === 'success' && options.coins !== undefined) {
+        return GameMessages.results.steal(options.coins);
+      } else if (options.result === 'blocked') {
+        return GameMessages.results.stealBlocked;
+      }
+      break;
+      
+    case 'assassinate':
+      if (!options.result) {
+        return GameMessages.claims.assassinate;
+      } else if (options.result === 'blocked') {
+        return GameMessages.results.assassinationBlocked;
+      } else if (options.result === 'success') {
+        return GameMessages.results.assassinationSucceeds;
+      }
+      break;
+      
+    case 'exchange':
+      if (!options.result) {
+        return GameMessages.claims.exchange;
+      } else if (options.result === 'success') {
+        return GameMessages.results.exchangeComplete;
+      } else if (options.isBluff) {
+        return GameMessages.responses.bluffExposed;
+      }
+      break;
+      
+    case 'coup':
+      if (options.coins && options.coins >= 10) {
+        return GameMessages.claims.coupWithExcess;
+      } else {
+        return GameMessages.claims.coup;
+      }
+      break;
+      
+    case 'block':
+      if (options.card) {
+        return GameMessages.blocks.generic(options.card);
+      }
+      break;
+      
+    case 'challenge':
+      return GameMessages.challenges.generic;
+      
+    case 'challenge-success':
+      if (options.card) {
+        return GameMessages.challenges.challengeBlockSuccess(options.card);
+      } else {
+        return 'challenge succeeds';
+      }
+      break;
+      
+    case 'challenge-fail':
+      if (options.card) {
+        return GameMessages.challenges.challengeBlockFail(options.card);
+      } else {
+        return 'challenge fails';
+      }
+      break;
+      
+    case 'eliminated':
+      return GameMessages.responses.eliminated;
+      
+    case 'lose-influence':
+      return GameMessages.responses.loseInfluence;
+      
+    case 'allow':
+      return GameMessages.responses.allow;
+  }
+  
+  return undefined;
+}
 
 export const applyInfluenceLoss = (
   player: Player, 
@@ -91,13 +220,7 @@ export const applyInfluenceLoss = (
   
   // Safety check - make sure player and influence exist
   if (!player || !player.influence || player.influence.length === 0) {
-    logs.push({
-      type: 'system',
-      player: 'System',
-      playerColor: '#9CA3AF',
-      timestamp: Date.now(),
-      message: 'Error: Could not find player influence cards'
-    });
+    logs.push(createSystemLog('Error: Could not find player influence cards'));
     return { logs, eliminated: false };
   }
   
@@ -112,13 +235,7 @@ export const applyInfluenceLoss = (
     } else {
       // No hidden cards found, player should already be eliminated
       player.eliminated = true;
-      logs.push({
-        type: 'system',
-        player: 'System',
-        playerColor: '#9CA3AF',
-        timestamp: Date.now(),
-        message: `${player.name} has no more cards to lose.`
-      });
+      logs.push(createSystemLog(`${player.name} has no more cards to lose.`));
       return { logs, eliminated: true };
     }
   }
@@ -157,33 +274,10 @@ export const replaceRevealedCard = (
   );
   
   if (revealedCardIndex === -1) {
-    logs.push({
-      type: 'system',
-      player: 'System',
-      playerColor: '#9CA3AF',
-      timestamp: Date.now(),
-      message: `Error: Could not find the revealed card in player's influence`
-    });
+    logs.push(createSystemLog(`Error: Could not find the revealed card in player's influence`));
     return { logs };
   }
   
-  // Count the occurrences of this card in the deck before adding
-  const cardCountInDeck = game.deck.filter(card => card === revealedCardType).length;
-  
-  // If we already have 3 cards of this type in the deck, don't add another
-  // This should never happen, but this ensures we never exceed 3 of each type
-  if (cardCountInDeck < 3) {
-    // Add the card back to the deck
-    game.deck.push(revealedCardType);
-  } else {
-    logs.push({
-      type: 'system',
-      player: 'System',
-      playerColor: '#9CA3AF',
-      timestamp: Date.now(),
-      message: `Warning: Did not return ${revealedCardType} to deck as max count (3) already reached`
-    });
-  }
   
   // Shuffle the deck (Fisher-Yates algorithm)
   for (let i = game.deck.length - 1; i > 0; i--) {
@@ -193,26 +287,13 @@ export const replaceRevealedCard = (
   
   // Draw a new card for the player
   if (game.deck.length === 0) {
-    logs.push({
-      type: 'system',
-      player: 'System',
-      playerColor: '#9CA3AF',
-      timestamp: Date.now(),
-      message: `Error: No cards left in the deck to draw`
-    });
+    logs.push(createSystemLog(`Error: No cards left in the deck to draw`));
     return { logs };
   }
   
   const newCard = game.deck.pop()!;
   player.influence[revealedCardIndex].card = newCard;
-  
-  logs.push({
-    type: 'system',
-    player: player.name,
-    playerColor: player.color,
-    timestamp: Date.now(),
-    message: `${player.name} revealed ${revealedCardType}, returned it to the deck, and drew a new card.`
-  });
+
   
   return { logs };
 };

@@ -1,4 +1,5 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { GameMessages } from '../messages';
 
 export const assassinateAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -142,9 +143,8 @@ export const assassinateAction: ActionHandler = {
         
         result.logs.push(...secondLoss.logs);
         if (secondLoss.logs.length > 0) {
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${player.name} loses a second influence for failing to challenge the Assassin.`
-          }));
+          // Use the GameMessages for consistent system messages
+          result.logs.push(createSystemLog(GameMessages.system.secondInfluenceLoss(player.name)));
         }
       }
 
@@ -155,9 +155,8 @@ export const assassinateAction: ActionHandler = {
         const targetId = game.actionInProgress.target ?? 0;
         
         if (!updatedPlayers[targetId].eliminated) {
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `With the Contessa block failed, ${targetPlayer.name} must now lose influence from the assassination.`
-          }));
+          // Use the GameMessages for consistent system messages
+          result.logs.push(createSystemLog(GameMessages.system.contessaBlockFailed(targetPlayer.name)));
           
           // Set up for target to lose influence next
           result.actionInProgress = {
@@ -186,9 +185,8 @@ export const assassinateAction: ActionHandler = {
           .some(card => card.revealed && card.card === 'Contessa');
         
         if (!targetHasRevealedContessa) {
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${targetPlayer.name} may now block with Contessa.`
-          }));
+          // Use the GameMessages for consistent system messages
+          result.logs.push(createSystemLog(GameMessages.system.contessaBlock(targetPlayer.name)));
         }
         
         // Remove losingPlayer field to reset action state
@@ -224,7 +222,7 @@ export const assassinateAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Contessa',
-        message: `claim Contessa to block assassination`
+        message: `claim Contessa to block Assassin`
       })];
 
       result.actionInProgress = {
@@ -248,7 +246,8 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Assassin claim and failed.`
+          card: 'Assassin',
+          message: `challenges Assassin claim! Fails`
         })];
 
         // SPECIAL CASE: If target challenged the Assassin and lost, flag for double influence loss
@@ -266,7 +265,8 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Assassin claim and succeeded.`
+          card: 'Assassin',
+          message: `challenges Assassin claim! Success`
         })];
 
         result.actionInProgress = {
@@ -289,7 +289,8 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `${player.name} challenged ${blockingPlayer.name}'s Contessa claim and failed.`
+          card: 'Contessa',
+          message: `challenges Contessa block! Fails`
         })];
 
         result.actionInProgress = {
@@ -304,7 +305,8 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `${player.name} challenged ${blockingPlayer.name}'s Contessa claim and succeeded.`
+          card: 'Contessa',
+          message: `challenges Contessa block! Success`
         })];
 
         result.actionInProgress = {
@@ -334,12 +336,11 @@ export const assassinateAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `accepted the Contessa block`
+            message: `allows Contessa block`
           })];
           
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `The assassination was blocked.`
-          }));
+          // Use the GameMessages for consistent system messages
+          result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
 
           result.actionInProgress = null;
           result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
@@ -365,7 +366,7 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('allow', targetPlayer, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `accepted the assassination.`
+          message: `allows assassination`
         })];
       }
 

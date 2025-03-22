@@ -1,4 +1,5 @@
 import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer } from './types';
+import { GameMessages } from '../messages';
 
 export const incomeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -14,7 +15,10 @@ export const incomeAction: ActionHandler = {
     const result: ActionResult = {
       players: updatedPlayers,
       logs: [
-        createLog('income', player, { coins: 1 })
+        createLog('income', player, { 
+          coins: 1,
+          message: GameMessages.results.income
+        })
       ],
       currentTurn: advanceToNextLivingPlayer(updatedPlayers, game.currentTurn)
     };
