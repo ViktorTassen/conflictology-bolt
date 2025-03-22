@@ -92,13 +92,13 @@ const getLogMessage = (log: GameLogEntry): string | React.ReactNode => {
 
   switch (log.type) {
     case 'income':
-      return 'takes income';
+      return 'takes Income +$1M';
     case 'foreign-aid':
       return log.coins ? 'takes Foreign Aid' : 'requests Foreign Aid';
     case 'tax':
       return log.coins ? 'collects tax' : 'claims Duke for tax';
     case 'steal':
-      return `steals ${log.coins}M from`;
+      return log.coins ? `steals ${log.coins}0.M from` : 'claims Captain to steal from';
     case 'assassinate':
       return 'assassinates';
     case 'coup':

@@ -89,7 +89,7 @@ export const foreignAidAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Duke',
-        message: `${player.name} blocked Foreign Aid with Duke.`
+        message: `claims to block Foreign Aid with Duke`
       })];
 
       // Clear previous responses when a block occurs
@@ -182,7 +182,7 @@ export const foreignAidAction: ActionHandler = {
   
           result.logs = [createLog('foreign-aid', actionPlayer, {
             coins: 2,
-            message: `${actionPlayer.name} successfully took foreign aid (+2 coins).`
+            message: `took Foreign Aid +2M`
           })];
   
           result.players = updatedPlayers;
@@ -203,7 +203,7 @@ export const foreignAidAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          message: `${player.name} challenged ${blockingPlayer.name}'s Duke claim and failed.`
+          message: `challenged Duke and failed.`
         })];
 
         result.actionInProgress = {

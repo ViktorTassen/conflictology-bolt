@@ -9,7 +9,9 @@ export const dukeAction: ActionHandler = {
 
     // Create the initial action state
     const result: ActionResult = {
-      logs: [createLog('duke', player)],
+      logs: [createLog('duke', player, {
+        message: `$claims Duke to collect Tax.`
+      })],
       actionInProgress: {
         type: 'duke',
         player: playerId,
@@ -141,7 +143,7 @@ export const dukeAction: ActionHandler = {
         
         result.logs = [createLog('duke', actionPlayer, {
           coins: 3,
-          message: `${actionPlayer.name} successfully took 3 coins with Duke.`
+          message: `collect $3M Tax with Duke.`
         })];
         
         result.players = updatedPlayers;

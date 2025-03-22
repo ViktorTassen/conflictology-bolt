@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole } from './types';
 import { CardType } from '../types';
 
 export const stealAction: ActionHandler = {
@@ -99,7 +99,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `${actionPlayer.name} steals ${stolenCoins} coins from ${targetPlayer.name}.`
+          message: `steals $${stolenCoins}M from`
         }));
       }
       // If this was the challenger losing influence (failed challenge)
@@ -136,7 +136,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `${actionPlayer.name} steals ${stolenCoins} coins from ${targetPlayer.name}.`
+          message: `steals $${stolenCoins}M from`
         }));
       }
       
@@ -329,7 +329,7 @@ export const stealAction: ActionHandler = {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: `${actionPlayer.name} steals ${stolenCoins} coins from ${targetPlayer.name}.`
+            message: `steals $${stolenCoins}M from`
           })];
 
           result.players = updatedPlayers;
