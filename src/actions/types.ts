@@ -268,17 +268,41 @@ export const replaceRevealedCard = (
 } => {
   const logs: GameLogEntry[] = [];
   
-  // Find the index of the revealed card
-  const revealedCardIndex = player.influence.findIndex(
-    i => !i.revealed && i.card === revealedCardType
-  );
-  
-  if (revealedCardIndex === -1) {
-    logs.push(createSystemLog(`Error: Could not find the revealed card in player's influence`));
+  // Safety check: make sure player has influences
+  if (!player || !player.influence || player.influence.length === 0) {
+    logs.push(createSystemLog(`Error: Player has no influence cards to replace`));
     return { logs };
   }
   
   
+  // Try to find a matching card that's not revealed first (this is the ideal case)
+  let revealedCardIndex = player.influence.findIndex(
+    i => !i.revealed && i.card === revealedCardType
+  );
+  
+  // If not found, check if there's a recently revealed card of the right type
+  if (revealedCardIndex === -1) {
+    logs.push(createSystemLog(`No hidden ${revealedCardType} found, checking for revealed cards`));
+    
+    // Look for any card of the specified type, even if revealed
+    revealedCardIndex = player.influence.findIndex(
+      i => i.card === revealedCardType
+    );
+    
+    if (revealedCardIndex === -1) {
+      // If we still can't find the card, just use any unrevealed card
+      logs.push(createSystemLog(`No ${revealedCardType} card found at all, using first hidden card`));
+      revealedCardIndex = player.influence.findIndex(i => !i.revealed);
+      
+      // If there are no unrevealed cards, we can't replace anything
+      if (revealedCardIndex === -1) {
+        logs.push(createSystemLog(`Player has no hidden cards to replace. Skip card replacement.`));
+        return { logs };
+      }
+    }
+  }
+  
+
   // Shuffle the deck (Fisher-Yates algorithm)
   for (let i = game.deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

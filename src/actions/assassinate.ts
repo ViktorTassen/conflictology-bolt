@@ -113,6 +113,16 @@ export const assassinateAction: ActionHandler = {
         result.logs = result.logs.concat(replaceResult.logs);
       }
       
+      // If the Assassin player lost a challenge (when they're the losingPlayer and the one losing an influence)
+      if (playerId === game.actionInProgress.player && 
+          playerId === game.actionInProgress.losingPlayer) {
+        // Assassin challenge succeeded, end action and move to next turn
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+        return result;
+      }
+      
       // If a blocking player was challenged regarding Contessa and won
       if (game.actionInProgress.blockingPlayer !== undefined && 
           game.actionInProgress.challengeInProgress && 
@@ -120,13 +130,22 @@ export const assassinateAction: ActionHandler = {
         
         // If this was the challenger losing influence (failed challenge to Contessa)
         if (playerId === game.actionInProgress.losingPlayer) {
-          // Replace the revealed Contessa card
-          const replaceResult = replaceRevealedCard(
-            updatedPlayers[game.actionInProgress.blockingPlayer],
-            'Contessa',
-            updatedGame
-          );
-          result.logs = result.logs.concat(replaceResult.logs);
+          // Make sure the blocking player has a Contessa card to replace
+          const blockingPlayerHasContessa = updatedPlayers[game.actionInProgress.blockingPlayer].influence
+            .some(card => card.card === 'Contessa');
+            
+          if (blockingPlayerHasContessa) {
+            // Replace the revealed Contessa card
+            const replaceResult = replaceRevealedCard(
+              updatedPlayers[game.actionInProgress.blockingPlayer],
+              'Contessa',
+              updatedGame
+            );
+            result.logs = result.logs.concat(replaceResult.logs);
+          } else {
+            // Log a warning but continue
+            result.logs.push(createSystemLog(`Note: Contessa card not found to replace for player ${updatedPlayers[game.actionInProgress.blockingPlayer].name}`));
+          }
         }
       }
       
@@ -150,20 +169,19 @@ export const assassinateAction: ActionHandler = {
       }
 
       // If this was the blocking player losing influence after a failed challenge
+      // (This means they claimed Contessa, were challenged, and failed)
       if (game.actionInProgress.blockingPlayer === playerId) {
+        // In this case, we do NOT need to replace the card - just reveal it and proceed
         // Contessa block failed, assassination proceeds
         // Check if target still has influence to lose
         const targetId = game.actionInProgress.target ?? 0;
         
         if (!updatedPlayers[targetId].eliminated) {
-          // Use the GameMessages for consistent system messages
-          result.logs.push(createSystemLog(GameMessages.system.contessaBlockFailed(targetPlayer.name)));
           
           // Set up for target to lose influence next
           result.actionInProgress = {
             ...game.actionInProgress,
-            blockingPlayer: undefined,
-            blockingCard: undefined,
+            challengeInProgress: false,  // Reset challenge state
             losingPlayer: targetId,
             responses: {}
           };
@@ -314,6 +332,8 @@ export const assassinateAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.blockingPlayer,
           challengeInProgress: true,
+          blockingCardType: 'Contessa', // Store the claimed card type for reference
+          challengeDefense: false, // Explicitly mark as failed defense
           responses: updatedResponses
         };
       }

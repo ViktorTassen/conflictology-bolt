@@ -38,12 +38,12 @@ export function ResponseButtons({
 
   return (
     <div className="rounded-lg w-full overflow-hidden mt-4 animate-in fade-in slide-in-from-bottom-2 mb-6">
-      <div className="flex justify-center gap-1 flex-wrap relative">
+      <div className="flex justify-center gap-2 flex-wrap relative">
         {/* For single block card, show just one block button */}
         {showSingleBlockButton && (
           <button
             onClick={() => onBlock?.(blockCards[0])}
-            className="flex items-center gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg transition-colors"
           >
             <ShieldAlert className="w-4 h-4" />
             <span className="text-sm font-medium">{blockText}</span>
@@ -55,17 +55,17 @@ export function ResponseButtons({
           <button
             key={card}
             onClick={() => onBlock?.(card)}
-            className="flex items-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-2 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg transition-colors"
           >
             <ShieldAlert className="w-3 h-3" />
-            <span className="text-xs font-medium">{card}</span>
+            <span className="text-sm font-medium">{card}</span>
           </button>
         ))}
         
         {showChallenge && (
           <button
             onClick={onChallenge}
-            className="flex items-center gap-1.5 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-3 py-2 rounded-lg transition-colors"
           >
             <Swords className="w-4 h-4" />
             <span className="text-sm font-medium">{challengeText}</span>
@@ -75,7 +75,7 @@ export function ResponseButtons({
         {showAllow && (
           <button
             onClick={onAllow}
-            className="flex items-center gap-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 px-3 py-2 rounded-lg transition-colors"
           >
             <Check className="w-4 h-4" />
             <span className="text-sm font-medium">{allowText}</span>
