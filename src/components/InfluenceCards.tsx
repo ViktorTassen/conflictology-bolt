@@ -35,9 +35,9 @@ export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCards
             />
             {showFaceUp && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
-                {/* <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
+                <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
                   {card.card}
-                </div> */}
+                </div>
               </div>
             )}
           </div>
