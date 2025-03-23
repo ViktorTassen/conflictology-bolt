@@ -264,7 +264,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           >
             <ArrowLeft className="w-5 h-5 text-white/80" />
           </button>
-          <h2 className="text-white font-semibold text-lg ml-4">Join Game</h2>
+         
         </div>
         
         {error && (
@@ -272,6 +272,8 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
             {error}
           </div>
         )}
+
+
         
         <div className="flex-1 flex flex-col justify-center relative z-20">
           <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl p-5 mb-6 border border-zinc-800/30 shadow-xl">

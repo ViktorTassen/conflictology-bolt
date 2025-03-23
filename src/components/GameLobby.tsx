@@ -115,7 +115,7 @@ export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu }: Gam
         {/* Waiting message */}
         {(!isHost || game.players.length < 2) && (
           <div className="mt-4 text-center text-zinc-500 text-sm animate-pulse relative z-20 bg-black/20 py-3 rounded-lg border border-zinc-800/20">
-            Waiting for more players...
+            Waiting...
           </div>
         )}
       </div>
