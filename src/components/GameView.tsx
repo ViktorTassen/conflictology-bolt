@@ -19,9 +19,10 @@ import { TargetSelectionOverlay } from './TargetSelectionOverlay';
 interface GameViewProps {
   gameId: string;
   playerId: number;
+  onReturnToLobby?: () => void;
 }
 
-export function GameView({ gameId, playerId }: GameViewProps) {
+export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const [showActions, setShowActions] = useState(false);
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
@@ -57,7 +58,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     return <div className="p-4 text-white">Loading game...</div>;
   }
 
-  const currentPlayer = game.players[playerId - 1];
+  const currentPlayer = game.players.find(player => player.id === playerId);
   
   if (!currentPlayer) {
     return (
@@ -71,7 +72,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     return (
       <GameLobby 
         game={game}
-        isHost={playerId === 1}
+        isHost={currentPlayer.id === game.players[0]?.id} // First player is host
         onStartGame={startGame}
       />
     );
@@ -79,7 +80,9 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   
   // We'll show the game over screen as an overlay, not as a replacement
 
-  const isCurrentTurn = game.currentTurn === (playerId - 1) && !currentPlayer.eliminated;
+  // Find current player's index for turn-based game logic
+  const playerIndex = game.players.findIndex(player => player.id === playerId);
+  const isCurrentTurn = game.currentTurn === playerIndex && !currentPlayer.eliminated;
   const actionInProgress = game.actionInProgress;
 
   const handleActionSelect = async (action: GameAction) => {
@@ -99,7 +102,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
       setShowActions(false);
     } else {
       try {
-        await performAction(playerId - 1, action);
+        await performAction(playerIndex, action);
         setSelectedAction(null);
       } catch (error) {
         console.error('Failed to perform action:', error);
@@ -120,7 +123,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           target: targetId
         };
         
-        await performAction(playerId - 1, actionWithTarget);
+        await performAction(playerIndex, actionWithTarget);
         setSelectedAction(null);
         setTargetedPlayerId(null);
       } catch (error) {
@@ -144,13 +147,13 @@ export function GameView({ gameId, playerId }: GameViewProps) {
       // Debug the response to see what's happening
       const responseData = { 
         type: response,
-        playerId: playerId - 1,
+        playerId: playerIndex,
         card: card as CardType
       };
       
       console.log('Response data:', responseData);
       
-      await respondToAction(playerId - 1, responseData);
+      await respondToAction(playerIndex, responseData);
     } catch (error) {
       console.error('Failed to respond:', error);
     }
@@ -160,9 +163,9 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     if (!actionInProgress) return;
     
     try {
-      await respondToAction(playerId - 1, {
+      await respondToAction(playerIndex, {
         type: 'lose_influence',
-        playerId: playerId - 1,
+        playerId: playerIndex,
         card: cardIndex
       });
     } catch (error) {
@@ -177,7 +180,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     }
     
     // Make sure the action is properly set up for exchange
-    if (game.actionInProgress.type !== 'exchange' || game.actionInProgress.player !== (playerId - 1)) {
+    if (game.actionInProgress.type !== 'exchange' || game.actionInProgress.player !== playerIndex) {
       console.error('Exchange attempted by the wrong player or with wrong action type');
       return;
     }
@@ -197,9 +200,9 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     
     try {
       // Process the exchange
-      await respondToAction(playerId - 1, {
+      await respondToAction(playerIndex, {
         type: 'exchange_selection',
-        playerId: playerId - 1,
+        playerId: playerIndex,
         selectedIndices: keptCardIndices
       });
     } catch (error) {
@@ -211,23 +214,23 @@ export function GameView({ gameId, playerId }: GameViewProps) {
     const targetPlayer = game.players[id];
     return selectedAction && 
            ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && 
-           id !== (playerId - 1) &&
+           id !== playerIndex &&
            !targetPlayer.eliminated;
   };
 
   const getGameState = (): GameState => {
     // Use the gameStateHelpers to get the game state
-    return gameStateHelpers.getGameState(playerId - 1);
+    return gameStateHelpers.getGameState(playerIndex);
   };
 
   const shouldShowResponseButtons = () => {
     // Use the gameStateHelpers to determine if response buttons should be shown
-    return gameStateHelpers.shouldShowResponseButtons(playerId - 1);
+    return gameStateHelpers.shouldShowResponseButtons(playerIndex);
   };
 
   const getResponseButtons = () => {
     // Use the gameStateHelpers to get the response options
-    return gameStateHelpers.getResponseOptions(playerId - 1);
+    return gameStateHelpers.getResponseOptions(playerIndex);
   };
 
   const allPlayerSpots = Array(6).fill(null).map((_, index) => {
@@ -236,7 +239,7 @@ export function GameView({ gameId, playerId }: GameViewProps) {
       index,
       player: player || null
     };
-  }).filter(({ index }) => index !== (playerId - 1));
+  }).filter(({ index }) => index !== playerIndex);
 
   const getPlayerPosition = (index: number) => {
     if (index === 0) {
@@ -262,9 +265,10 @@ export function GameView({ gameId, playerId }: GameViewProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Independent button - left side */}
+      {/* Return to lobby button */}
       <button 
         className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors absolute left-4 top-4 z-20"
+        onClick={onReturnToLobby}
       >
         <ArrowLeft className="w-5 h-5 text-white/80" />
       </button>
@@ -465,8 +469,11 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           <GameOverScreen
             game={game}
             currentPlayerId={playerId}
-            onVoteNextMatch={() => voteForNextMatch(playerId - 1)}
-            onLeaveGame={() => leaveGame(playerId - 1)}
+            onVoteNextMatch={() => voteForNextMatch(playerIndex)}
+            onLeaveGame={() => {
+              leaveGame(playerIndex);
+              if (onReturnToLobby) onReturnToLobby();
+            }}
           />
         </div>
       )}

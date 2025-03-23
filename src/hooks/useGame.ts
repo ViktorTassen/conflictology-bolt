@@ -481,7 +481,7 @@ export function useGame(gameId?: string) {
     }
   };
   
-  // Leave game and redirect to main screen/lobby
+  // Leave game and return to lobby
   const leaveGame = async (playerId: number) => {
     if (!game || playerId < 0 || playerId >= game.players.length) {
       throw new Error('Invalid player ID');
@@ -490,13 +490,12 @@ export function useGame(gameId?: string) {
     try {
       console.log(`Player ${playerId} leaving the game`);
       
-      // In a real app, you might want to update player status in the database
-      // For now, we'll simply redirect to the main menu
+      // In a production app, you might want to update player status in the database
+      // such as removing them from the players array
       
-      // Redirect to the main screen/lobby
-      window.location.href = '/'; // This redirects to the root path
-      
-      console.log('Redirected to main menu');
+      // We will rely on the caller to handle the navigation
+      // This is much better than using window.location.href directly
+      console.log('Player left the game');
     } catch (err) {
       console.error('Failed to leave game:', err);
       setError('Failed to leave game');

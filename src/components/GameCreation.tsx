@@ -36,10 +36,10 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
 
   const createPlayerData = () => ({
     id: playerId,
-    name: `${PLAYER_NAMES[(playerId - 1) % PLAYER_NAMES.length]} ${playerId}`,
+    name: `Player ${playerId % 1000}`, // Use modulo to get a smaller display number
     coins: 2,
-    color: COLORS[(playerId - 1) % COLORS.length],
-    avatar: AVATARS[(playerId - 1) % AVATARS.length]
+    color: COLORS[playerId % COLORS.length],
+    avatar: AVATARS[playerId % AVATARS.length]
   });
 
   const handleCreateGame = async () => {
