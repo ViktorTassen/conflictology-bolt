@@ -12,6 +12,7 @@ import { LoseInfluenceDialog } from './LoseInfluenceDialog';
 import { ExchangeCardsDialog } from './ExchangeCardsDialog';
 import { GameLobby } from './GameLobby';
 import { GameOverScreen } from './GameOverScreen';
+import { ConfirmationDialog } from './ConfirmationDialog';
 import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
@@ -26,6 +27,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const [showActions, setShowActions] = useState(false);
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { 
@@ -272,9 +274,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         onClick={() => {
           // Show a confirmation dialog if a game is in progress and the player is not eliminated
           if (game.status === 'playing' && !currentPlayer.eliminated) {
-            if (window.confirm('Are you sure you want to leave the game? You will forfeit the match.')) {
-              onReturnToLobby?.();
-            }
+            setShowLeaveConfirmation(true);
           } else {
             onReturnToLobby?.();
           }
@@ -486,6 +486,23 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
             }}
           />
         </div>
+      )}
+
+      {/* Leave game confirmation dialog */}
+      {showLeaveConfirmation && (
+        <ConfirmationDialog
+          title="Leave Game"
+          message="Are you sure you want to leave the game? You will forfeit the match."
+          confirmText="Leave Game"
+          cancelText="Stay"
+          onConfirm={() => {
+            // Eliminate the player from the game when they leave
+            leaveGame(playerIndex);
+            setShowLeaveConfirmation(false);
+            onReturnToLobby?.();
+          }}
+          onCancel={() => setShowLeaveConfirmation(false)}
+        />
       )}
     </div>
   );
