@@ -47,9 +47,7 @@ export function GameOverScreen({
 
     // Different colors for winners and non-winners
     const colors = [
-      isCurrentPlayerWinner ? '#FFD700' : winner?.color || '#FFFFFF', // Gold for winner, winner color for others
-      '#FFFFFF',
-      isCurrentPlayerWinner ? winner?.color || '#FFFFFF' : '#FFD700' // Mix the colors
+      '#bb0000', '#ffffff', "0000bb"
     ];
     
     // Fire a burst of confetti - will appear differently in each client
