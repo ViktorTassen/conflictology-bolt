@@ -331,6 +331,179 @@ export function useGame(gameId?: string) {
     }
   };
 
+  // Check if game is over (only one player remains)
+  const isGameOver = game && game.status === 'playing' && 
+    game.players.filter(p => !p.eliminated).length === 1;
+    
+  // Set winner if game is over but winner is not yet set
+  useEffect(() => {
+    const setWinner = async () => {
+      if (isGameOver && game && !game.winner) {
+        const winner = game.players.findIndex(p => !p.eliminated);
+        if (winner !== -1) {
+          try {
+            const gameRef = doc(db, 'games', game.id);
+            await updateDoc(gameRef, {
+              winner: winner,
+              // Initialize empty vote object if it doesn't exist
+              voteNextMatch: game.voteNextMatch || {}
+            });
+          } catch (err) {
+            console.error('Failed to set winner:', err);
+          }
+        }
+      }
+    };
+    
+    setWinner();
+  }, [isGameOver, game]);
+  
+  // Auto-start new match when all players have voted or redirect to lobby if < 3 players
+  useEffect(() => {
+    if (!game || !game.voteNextMatch) return;
+    
+    const voteCount = Object.keys(game.voteNextMatch).length;
+    const totalPlayers = game.players.length;
+    
+    console.log(`Vote count: ${voteCount}/${totalPlayers}, Game state: `, 
+                game.newMatchCountdownStarted ? 'starting' : 'waiting');
+    
+    // If all players have voted, start immediately
+    if (voteCount === totalPlayers && voteCount >= 3) {
+      console.log("All players voted! Starting new match...");
+      
+      // Force-start the new match immediately - no intermediate state
+      startNewMatch();
+    } 
+    // If there are less than 3 players who have voted to play
+    else if (voteCount < 3 && voteCount === totalPlayers) {
+      console.log("Not enough players voted to continue. Redirecting to lobby...");
+      
+      // Not enough players agreed to start new match, redirect to lobby
+      if (!game.redirectToLobby) {
+        const gameRef = doc(db, 'games', game.id);
+        
+        // Mark game as redirecting to lobby
+        updateDoc(gameRef, {
+          redirectToLobby: true
+        });
+        
+        // In a real app, you'd implement your redirect logic here
+        console.log('Not enough players to start new match. Redirecting to lobby...');
+      }
+    }
+  }, [game?.voteNextMatch]);
+  
+  // Vote for next match
+  const voteForNextMatch = async (playerId: number) => {
+    if (!game || playerId < 0 || playerId >= game.players.length) {
+      throw new Error('Invalid player ID');
+    }
+    
+    try {
+      console.log(`Player ${playerId} voting for next match`);
+      const gameRef = doc(db, 'games', game.id);
+      
+      // Create or update the voteNextMatch object
+      const voteNextMatch = game.voteNextMatch || {};
+      voteNextMatch[playerId] = true;
+      
+      await updateDoc(gameRef, {
+        voteNextMatch
+      });
+      
+      console.log("Vote recorded successfully");
+      
+      // Check if this vote completes the required votes to start a new match
+      const voteCount = Object.keys(voteNextMatch).length;
+      if (voteCount === game.players.length && voteCount >= 3) {
+        console.log("This was the final vote needed! Starting match directly...");
+        // Start immediately if this was the last vote needed
+        startNewMatch();
+      }
+    } catch (err) {
+      console.error('Failed to vote for next match', err);
+      setError('Failed to vote for next match');
+      throw err;
+    }
+  };
+  
+  // Start a new match with the same players
+  const startNewMatch = async () => {
+    if (!game) return;
+    
+    console.log("Starting new match now!");
+    
+    try {
+      const gameRef = doc(db, 'games', game.id);
+      const newDeck = createDeck();
+      const playerHands = dealCards(newDeck, game.players.length)[1];
+      
+      // Reset all players
+      const updatedPlayers = game.players.map((player, index) => ({
+        ...player,
+        coins: 2, // Start with 2 coins
+        eliminated: false,
+        influence: playerHands[index].map(card => ({
+          card,
+          revealed: false
+        }))
+      }));
+      
+      // Important: Reset all game state completely
+      // Firestore doesn't accept undefined values, so we use null instead
+      await updateDoc(gameRef, {
+        status: 'playing',
+        players: updatedPlayers,
+        deck: newDeck,
+        currentTurn: 0,
+        actionInProgress: null,
+        responses: {},
+        voteNextMatch: {},
+        winner: null, // Use null instead of undefined
+        newMatchCountdownStarted: false,
+        newMatchStartTime: null, // Use null instead of undefined
+        redirectToLobby: false,
+        logs: [{
+          type: 'system',
+          player: 'System',
+          playerColor: '#9CA3AF',
+          timestamp: Date.now(),
+          message: 'New match started!'
+        }]
+      });
+      
+      console.log("New match started successfully!");
+    } catch (err) {
+      console.error('Failed to start new match', err);
+      setError('Failed to start new match');
+      throw err;
+    }
+  };
+  
+  // Leave game and redirect to main screen/lobby
+  const leaveGame = async (playerId: number) => {
+    if (!game || playerId < 0 || playerId >= game.players.length) {
+      throw new Error('Invalid player ID');
+    }
+    
+    try {
+      console.log(`Player ${playerId} leaving the game`);
+      
+      // In a real app, you might want to update player status in the database
+      // For now, we'll simply redirect to the main menu
+      
+      // Redirect to the main screen/lobby
+      window.location.href = '/'; // This redirects to the root path
+      
+      console.log('Redirected to main menu');
+    } catch (err) {
+      console.error('Failed to leave game:', err);
+      setError('Failed to leave game');
+      throw err;
+    }
+  };
+
   return {
     game,
     error,
@@ -338,6 +511,10 @@ export function useGame(gameId?: string) {
     joinGame,
     performAction,
     respondToAction,
-    startGame
+    startGame,
+    isGameOver,
+    voteForNextMatch,
+    startNewMatch,
+    leaveGame
   };
 }

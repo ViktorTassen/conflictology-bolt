@@ -11,6 +11,7 @@ import { ResponseButtons } from './ResponseButtons';
 import { LoseInfluenceDialog } from './LoseInfluenceDialog';
 import { ExchangeCardsDialog } from './ExchangeCardsDialog';
 import { GameLobby } from './GameLobby';
+import { GameOverScreen } from './GameOverScreen';
 import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
@@ -26,7 +27,16 @@ export function GameView({ gameId, playerId }: GameViewProps) {
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { game, performAction, respondToAction, startGame } = useGame(gameId);
+  const { 
+    game, 
+    performAction, 
+    respondToAction, 
+    startGame, 
+    isGameOver,
+    voteForNextMatch,
+    startNewMatch,
+    leaveGame
+  } = useGame(gameId);
   const gameStateHelpers = useGameState(game, selectedAction?.type);
   
   useEffect(() => {
@@ -66,6 +76,8 @@ export function GameView({ gameId, playerId }: GameViewProps) {
       />
     );
   }
+  
+  // We'll show the game over screen as an overlay, not as a replacement
 
   const isCurrentTurn = game.currentTurn === (playerId - 1) && !currentPlayer.eliminated;
   const actionInProgress = game.actionInProgress;
@@ -446,6 +458,18 @@ export function GameView({ gameId, playerId }: GameViewProps) {
           />
         )}
       </div>
+      
+      {/* Game Over Overlay - shows only when game is over */}
+      {isGameOver && (
+        <div className="absolute inset-0 z-50">
+          <GameOverScreen
+            game={game}
+            currentPlayerId={playerId}
+            onVoteNextMatch={() => voteForNextMatch(playerId - 1)}
+            onLeaveGame={() => leaveGame(playerId - 1)}
+          />
+        </div>
+      )}
     </div>
   );
 }

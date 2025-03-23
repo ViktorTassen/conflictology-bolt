@@ -117,4 +117,10 @@ export interface Game {
     type: ResponseType;
     card?: CardType;
   }>;
+  // Record of player IDs who have voted for the next match
+  voteNextMatch?: Record<number, boolean>;
+  winner?: number; // ID of the winning player
+  newMatchCountdownStarted?: boolean; // Whether countdown to new match has started
+  newMatchStartTime?: number; // Timestamp when the new match will start
+  redirectToLobby?: boolean; // Whether to redirect players to lobby
 }
