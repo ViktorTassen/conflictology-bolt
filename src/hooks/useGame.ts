@@ -163,26 +163,20 @@ export function useGame(gameId?: string) {
         throw new Error('Player already in game');
       }
 
-      const currentDeck = game.deck || createDeck();
-      const [newDeck, hands] = dealCards(currentDeck, game.players.length + 1);
-      const playerHand = hands[hands.length - 1];
-
       // Assign a unique color to the player
       const uniqueColor = assignUniqueColor(game.players);
 
+      // We're not dealing cards when joining, only when the game starts
       const completePlayer: Player = {
         ...player,
         color: uniqueColor, // Override any color passed in with a unique one
-        influence: playerHand.map(card => ({ 
-          card,
-          revealed: false
-        })),
+        coins: 2, // Start with 2 coins
+        influence: [], // Empty influence array until game starts
         lastActivity: Date.now() // Initialize lastActivity timestamp
       };
 
       await updateDoc(gameRef, {
         players: [...game.players, completePlayer],
-        deck: newDeck,
         logs: arrayUnion({
           type: 'system',
           player: 'System',
@@ -202,8 +196,35 @@ export function useGame(gameId?: string) {
 
     try {
       const gameRef = doc(db, 'games', gameId);
+      
+      // Get the current game state
+      const gameDoc = await getDoc(gameRef);
+      if (!gameDoc.exists()) {
+        throw new Error('Game not found');
+      }
+      
+      const currentGame = gameDoc.data() as Game;
+      
+      // Create a new shuffled deck at game start
+      const newDeck = createDeck();
+      
+      // Deal cards to all players
+      const [remainingDeck, hands] = dealCards(newDeck, currentGame.players.length);
+      
+      // Update each player with their new cards
+      const updatedPlayers = currentGame.players.map((player, index) => ({
+        ...player,
+        influence: hands[index].map(card => ({
+          card,
+          revealed: false
+        }))
+      }));
+      
+      // Update the game with the new state
       await updateDoc(gameRef, {
         status: 'playing',
+        players: updatedPlayers,
+        deck: remainingDeck,
         logs: arrayUnion({
           type: 'system',
           player: 'System',
