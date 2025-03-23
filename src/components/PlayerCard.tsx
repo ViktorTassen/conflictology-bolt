@@ -9,6 +9,7 @@ interface PlayerCardProps {
   isTargetable?: boolean;
   isTargeted?: boolean;
   onTargetSelect?: () => void;
+  isCurrentPlayer?: boolean;
 }
 
 export function PlayerCard({ 
@@ -16,7 +17,8 @@ export function PlayerCard({
   isActive, 
   isTargetable = false,
   isTargeted = false,
-  onTargetSelect 
+  onTargetSelect,
+  isCurrentPlayer = false
 }: PlayerCardProps) {
   const truncateName = (name: string) => {
     return name.length > 13 ? `${name.slice(0, 12)}...` : name;
@@ -76,11 +78,20 @@ export function PlayerCard({
               ${isTargeted && !player.eliminated ? 'ring-2 ring-red-500/50' : ''}
               ${player.eliminated ? 'grayscale' : ''}
             `}>
-              <img
-                src={player.avatar}
-                alt={player.name}
-                className="w-full h-full object-cover"
-              />
+              {player.avatar ? (
+                <img
+                  src={player.avatar}
+                  alt={player.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div 
+                  className="w-full h-full flex items-center justify-center font-bold text-xs text-white"
+                  style={{ backgroundColor: player.color }}
+                >
+                  {player.name.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
             {player.eliminated && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
@@ -92,7 +103,7 @@ export function PlayerCard({
           {/* Name and coins container */}
           <div className="flex-1 min-w-0 flex flex-col gap-0.5">
             {/* Player name */}
-            <div className="w-full">
+            <div className="w-full flex items-center gap-1">
               <span 
                 className={`
                   text-xs font-medium leading-none block truncate
@@ -103,6 +114,9 @@ export function PlayerCard({
               >
                 {truncateName(player.name)}
               </span>
+              {isCurrentPlayer && (
+                <span className="text-[8px] text-yellow-300 bg-zinc-800/80 border border-yellow-500/30 rounded-full px-1 py-0.5 leading-none whitespace-nowrap">You</span>
+              )}
             </div>
 
             {/* Coins */}

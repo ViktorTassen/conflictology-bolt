@@ -8,9 +8,10 @@ interface GameLobbyProps {
   isHost: boolean;
   onStartGame: () => void;
   onReturnToMainMenu: () => void;
+  currentPlayerId?: number;
 }
 
-export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu }: GameLobbyProps) {
+export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu, currentPlayerId }: GameLobbyProps) {
   const copyGameId = () => {
     navigator.clipboard.writeText(game.id);
   };
@@ -73,7 +74,7 @@ export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu }: Gam
           </div>
 
           {/* Player list */}
-          <div className="mt-4 space-y-2 max-h-56 overflow-y-auto">
+          <div className="mt-4 space-y-2 max-h-72 overflow-y-auto">
             {game.players.map((player, index) => (
               <div 
                 key={index}
@@ -86,9 +87,14 @@ export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu }: Gam
                   {player.name.substring(0, 1).toUpperCase()}
                 </div>
                 <span className="text-sm text-zinc-200">{player.name}</span>
-                {index === 0 && (
-                  <span className="text-xs text-zinc-500 ml-auto border border-zinc-800 rounded-full px-2 py-0.5">Host</span>
-                )}
+                <div className="ml-auto flex gap-2">
+                  {player.id === currentPlayerId && (
+                    <span className="text-xs text-yellow-300 bg-zinc-800 border border-yellow-500/30 rounded-full px-2 py-0.5">You</span>
+                  )}
+                  {index === 0 && (
+                    <span className="text-xs text-zinc-500 border border-zinc-800 rounded-full px-2 py-0.5">Host</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -77,6 +77,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         isHost={currentPlayer.id === game.players[0]?.id} // First player is host
         onStartGame={startGame}
         onReturnToMainMenu={onReturnToLobby || (() => {})}
+        currentPlayerId={playerId}
       />
     );
   }
@@ -304,6 +305,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                   isTargetable={isPlayerTargetable(index)}
                   isTargeted={targetedPlayerId === index}
                   onTargetSelect={() => handlePlayerTarget(index)}
+                  isCurrentPlayer={player.id === playerId}
                 />
               ) : (
                 <EmptyPlayerCard />

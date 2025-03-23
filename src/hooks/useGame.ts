@@ -58,6 +58,32 @@ function dealCards(deck: CardType[], numPlayers: number): [CardType[], CardType[
   return [remainingDeck, hands];
 }
 
+// Exactly 6 predefined colors for the game
+const PLAYER_COLORS = [
+  '#E74C3C', // Red
+  '#2ECC71', // Green
+  '#3498DB', // Blue
+  '#F1C40F', // Yellow
+  '#9B59B6', // Purple
+  '#E67E22', // Orange
+];
+
+// Find a unique color that's not already used by other players
+const assignUniqueColor = (existingPlayers: Player[]): string => {
+  // Get all colors already in use
+  const usedColors = new Set(existingPlayers.map(p => p.color));
+  
+  // Find the first available color that's not used
+  for (const color of PLAYER_COLORS) {
+    if (!usedColors.has(color)) {
+      return color;
+    }
+  }
+  
+  // If all colors are in use (shouldn't happen with max 6 players), use the first color
+  return PLAYER_COLORS[0];
+};
+
 export function useGame(gameId?: string) {
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -141,12 +167,17 @@ export function useGame(gameId?: string) {
       const [newDeck, hands] = dealCards(currentDeck, game.players.length + 1);
       const playerHand = hands[hands.length - 1];
 
+      // Assign a unique color to the player
+      const uniqueColor = assignUniqueColor(game.players);
+
       const completePlayer: Player = {
         ...player,
+        color: uniqueColor, // Override any color passed in with a unique one
         influence: playerHand.map(card => ({ 
           card,
           revealed: false
-        }))
+        })),
+        lastActivity: Date.now() // Initialize lastActivity timestamp
       };
 
       await updateDoc(gameRef, {

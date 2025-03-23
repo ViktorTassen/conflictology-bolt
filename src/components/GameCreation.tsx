@@ -7,15 +7,6 @@ interface GameCreationProps {
   playerId: number;
 }
 
-const COLORS = [
-  '#E74C3C', // Red
-  '#2ECC71', // Green
-  '#3498DB', // Blue
-  '#F1C40F', // Yellow
-  '#9B59B6', // Purple
-  '#E67E22', // Orange
-];
-
 const AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
@@ -38,7 +29,7 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
     id: playerId,
     name: `Player ${playerId % 1000}`, // Use modulo to get a smaller display number
     coins: 2,
-    color: COLORS[playerId % COLORS.length],
+    color: '#808080', // Temporary color, will be assigned by server
     avatar: AVATARS[playerId % AVATARS.length]
   });
 
