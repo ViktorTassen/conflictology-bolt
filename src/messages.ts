@@ -1,7 +1,7 @@
 /**
  * Game Messages
  * 
- * This file contains all game messages for Conflictology Bolt.
+ * This file contains all game messages for Conflictology Capitol.
  * Having them in a separate file makes it easier to translate to different languages.
  */
 

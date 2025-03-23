@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from './hooks/useGame';
-import { GameCreation } from './components/GameCreation';
+import { MainMenu } from './components/MainMenu';
 import { GameView } from './components/GameView';
 import { GameLobby } from './components/GameLobby';
 
@@ -78,9 +78,7 @@ function App() {
 
         <div className="relative h-full">
           {view === 'lobby' ? (
-            <div className="p-4">
-              <GameCreation onGameStart={handleGameStart} playerId={playerId} />
-            </div>
+            <MainMenu onGameStart={handleGameStart} playerId={playerId} />
           ) : (
             <GameView gameId={gameId!} playerId={playerId} onReturnToLobby={handleReturnToLobby} />
           )}

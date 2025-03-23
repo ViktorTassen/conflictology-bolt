@@ -74,6 +74,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         game={game}
         isHost={currentPlayer.id === game.players[0]?.id} // First player is host
         onStartGame={startGame}
+        onReturnToMainMenu={onReturnToLobby || (() => {})}
       />
     );
   }
@@ -267,15 +268,24 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     <div className="h-full flex flex-col">
       {/* Return to lobby button */}
       <button 
-        className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors absolute left-4 top-4 z-20"
-        onClick={onReturnToLobby}
+        className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute left-4 top-4 z-20 border border-zinc-800/30"
+        onClick={() => {
+          // Show a confirmation dialog if a game is in progress and the player is not eliminated
+          if (game.status === 'playing' && !currentPlayer.eliminated) {
+            if (window.confirm('Are you sure you want to leave the game? You will forfeit the match.')) {
+              onReturnToLobby?.();
+            }
+          } else {
+            onReturnToLobby?.();
+          }
+        }}
       >
         <ArrowLeft className="w-5 h-5 text-white/80" />
       </button>
       
       {/* Independent button - right side */}
       <button 
-        className="w-10 h-10 bg-[#2a2a2a]/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-[#333333] transition-colors absolute right-4 top-4 z-20"
+        className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute right-4 top-4 z-20 border border-zinc-800/30"
       >
         <Info className="w-5 h-5 text-white/80" />
       </button>
