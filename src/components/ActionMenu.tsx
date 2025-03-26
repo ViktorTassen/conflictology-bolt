@@ -29,8 +29,8 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
     { type: 'assassinate', icon: Sword, name: 'Assassin', description: 'Pay $3M to assassinate', cost: 3, cardImage: assassinImage },
     { type: 'steal', icon: Ship, name: 'Captain', description: 'Steal $2M', cardImage: captainImage },
     { type: 'exchange', icon: Users, name: 'Ambassador', description: 'Exchange 2 cards', cardImage: ambassadorImage },
-    { type: 'investigate', icon: Eye, name: 'Inquisitor', description: 'Investigate a player\'s card', cardImage: inquisitorImage, requiresTarget: true },
-    { type: 'swap', icon: RefreshCw, name: 'Inquisitor', description: 'Swap one of your cards', cardImage: inquisitorImage },
+    { type: 'investigate', icon: Eye, name: 'Inquisitor (Investigate)', description: 'Investigate a player\'s card', cardImage: inquisitorImage, requiresTarget: true },
+    { type: 'swap', icon: RefreshCw, name: 'Inquisitor (Swap)', description: 'Swap one of your cards', cardImage: inquisitorImage },
     // Contessa is defensive only (blocks assassinations) so it doesn't have an action,
     // but we'll display it for player reference
     { type: 'contessa', icon: Crown, name: 'Contessa', description: 'Blocks assassination', cardImage: contessaImage },
@@ -53,7 +53,7 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
           
           return (
             <div
-              key={action.name}
+              key={action.type}
               onClick={() => {
                 if (!disabled) {
                   onActionSelect(action);
@@ -119,7 +119,7 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
           
           return (
             <div
-              key={action.name}
+              key={action.type}
               onClick={() => {
                 if (!disabled && !isContessa) {
                   onActionSelect(action);
@@ -138,7 +138,6 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
               `}
               style={{
                 animationDelay: `${(index + universalActions.length) * 50}ms`,
-                animationFill: 'forwards'
               }}
             >
               {/* Card image instead of icon */}

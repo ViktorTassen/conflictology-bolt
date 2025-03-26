@@ -105,7 +105,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     setTargetedPlayerId(null); // Reset any previous target
     
     // For actions that require a target
-    if (['steal', 'assassinate', 'coup'].includes(action.type)) {
+    if (['steal', 'assassinate', 'coup', 'investigate'].includes(action.type)) {
       setShowActions(false);
     } else {
       try {
