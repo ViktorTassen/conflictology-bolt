@@ -122,8 +122,6 @@ export const investigateAction: ActionHandler = {
           targetColor: targetPlayer.color,
           message: GameMessages.results.investigateKeep(targetPlayer.name)
         })];
-        
-        // No changes to cards, just end the action
       } else {
         // If Inquisitor wants to swap the card
         const updatedDeck = [...game.deck];
@@ -178,6 +176,15 @@ export const investigateAction: ActionHandler = {
       return result;
     }
     
+    const responseData = response.card 
+      ? { type: response.type, card: response.card }
+      : { type: response.type };
+      
+    const updatedResponses = {
+      ...game.actionInProgress.responses,
+      [playerId]: responseData
+    };
+
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       const updatedPlayers = [...game.players];
@@ -245,7 +252,7 @@ export const investigateAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Inquisitor claim and failed.`
+          message: `challenges Inquisitor claim! Fails`
         })];
 
         result.actionInProgress = {
@@ -253,27 +260,21 @@ export const investigateAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
-          responses: {
-            ...game.actionInProgress.responses,
-            [playerId]: { type: response.type }
-          }
+          responses: updatedResponses
         };
       } else {
         // Challenge succeeds, Inquisitor player loses influence
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `challenged Inquisitor claim and succeeded.`
+          message: `challenges Inquisitor claim! Success`
         })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.player,
           challengeInProgress: true,
-          responses: {
-            ...game.actionInProgress.responses,
-            [playerId]: { type: response.type }
-          }
+          responses: updatedResponses
         };
       }
 
@@ -282,11 +283,6 @@ export const investigateAction: ActionHandler = {
 
     // Handle allow responses
     if (response.type === 'allow') {
-      const updatedResponses = {
-        ...game.actionInProgress.responses,
-        [playerId]: { type: response.type }
-      };
-      
       result.actionInProgress = {
         ...game.actionInProgress,
         responses: updatedResponses
@@ -299,37 +295,23 @@ export const investigateAction: ActionHandler = {
         !p.eliminated
       );
       
-      console.log('Other players who need to respond to Investigate:', otherPlayers.map(p => ({ name: p.name, id: p.id, index: game.players.indexOf(p) })));
-      console.log('Current responses for Investigate:', updatedResponses);
-      
-      const allResponded = otherPlayers.every(p => {
-        // Get the player's index which is used as the key in responses
-        const playerIdx = game.players.indexOf(p);
-        const hasResponded = updatedResponses[playerIdx] !== undefined;
-        console.log(`Player ${p.name} (index ${playerIdx}) has responded:`, hasResponded);
-        return hasResponded;
-      });
-
-      // Check that each response from other players is 'allow'
-      const allPlayersAllowed = allResponded && otherPlayers.every(p => {
-        const playerIdx = game.players.indexOf(p);
-        const response = updatedResponses[playerIdx];
-        return response && response.type === 'allow';
-      });
-      
-      console.log('All players have allowed Investigate action?', allPlayersAllowed);
-      
-      if (allPlayersAllowed) {
-        // All players allowed - proceed to the target player selecting a card for investigation
+      // If this is the target player allowing
+      if (playerId === game.actionInProgress.target) {
         result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `Investigate allowed. ${game.players[game.actionInProgress.target!].name} selecting a card to show.`
+          message: `${player.name} selecting a card to show.`
         })];
         
+        // Clear all responses and move to card selection phase
         result.actionInProgress = {
           ...game.actionInProgress,
-          responses: {} // Clear responses for card selection phase
+          responses: {
+            [playerId]: { type: 'allow' }
+          }
         };
+        
+        return result;
       }
+      
 
       return result;
     }

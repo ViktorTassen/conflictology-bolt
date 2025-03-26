@@ -80,7 +80,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         currentPlayerId={playerId}
         onStartGame={startGame}
         onReturnToMainMenu={onReturnToLobby || (() => {})}
-        currentPlayerId={playerId}
       />
     );
   }

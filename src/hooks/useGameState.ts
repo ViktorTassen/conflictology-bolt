@@ -39,7 +39,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             actionInProgress.target === playerId && 
             !actionInProgress.investigateCard &&
             !actionInProgress.challengeInProgress &&
-            Object.keys(actionInProgress.responses).length > 0) {
+            actionInProgress.responses[playerId]?.type === 'allow') {
           return 'waiting_for_card_selection';
         }
         
@@ -58,11 +58,22 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         }
         
         // For other players during card investigation
-        if (actionInProgress.type === 'investigate' && 
-            (actionInProgress.investigateCard || 
-             (actionInProgress.target !== undefined && 
-              Object.keys(actionInProgress.responses).length > 0))) {
-          return 'waiting_for_others';
+        if (actionInProgress.type === 'investigate') {
+          // If this player has already allowed, they should wait
+          if (actionInProgress.responses[playerId]?.type === 'allow') {
+            return 'waiting_for_others';
+          }
+          
+          // If target has allowed, everyone should wait
+          if (actionInProgress.target !== undefined && 
+              actionInProgress.responses[actionInProgress.target]?.type === 'allow') {
+            return 'waiting_for_others';
+          }
+          
+          // If investigation card is being shown
+          if (actionInProgress.investigateCard) {
+            return 'waiting_for_others';
+          }
         }
         
         // Player who initiated the action waits for others, unless a block happened
@@ -131,7 +142,6 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             blockCards = ['Captain', 'Ambassador'];
             blockText = 'Block';  // We'll show options in the dropdown
             showBlock = isTarget; // Only target can block steal
-            console.log('Setting up block cards for steal:', blockCards);
             break;
             
           case 'assassinate':
@@ -159,16 +169,6 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
 
         // Make sure blockCards is always included for block options
         const validBlockCards = blockCards.length > 0 ? blockCards : ['Duke'] as CardType[];
-        
-        console.log('Providing response options:', {
-          showBlock,
-          showChallenge,
-          showAllow: true,
-          blockText,
-          challengeText: 'Challenge',
-          allowText: 'Allow',
-          blockCards: validBlockCards
-        });
         
         return {
           showBlock,
@@ -219,28 +219,23 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         return false;
       }
       
-      // Special case: Don't show response buttons during card selection for investigation
-      if (actionInProgress.type === 'investigate' && 
-          !actionInProgress.investigateCard) {
-        // Case 1: If target player has already responded with 'allow', hide buttons for everyone else
-        if (actionInProgress.target !== undefined) {
-          const targetResponse = actionInProgress.responses[actionInProgress.target];
-          if (targetResponse && targetResponse.type === 'allow') {
-            return false;
-          }
-        }
-        
-        // Case 2: If this is the target player and they have been asked to select a card, hide buttons
-        if (actionInProgress.target === playerId &&
-            Object.keys(actionInProgress.responses).length > 0) {
+      // Special case: Don't show response buttons during investigation
+      if (actionInProgress.type === 'investigate') {
+        // Hide buttons if this player has already allowed
+        if (actionInProgress.responses[playerId]?.type === 'allow') {
           return false;
         }
-      }
-      
-      // Special case: Don't show response buttons during investigation decision
-      if (actionInProgress.type === 'investigate' && 
-          actionInProgress.investigateCard) {
-        return false;
+        
+        // Hide buttons for everyone if target has allowed
+        if (actionInProgress.target !== undefined && 
+            actionInProgress.responses[actionInProgress.target]?.type === 'allow') {
+          return false;
+        }
+        
+        // Hide buttons during card selection or investigation decision
+        if (actionInProgress.investigateCard) {
+          return false;
+        }
       }
       
       // If there's a block in progress
@@ -252,8 +247,6 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       // Don't show buttons to the player performing the action
       if (actionInProgress.player === playerId) return false;
       
-      // FIXED: Allow all players to respond simultaneously
-      // Only limit who can block (handled by getResponseOptions)
       return true;
     },
 

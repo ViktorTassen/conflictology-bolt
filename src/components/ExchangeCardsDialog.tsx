@@ -137,9 +137,6 @@ export function ExchangeCardsDialog({
                               <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
                                 {cardInfo.card}
                               </div>
-                              <div className="absolute top-2 right-2 text-white/70 text-xs">
-                                Current
-                              </div>
                             </div>
                             
                             {/* Hover overlay */}
@@ -185,9 +182,6 @@ export function ExchangeCardsDialog({
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
                               <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
                                 {cardInfo.card}
-                              </div>
-                              <div className="absolute top-2 right-2 text-blue-400/70 text-xs">
-                                New
                               </div>
                             </div>
                             
