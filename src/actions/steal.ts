@@ -41,11 +41,11 @@ export const stealAction: ActionHandler = {
   },
 
   respond: async ({ game, player, playerId }, response: ActionResponse) => {
-    if (!game.actionInProgress) return {};
+    if (!game?.actionInProgress) return {};
 
     // Check if player is eliminated
     if (player.eliminated) {
-      throw new Error('Eliminated players cannot respond to actions');
+      throw new Error('Eliminated players cannot perform actions');
     }
 
     const actionPlayer = game.players[game.actionInProgress.player];
@@ -188,14 +188,14 @@ export const stealAction: ActionHandler = {
       return result;
     }
 
-    // Handle block with Captain or Ambassador
+    // Handle block with Captain, Ambassador, or Inquisitor
     if (response.type === 'block') {
       console.log('Processing block response with card:', response.card);
       
       // Verify a valid block card is specified
-      if (!response.card || (response.card !== 'Captain' && response.card !== 'Ambassador')) {
+      if (!response.card || !['Captain', 'Ambassador', 'Inquisitor'].includes(response.card)) {
         console.error('Invalid block card:', response.card);
-        throw new Error('Must block with Captain or Ambassador');
+        throw new Error('Must block with Captain, Ambassador, or Inquisitor');
       }
       
       // Only the target can block a steal

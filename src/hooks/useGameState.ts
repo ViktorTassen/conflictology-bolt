@@ -125,28 +125,24 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       if (actionInProgress.player !== playerId) {
         // Determine what cards can block this action
         let blockCards: CardType[] = [];
-        let blockText = '';
         let showChallenge = true;
         let showBlock = false;
         
         switch (actionType) {
           case 'foreign-aid':
             blockCards = ['Duke'];
-            blockText = 'Block';
             showBlock = true;
             showChallenge = false; // Foreign Aid can't be challenged
             break;
             
           case 'steal':
-            // For steal, you can block with either Captain or Ambassador
-            blockCards = ['Captain', 'Ambassador'];
-            blockText = 'Block';  // We'll show options in the dropdown
+            // For steal, you can block with Captain, Ambassador, or Inquisitor
+            blockCards = ['Captain', 'Ambassador', 'Inquisitor'];
             showBlock = isTarget; // Only target can block steal
             break;
             
           case 'assassinate':
             blockCards = ['Contessa'];
-            blockText = 'Block';
             showBlock = isTarget; // Only target can block assassination
             break;
             
@@ -169,6 +165,9 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
 
         // Make sure blockCards is always included for block options
         const validBlockCards = blockCards.length > 0 ? blockCards : ['Duke'] as CardType[];
+        
+        // For single-card blocks (like Contessa or Duke), use the card name as the block text
+        const blockText = validBlockCards.length === 1 ? validBlockCards[0] : '';
         
         return {
           showBlock,
