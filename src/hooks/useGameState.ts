@@ -27,9 +27,41 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           return 'waiting_for_exchange';
         }
         
-        // For other players during an exchange, they should be in waiting_for_others state
-        if (actionInProgress.type === 'exchange' && 
+        // Special handling for swap action - ONLY for the player who initiated the swap
+        if (actionInProgress.type === 'swap' && 
+            actionInProgress.player === playerId && 
             actionInProgress.exchangeCards) {
+          return 'waiting_for_exchange';
+        }
+        
+        // Special handling for investigate action - target player selecting a card
+        if (actionInProgress.type === 'investigate' && 
+            actionInProgress.target === playerId && 
+            !actionInProgress.investigateCard &&
+            !actionInProgress.challengeInProgress &&
+            Object.keys(actionInProgress.responses).length > 0) {
+          return 'waiting_for_card_selection';
+        }
+        
+        // Special handling for investigate action - Inquisitor player deciding on the card
+        if (actionInProgress.type === 'investigate' && 
+            actionInProgress.player === playerId && 
+            actionInProgress.investigateCard) {
+          return 'waiting_for_investigate_decision';
+        }
+        
+        // For other players during an exchange/swap/investigate, they should be in waiting_for_others state
+        if ((actionInProgress.type === 'exchange' || 
+             actionInProgress.type === 'swap') && 
+            actionInProgress.exchangeCards) {
+          return 'waiting_for_others';
+        }
+        
+        // For other players during card investigation
+        if (actionInProgress.type === 'investigate' && 
+            (actionInProgress.investigateCard || 
+             (actionInProgress.target !== undefined && 
+              Object.keys(actionInProgress.responses).length > 0))) {
           return 'waiting_for_others';
         }
         
@@ -110,6 +142,8 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             
           case 'duke':
           case 'exchange':
+          case 'investigate':
+          case 'swap':
             showBlock = false;
             break;
 
@@ -172,13 +206,40 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         return false;
       }
       
-      // Special case: Don't show response buttons during exchange cards selection
-      if (actionInProgress.exchangeCards && actionInProgress.player === playerId) {
+      // Special case: Don't show response buttons during exchange/swap cards selection
+      if (actionInProgress.exchangeCards && 
+          (actionInProgress.player === playerId || 
+           actionInProgress.type === 'exchange' || 
+           actionInProgress.type === 'swap')) {
         return false;
       }
       
-      // Hide response buttons for everyone during an exchange
+      // Hide response buttons for everyone during an exchange/swap
       if (actionInProgress.exchangeCards) {
+        return false;
+      }
+      
+      // Special case: Don't show response buttons during card selection for investigation
+      if (actionInProgress.type === 'investigate' && 
+          !actionInProgress.investigateCard) {
+        // Case 1: If target player has already responded with 'allow', hide buttons for everyone else
+        if (actionInProgress.target !== undefined) {
+          const targetResponse = actionInProgress.responses[actionInProgress.target];
+          if (targetResponse && targetResponse.type === 'allow') {
+            return false;
+          }
+        }
+        
+        // Case 2: If this is the target player and they have been asked to select a card, hide buttons
+        if (actionInProgress.target === playerId &&
+            Object.keys(actionInProgress.responses).length > 0) {
+          return false;
+        }
+      }
+      
+      // Special case: Don't show response buttons during investigation decision
+      if (actionInProgress.type === 'investigate' && 
+          actionInProgress.investigateCard) {
         return false;
       }
       
@@ -202,7 +263,14 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       // Check if target player is eliminated
       if (game.players[targetId]?.eliminated) return false;
       
-      const targetableActions = ['steal', 'assassinate', 'coup'];
+      // Check if target has any non-revealed cards for investigate action
+      if (selectedAction === 'investigate') {
+        const targetPlayer = game.players[targetId];
+        const targetHasCards = targetPlayer.influence.some(i => !i.revealed);
+        return targetHasCards && targetId !== playerId;
+      }
+      
+      const targetableActions = ['steal', 'assassinate', 'coup', 'investigate'];
       return targetableActions.includes(selectedAction) && targetId !== playerId;
     }
   }), [game, selectedAction]);

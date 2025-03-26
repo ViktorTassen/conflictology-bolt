@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { GameMessages } from '../messages';
 
 export const assassinateAction: ActionHandler = {
@@ -119,7 +119,11 @@ export const assassinateAction: ActionHandler = {
         // Assassin challenge succeeded, end action and move to next turn
         result.players = updatedPlayers;
         result.actionInProgress = null;
-        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
         return result;
       }
       
@@ -225,7 +229,11 @@ export const assassinateAction: ActionHandler = {
       // Complete the action
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      
+      // Get next turn and reset actionUsedThisTurn flag
+      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      result.currentTurn = nextTurn.currentTurn;
+      result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
       return result;
     }
@@ -364,7 +372,11 @@ export const assassinateAction: ActionHandler = {
           result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
 
           result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
           
           return result;
         }

@@ -30,6 +30,8 @@ export const GameMessages = {
     steal: 'claims Captain to steal from',
     assassinate: 'pays $3M → assassinate',
     exchange: 'claims Ambassador to exchange',
+    investigate: 'claims Inquisitor to investigate',
+    swap: 'claims Inquisitor to swap cards',
     coup: 'pays $7M to Coup',
     coupWithExcess: 'has $10M! Must coup'
   },
@@ -41,6 +43,13 @@ export const GameMessages = {
     foreignAidSuccess: 'receives Foreign Aid (+$2M)',
     steal: "steals $2M from",
     exchangeComplete: 'completes the 2 cards exchange',
+    swapComplete: 'completes the card swap',
+    investigateKeep: (targetName?: string) => targetName ?
+      `lets ${targetName} keep their card` :
+      'lets target keep their card',
+    investigateSwap: (targetName?: string) => targetName ?
+      `forces ${targetName} to swap their card` :
+      'forces target to swap their card',
     foreignAidBlocked: 'Foreign Aid blocked! Gains 0M',
     stealBlocked: 'Steal blocked! Gains 0M',
     assassinationBlocked: 'Assassination blocked!',
@@ -70,6 +79,8 @@ export const GameMessages = {
     failAssassin: 'challenges Assassin claim! Fails',
     succeedAmbassador: 'challenges Ambassador claim! Success',
     failAmbassador: 'challenges Ambassador claim! Fails',
+    succeedInquisitor: 'challenges Inquisitor claim! Success',
+    failInquisitor: 'challenges Inquisitor claim! Fails',
     succeedContessa: 'challenges Contessa block! Success',
     failContessa: 'challenges Contessa block! Fails',
     challengeBlockSuccess: (card: string) => `challenges ${card} block! Success`,

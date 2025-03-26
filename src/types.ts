@@ -15,7 +15,7 @@ export interface Player {
 }
 
 // Game state types
-export const CARDS = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa'] as const;
+export const CARDS = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'] as const;
 export type CardType = typeof CARDS[number];
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
@@ -26,7 +26,9 @@ export type GameState =
   | 'waiting_for_influence_loss'
   | 'waiting_for_others'
   | 'waiting_for_turn'
-  | 'waiting_for_exchange';
+  | 'waiting_for_exchange'
+  | 'waiting_for_card_selection'
+  | 'waiting_for_investigate_decision';
 
 // Action types
 export type ActionType = 
@@ -36,9 +38,12 @@ export type ActionType =
   | 'assassinate'
   | 'steal'
   | 'exchange'
-  | 'coup';
+  | 'coup'
+  | 'contessa'
+  | 'investigate'
+  | 'swap';
 
-export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence' | 'exchange_selection';
+export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence' | 'exchange_selection' | 'select_card_for_investigation' | 'investigate_decision';
 
 export interface GameAction {
   type: ActionType;
@@ -48,6 +53,7 @@ export interface GameAction {
   cost?: number;
   target?: number;
   requiresTarget?: boolean;
+  cardImage?: string; // Path to card image for character actions
 }
 
 // Response option types
@@ -71,6 +77,8 @@ export type LogType =
   | 'lose-influence'
   | 'allow'
   | 'exchange-complete'
+  | 'swap-complete'
+  | 'investigate-result'
   | 'system'
   | 'eliminated';
 
@@ -95,6 +103,7 @@ export interface Game {
   deck: CardType[];
   logs: GameLogEntry[];
   status: GameStatus;
+  actionUsedThisTurn?: boolean; // Flag to track if the current player has used an action during their turn
   actionInProgress?: {
     type: ActionType;
     player: number;
@@ -106,6 +115,10 @@ export interface Game {
     challengeDefense?: boolean; // Indicates if a player successfully defended a challenge and should replace their card
     challengeInProgress?: boolean;
     exchangeCards?: CardType[];
+    investigateCard?: {
+      card: CardType;
+      cardIndex: number;
+    };
     responses: Record<number, { 
       type: ResponseType;
       card?: CardType;

@@ -7,16 +7,23 @@ interface GameCreationProps {
   playerId: number;
 }
 
+// Six distinct colors for the game
+const PLAYER_COLORS = [
+  '#E74C3C', // Red
+  '#2ECC71', // Green
+  '#3498DB', // Blue
+  '#F1C40F', // Yellow
+  '#9B59B6', // Purple
+  '#E67E22', // Orange
+];
+
+// For players who don't connect a profile picture
+// Note: We're not using these URLs anymore, but our avatar component
+// now handles showing the player's first initial with their color as background
 const AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
-];
-
-const PLAYER_NAMES = [
-  'Player',
-  'Player',
-  'Player',
 ];
 
 export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
@@ -29,8 +36,8 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
     id: playerId,
     name: `Player ${playerId % 1000}`, // Use modulo to get a smaller display number
     coins: 2,
-    color: '#808080', // Temporary color, will be assigned by server
-    avatar: AVATARS[playerId % AVATARS.length]
+    color: PLAYER_COLORS[playerId % PLAYER_COLORS.length],
+    avatar: '' // We'll use the color + first initial fallback instead
   });
 
   const handleCreateGame = async () => {

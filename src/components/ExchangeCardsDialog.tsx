@@ -8,6 +8,7 @@ import assassinImg from '../assets/images/assassin.png';
 import captainImg from '../assets/images/captain.png';
 import contessaImg from '../assets/images/contessa.png';
 import dukeImg from '../assets/images/duke.png';
+import inquisitorImg from '../assets/images/inquisitor.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {
@@ -15,7 +16,8 @@ const cardImages: Record<CardType, string> = {
   'Assassin': assassinImg,
   'Captain': captainImg,
   'Contessa': contessaImg,
-  'Duke': dukeImg
+  'Duke': dukeImg,
+  'Inquisitor': inquisitorImg
 };
 
 interface ExchangeCardsDialogProps {

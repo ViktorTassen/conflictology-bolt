@@ -83,10 +83,15 @@ export function PlayerCard({
                   src={player.avatar}
                   alt={player.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Hide the broken image and fallback to initials
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    e.currentTarget.parentElement!.classList.add('fallback-avatar');
+                  }}
                 />
               ) : (
                 <div 
-                  className="w-full h-full flex items-center justify-center font-bold text-xs text-white"
+                  className="w-full h-full flex items-center justify-center font-bold text-white"
                   style={{ backgroundColor: player.color }}
                 >
                   {player.name.charAt(0).toUpperCase()}

@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss } from './types';
 import { GameMessages } from '../messages';
 
 export const coupAction: ActionHandler = {
@@ -82,7 +82,11 @@ export const coupAction: ActionHandler = {
       // Move to next player's turn
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      
+      // Get next turn and reset actionUsedThisTurn flag
+      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      result.currentTurn = nextTurn.currentTurn;
+      result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
     }
 
     return result;

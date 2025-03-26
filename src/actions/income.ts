@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
 
 export const incomeAction: ActionHandler = {
@@ -12,6 +12,9 @@ export const incomeAction: ActionHandler = {
     const updatedPlayers = [...game.players];
     updatedPlayers[playerId].coins += 1;
 
+    // Get next turn and reset actionUsedThisTurn flag
+    const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+
     const result: ActionResult = {
       players: updatedPlayers,
       logs: [
@@ -20,7 +23,7 @@ export const incomeAction: ActionHandler = {
           message: GameMessages.results.income
         })
       ],
-      currentTurn: advanceToNextLivingPlayer(updatedPlayers, game.currentTurn)
+      ...nextTurn // Spread nextTurn which includes currentTurn and actionUsedThisTurn
     };
 
     return result;

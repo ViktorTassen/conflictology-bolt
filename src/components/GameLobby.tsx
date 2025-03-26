@@ -1,4 +1,3 @@
-import React from 'react';
 import { Copy, Users, PlayCircle, ArrowLeft } from 'lucide-react';
 import { Game } from '../types';
 import capitolBg from '../assets/images/capitol-bg.png';
@@ -6,12 +5,12 @@ import capitolBg from '../assets/images/capitol-bg.png';
 interface GameLobbyProps {
   game: Game;
   isHost: boolean;
+  currentPlayerId: number;
   onStartGame: () => void;
   onReturnToMainMenu: () => void;
-  currentPlayerId?: number;
 }
 
-export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu, currentPlayerId }: GameLobbyProps) {
+export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturnToMainMenu }: GameLobbyProps) {
   const copyGameId = () => {
     navigator.clipboard.writeText(game.id);
   };
@@ -39,7 +38,7 @@ export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu, curre
       
       <div className="p-4 space-y-4 h-full">
         {/* Page title - centered at top */}
-        <div className="relative z-20 mt-12 mb-4 text-center">
+        <div className="relative z-20 mt-4 mb-4 text-center">
           <h2 className="text-md font-semibold text-zinc-400">Game Room</h2>
         </div>
         
@@ -74,25 +73,35 @@ export function GameLobby({ game, isHost, onStartGame, onReturnToMainMenu, curre
           </div>
 
           {/* Player list */}
-          <div className="mt-4 space-y-2 max-h-72 overflow-y-auto">
+          <div className="mt-4 space-y-2 max-h-84 overflow-y-auto">
             {game.players.map((player, index) => (
               <div 
                 key={index}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-black/50 border border-zinc-800/30"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/50 border border-zinc-800/30"
               >
                 <div 
-                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-md" 
+                  className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm shadow-md" 
                   style={{ backgroundColor: player.color }}
                 >
                   {player.name.substring(0, 1).toUpperCase()}
                 </div>
                 <span className="text-sm text-zinc-200">{player.name}</span>
-                <div className="ml-auto flex gap-2">
+                <div className="flex gap-1.5 ml-auto">
                   {player.id === currentPlayerId && (
-                    <span className="text-xs text-yellow-300 bg-zinc-800 border border-yellow-500/30 rounded-full px-2 py-0.5">You</span>
+                    <span 
+                      className="text-xs px-2 py-0.5 rounded-full border"
+                      style={{ 
+                        color: player.color,
+                        borderColor: `${player.color}40` // 25% opacity of player color
+                      }}
+                    >
+                      You
+                    </span>
                   )}
                   {index === 0 && (
-                    <span className="text-xs text-zinc-500 border border-zinc-800 rounded-full px-2 py-0.5">Host</span>
+                    <span className="text-xs text-zinc-500 border border-zinc-800 rounded-full px-2 py-0.5">
+                      Host
+                    </span>
                   )}
                 </div>
               </div>

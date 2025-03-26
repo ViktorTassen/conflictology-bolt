@@ -30,7 +30,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-[345px] h-[700px] bg-[#1a1a1a] relative overflow-hidden">
+      <div className="w-[345px] h-[800px] bg-[#1a1a1a] relative overflow-hidden">
         <div className="absolute inset-0">
           <div 
             className="absolute top-1/2 left-1/2 w-[200%] h-[200%] lamp-light origin-center"

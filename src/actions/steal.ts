@@ -1,4 +1,4 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { CardType } from '../types';
 import { GameMessages } from '../messages';
 
@@ -179,7 +179,11 @@ export const stealAction: ActionHandler = {
       // Complete action
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      
+      // Get next turn and reset actionUsedThisTurn flag
+      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      result.currentTurn = nextTurn.currentTurn;
+      result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
       return result;
     }
@@ -324,7 +328,11 @@ export const stealAction: ActionHandler = {
           result.logs.push(createSystemLog(GameMessages.system.stealBlocked));
 
           result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
           
           return result;
         }
@@ -361,7 +369,11 @@ export const stealAction: ActionHandler = {
 
         result.players = updatedPlayers;
         result.actionInProgress = null;
-        result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
         
         return result;
       }
@@ -409,7 +421,11 @@ export const stealAction: ActionHandler = {
 
           result.players = updatedPlayers;
           result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
         }
       }
 

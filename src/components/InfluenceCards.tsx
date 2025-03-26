@@ -14,8 +14,10 @@ export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCards
   return (
     <div className="flex gap-1 transform -rotate-6">
       {availableCards.map((card, index) => {
+        // Import dynamically from assets for face-up cards
+        // Using the correct relative import path that will work in production
         const cardImage = showFaceUp 
-          ? `/src/assets/images/${card.card.toLowerCase()}.png`
+          ? new URL(`../assets/images/${card.card.toLowerCase()}.png`, import.meta.url).href
           : backImage;
 
         return (
@@ -32,6 +34,25 @@ export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCards
               src={cardImage}
               alt={showFaceUp ? card.card : "Card back"}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                console.warn(`Failed to load card image: ${card.card}`);
+                // Apply a colored background with text as fallback
+                const target = e.currentTarget;
+                target.style.display = 'none';
+                
+                // Create fallback element
+                const fallback = document.createElement('div');
+                fallback.className = 'w-full h-full bg-gray-800 flex items-center justify-center';
+                fallback.style.color = 'white';
+                fallback.style.fontWeight = 'bold';
+                fallback.style.fontSize = '14px';
+                fallback.textContent = card.card;
+                
+                // Add to parent
+                if (target.parentElement) {
+                  target.parentElement.appendChild(fallback);
+                }
+              }}
             />
             {showFaceUp && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">

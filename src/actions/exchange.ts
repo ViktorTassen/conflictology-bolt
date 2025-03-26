@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { GameMessages } from '../messages';
 import { CardType } from '../types';
 
@@ -127,7 +127,11 @@ export const exchangeAction: ActionHandler = {
       // Update the game state
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      
+      // Get next turn and reset actionUsedThisTurn flag
+      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      result.currentTurn = nextTurn.currentTurn;
+      result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
       return result;
     }
@@ -181,7 +185,11 @@ export const exchangeAction: ActionHandler = {
           
           result.players = updatedPlayers;
           result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
           
           return result;
         }
@@ -214,7 +222,11 @@ export const exchangeAction: ActionHandler = {
       // No exchange happens
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      
+      // Get next turn and reset actionUsedThisTurn flag
+      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      result.currentTurn = nextTurn.currentTurn;
+      result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
       return result;
     }
@@ -265,15 +277,32 @@ export const exchangeAction: ActionHandler = {
       };
 
       // Check if all other non-eliminated players have allowed
+      // Already using correct index-based filtering
       const otherPlayers = game.players.filter((p, index) => 
         index !== game.actionInProgress!.player && !p.eliminated
       );
       
-      const allResponded = otherPlayers.every(p => 
-        updatedResponses[p.id - 1] !== undefined
-      );
+      console.log('Other players who need to respond to Exchange:', otherPlayers.map(p => ({ name: p.name, id: p.id, index: game.players.indexOf(p) })));
+      console.log('Current responses for Exchange:', updatedResponses);
+      
+      const allResponded = otherPlayers.every(p => {
+        // Get the player's index which is used as the key in responses
+        const playerIdx = game.players.indexOf(p);
+        const hasResponded = updatedResponses[playerIdx] !== undefined;
+        console.log(`Player ${p.name} (index ${playerIdx}) has responded:`, hasResponded);
+        return hasResponded;
+      });
 
-      if (allResponded && Object.values(updatedResponses).every(r => r.type === 'allow')) {
+      // Check that each response from other players is 'allow'
+      const allPlayersAllowed = allResponded && otherPlayers.every(p => {
+        const playerIdx = game.players.indexOf(p);
+        const response = updatedResponses[playerIdx];
+        return response && response.type === 'allow';
+      });
+      
+      console.log('All players have allowed Exchange action?', allPlayersAllowed);
+      
+      if (allPlayersAllowed) {
         // All players allowed - process exchange action
         const updatedPlayers = [...game.players];
         const updatedDeck = [...game.deck];

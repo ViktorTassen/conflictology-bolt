@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextLivingPlayer, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing, replaceRevealedCard } from './types';
 import { GameMessages } from '../messages';
 
 export const foreignAidAction: ActionHandler = {
@@ -95,7 +95,11 @@ export const foreignAidAction: ActionHandler = {
 
       result.players = updatedPlayers;
       result.actionInProgress = null;
-      result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+      
+      // Get next turn and reset actionUsedThisTurn flag
+      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      result.currentTurn = nextTurn.currentTurn;
+      result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
 
       return result;
     }
@@ -142,22 +146,31 @@ export const foreignAidAction: ActionHandler = {
           
 
           result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(game.players, game.currentTurn);
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
           
           return result;
         }
         
         // If someone other than the action player responded to a block
         // We need to check if all OTHER players have responded
-        const otherPlayers = game.players.filter(p => 
+        const otherPlayers = game.players.filter((p, index) => 
           !p.eliminated && 
-          p.id !== game.actionInProgress!.player + 1 && 
-          p.id !== game.actionInProgress!.blockingPlayer + 1
+          index !== game.actionInProgress!.player && 
+          index !== game.actionInProgress!.blockingPlayer
         );
         
-        const allOtherPlayersResponded = otherPlayers.every(p => 
-          updatedResponses[p.id - 1] !== undefined
-        );
+        console.log('Other players who need to respond to block:', otherPlayers.map(p => ({ name: p.name, index: game.players.indexOf(p) })));
+        
+        const allOtherPlayersResponded = otherPlayers.every(p => {
+          const playerIdx = game.players.indexOf(p);
+          const hasResponded = updatedResponses[playerIdx] !== undefined;
+          console.log(`Player ${p.name} (index ${playerIdx}) has responded to block:`, hasResponded);
+          return hasResponded;
+        });
         
         // If all other players have responded, we're just waiting for the action player
         if (allOtherPlayersResponded) {
@@ -172,19 +185,32 @@ export const foreignAidAction: ActionHandler = {
       // No block yet, handling regular allow responses to the Foreign Aid
       
       // Check if all other non-eliminated players have allowed
-      const otherPlayers = game.players.filter(p => 
-        p.id !== game.actionInProgress!.player + 1 && !p.eliminated
+      // Use index-based filtering instead of ID-based to avoid mismatches
+      const otherPlayers = game.players.filter((p, index) => 
+        index !== game.actionInProgress!.player && !p.eliminated
       );
       
-      const allResponded = otherPlayers.every(p => 
-        updatedResponses[p.id - 1] !== undefined
-      );
+      console.log('Other players who need to respond to Foreign Aid:', otherPlayers.map(p => ({ name: p.name, id: p.id, index: game.players.indexOf(p) })));
+      console.log('Current responses for Foreign Aid:', updatedResponses);
+      
+      const allResponded = otherPlayers.every(p => {
+        // Get the player's index which is used as the key in responses
+        const playerIdx = game.players.indexOf(p);
+        const hasResponded = updatedResponses[playerIdx] !== undefined;
+        console.log(`Player ${p.name} (index ${playerIdx}) has responded:`, hasResponded);
+        return hasResponded;
+      });
 
       if (allResponded) {
-        // Check if anyone blocked
-        const anyPlayerBlocked = Object.values(updatedResponses).some(
-          r => r.type === 'block'
-        );
+        // Check if anyone blocked using the specific player responses
+        const anyPlayerBlocked = otherPlayers.some(p => {
+          const playerIdx = game.players.indexOf(p);
+          const response = updatedResponses[playerIdx];
+          return response && response.type === 'block';
+        });
+        
+        console.log('Any player blocked Foreign Aid?', anyPlayerBlocked);
+        console.log('Should complete Foreign Aid?', allResponded && !anyPlayerBlocked);
         
         // If no one blocked, complete Foreign Aid
         if (!anyPlayerBlocked) {
@@ -198,7 +224,11 @@ export const foreignAidAction: ActionHandler = {
   
           result.players = updatedPlayers;
           result.actionInProgress = null;
-          result.currentTurn = advanceToNextLivingPlayer(updatedPlayers, game.currentTurn);
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
         }
       }
 

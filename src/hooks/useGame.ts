@@ -46,19 +46,7 @@ function cleanFirebaseObject<T>(obj: T | null): T | null {
   ) as unknown as T;
 }
 
-function dealCards(deck: CardType[], numPlayers: number): [CardType[], CardType[][]] {
-  const hands: CardType[][] = [];
-  const remainingDeck = [...deck];
-  
-  for (let i = 0; i < numPlayers; i++) {
-    const hand = remainingDeck.splice(0, 2);
-    hands.push(hand);
-  }
-  
-  return [remainingDeck, hands];
-}
-
-// Exactly 6 predefined colors for the game
+// Exactly 6 predefined colors for the game with distinct contrast
 const PLAYER_COLORS = [
   '#E74C3C', // Red
   '#2ECC71', // Green
@@ -83,6 +71,18 @@ const assignUniqueColor = (existingPlayers: Player[]): string => {
   // If all colors are in use (shouldn't happen with max 6 players), use the first color
   return PLAYER_COLORS[0];
 };
+
+function dealCards(deck: CardType[], numPlayers: number): [CardType[], CardType[][]] {
+  const hands: CardType[][] = [];
+  const remainingDeck = [...deck];
+  
+  for (let i = 0; i < numPlayers; i++) {
+    const hand = remainingDeck.splice(0, 2);
+    hands.push(hand);
+  }
+  
+  return [remainingDeck, hands];
+}
 
 export function useGame(gameId?: string) {
   const [game, setGame] = useState<Game | null>(null);
@@ -121,7 +121,8 @@ export function useGame(gameId?: string) {
         }],
         status: 'waiting',
         actionInProgress: null,
-        responses: {}
+        responses: {},
+        actionUsedThisTurn: false
       };
 
       await setDoc(doc(db, 'games', newGameId), initialGame);
@@ -163,20 +164,25 @@ export function useGame(gameId?: string) {
         throw new Error('Player already in game');
       }
 
+      const currentDeck = game.deck || createDeck();
+      const [newDeck, hands] = dealCards(currentDeck, game.players.length + 1);
+      const playerHand = hands[hands.length - 1];
+
       // Assign a unique color to the player
       const uniqueColor = assignUniqueColor(game.players);
 
-      // We're not dealing cards when joining, only when the game starts
       const completePlayer: Player = {
         ...player,
         color: uniqueColor, // Override any color passed in with a unique one
-        coins: 2, // Start with 2 coins
-        influence: [], // Empty influence array until game starts
-        lastActivity: Date.now() // Initialize lastActivity timestamp
+        influence: playerHand.map(card => ({ 
+          card,
+          revealed: false
+        }))
       };
 
       await updateDoc(gameRef, {
         players: [...game.players, completePlayer],
+        deck: newDeck,
         logs: arrayUnion({
           type: 'system',
           player: 'System',
@@ -196,35 +202,9 @@ export function useGame(gameId?: string) {
 
     try {
       const gameRef = doc(db, 'games', gameId);
-      
-      // Get the current game state
-      const gameDoc = await getDoc(gameRef);
-      if (!gameDoc.exists()) {
-        throw new Error('Game not found');
-      }
-      
-      const currentGame = gameDoc.data() as Game;
-      
-      // Create a new shuffled deck at game start
-      const newDeck = createDeck();
-      
-      // Deal cards to all players
-      const [remainingDeck, hands] = dealCards(newDeck, currentGame.players.length);
-      
-      // Update each player with their new cards
-      const updatedPlayers = currentGame.players.map((player, index) => ({
-        ...player,
-        influence: hands[index].map(card => ({
-          card,
-          revealed: false
-        }))
-      }));
-      
-      // Update the game with the new state
       await updateDoc(gameRef, {
         status: 'playing',
-        players: updatedPlayers,
-        deck: remainingDeck,
+        actionUsedThisTurn: false, // Initialize action flag when starting game
         logs: arrayUnion({
           type: 'system',
           player: 'System',
@@ -245,6 +225,11 @@ export function useGame(gameId?: string) {
   ) => {
     if (!game || !action || playerId < 0 || playerId >= game.players.length) {
       throw new Error('Invalid action parameters');
+    }
+    
+    // Check if the player has already used their action this turn
+    if (game.actionUsedThisTurn && game.currentTurn === playerId) {
+      throw new Error('You have already used your action this turn');
     }
     
     // Validate target for actions that require one
@@ -274,7 +259,7 @@ export function useGame(gameId?: string) {
         }
         
         // For targeted actions, set up the actionInProgress with target
-        if (['steal', 'assassinate', 'coup'].includes(action.type) && action.target !== undefined) {
+        if (['steal', 'assassinate', 'coup', 'investigate'].includes(action.type) && action.target !== undefined) {
           currentGame.actionInProgress = {
             type: action.type,
             player: playerId,
@@ -310,6 +295,9 @@ export function useGame(gameId?: string) {
         if (result.currentTurn !== undefined) updates.currentTurn = result.currentTurn;
         if (result.actionInProgress !== undefined) updates.actionInProgress = cleanFirebaseObject(result.actionInProgress);
         if (result.responses !== undefined) updates.responses = result.responses;
+        
+        // Set actionUsedThisTurn from the result if provided, otherwise set to true
+        updates.actionUsedThisTurn = result.actionUsedThisTurn !== undefined ? result.actionUsedThisTurn : true;
 
         transaction.update(gameRef, updates);
       });
@@ -374,6 +362,7 @@ export function useGame(gameId?: string) {
         if (result.currentTurn !== undefined) updates.currentTurn = result.currentTurn;
         if (result.actionInProgress !== undefined) updates.actionInProgress = cleanFirebaseObject(result.actionInProgress);
         if (result.responses !== undefined) updates.responses = result.responses;
+        if (result.actionUsedThisTurn !== undefined) updates.actionUsedThisTurn = result.actionUsedThisTurn;
 
         transaction.update(gameRef, updates);
       });
@@ -516,6 +505,7 @@ export function useGame(gameId?: string) {
         newMatchCountdownStarted: false,
         newMatchStartTime: null, // Use null instead of undefined
         redirectToLobby: false,
+        actionUsedThisTurn: false, // Reset the action flag for the new match
         logs: [{
           type: 'system',
           player: 'System',

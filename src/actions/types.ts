@@ -15,6 +15,7 @@ export interface ActionResponse {
   playerId: number;
   card?: CardType;
   selectedIndices?: number[]; // For exchange_selection
+  keepCard?: boolean; // For investigate_decision
 }
 
 export interface ActionResult {
@@ -23,6 +24,7 @@ export interface ActionResult {
   currentTurn?: number;
   actionInProgress?: Game['actionInProgress'];
   responses?: Game['responses'];
+  actionUsedThisTurn?: boolean;
 }
 
 export interface ActionHandler {
@@ -43,12 +45,24 @@ export const advanceToNextLivingPlayer = (players: Player[], currentTurn: number
   return nextTurn;
 };
 
+// This function advances to the next player and resets the actionUsedThisTurn flag
+export const advanceToNextTurn = (players: Player[], currentTurn: number): { currentTurn: number, actionUsedThisTurn: boolean } => {
+  const nextTurn = advanceToNextLivingPlayer(players, currentTurn);
+  // Reset the actionUsedThisTurn flag when advancing to the next player
+  return {
+    currentTurn: nextTurn,
+    actionUsedThisTurn: false
+  };
+};
+
 export const getClaimedRole = (actionType: string): CardType | null => {
   const roleMap: Record<string, CardType> = {
     'duke': 'Duke',
     'steal': 'Captain',
     'assassinate': 'Assassin',
     'exchange': 'Ambassador',
+    'investigate': 'Inquisitor',
+    'swap': 'Inquisitor',
   };
   return roleMap[actionType] || null;
 };

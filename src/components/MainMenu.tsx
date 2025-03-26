@@ -8,7 +8,8 @@ interface MainMenuProps {
   playerId: number;
 }
 
-const COLORS = [
+// Six distinct colors for the game
+const PLAYER_COLORS = [
   '#E74C3C', // Red
   '#2ECC71', // Green
   '#3498DB', // Blue
@@ -26,14 +27,14 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   const [showInstructions, setShowInstructions] = useState(false);
 
   // Avatar color based on player ID
-  const playerColor = COLORS[playerId % COLORS.length];
+  const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
 
   const createPlayerData = () => ({
     id: playerId,
     name: playerName || `Player ${playerId % 1000}`,
     coins: 2,
     color: playerColor,
-    avatar: ''
+    avatar: '' // We'll use the color + first initial fallback instead
   });
 
   const handleCreateGame = async () => {

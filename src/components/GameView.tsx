@@ -10,6 +10,8 @@ import { InfluenceCards } from './InfluenceCards';
 import { ResponseButtons } from './ResponseButtons';
 import { LoseInfluenceDialog } from './LoseInfluenceDialog';
 import { ExchangeCardsDialog } from './ExchangeCardsDialog';
+import { SelectCardForInvestigationDialog } from './SelectCardForInvestigationDialog';
+import { InvestigateDecisionDialog } from './InvestigateDecisionDialog';
 import { GameLobby } from './GameLobby';
 import { GameOverScreen } from './GameOverScreen';
 import { ConfirmationDialog } from './ConfirmationDialog';
@@ -75,6 +77,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       <GameLobby 
         game={game}
         isHost={currentPlayer.id === game.players[0]?.id} // First player is host
+        currentPlayerId={playerId}
         onStartGame={startGame}
         onReturnToMainMenu={onReturnToLobby || (() => {})}
         currentPlayerId={playerId}
@@ -87,10 +90,11 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   // Find current player's index for turn-based game logic
   const playerIndex = game.players.findIndex(player => player.id === playerId);
   const isCurrentTurn = game.currentTurn === playerIndex && !currentPlayer.eliminated;
+  const canTakeAction = isCurrentTurn && !game.actionUsedThisTurn;
   const actionInProgress = game.actionInProgress;
 
   const handleActionSelect = async (action: GameAction) => {
-    if (!isCurrentTurn || currentPlayer.eliminated) return;
+    if (!canTakeAction || currentPlayer.eliminated) return;
     
     // Check if the player has enough coins for the action
     if (action.cost && currentPlayer.coins < action.cost) {
@@ -115,7 +119,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   };
 
   const handlePlayerTarget = async (targetId: number) => {
-    if (selectedAction && ['steal', 'assassinate', 'coup'].includes(selectedAction.type)) {
+    if (selectedAction && ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type)) {
       // First set the targeted player to provide visual feedback
       setTargetedPlayerId(targetId);
       
@@ -148,16 +152,24 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     console.log('Sending response:', response, 'with card:', card);
     
     try {
-      // Debug the response to see what's happening
-      const responseData = { 
+      // Create a clean response object without undefined values
+      let responseData: any = { 
         type: response,
-        playerId: playerIndex,
-        card: card as CardType
+        playerId: playerIndex
       };
       
-      console.log('Response data:', responseData);
+      // Only include card if it's defined and needed (block actions)
+      if (card && response === 'block') {
+        responseData.card = card;
+      }
+      
+      console.log('Final response data being sent:', responseData);
+      console.log('Player index responding:', playerIndex);
       
       await respondToAction(playerIndex, responseData);
+      
+      // Show confirmation in console
+      console.log(`Player ${currentPlayer.name} (index ${playerIndex}) responded with ${response}`);
     } catch (error) {
       console.error('Failed to respond:', error);
     }
@@ -179,19 +191,20 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   
   const handleExchangeCards = async (keptCardIndices: number[]) => {
     if (!game || !game.actionInProgress || !game.actionInProgress.exchangeCards) {
-      console.error('Exchange attempted without proper game state');
+      console.error('Exchange/Swap attempted without proper game state');
       return;
     }
     
-    // Make sure the action is properly set up for exchange
-    if (game.actionInProgress.type !== 'exchange' || game.actionInProgress.player !== playerIndex) {
-      console.error('Exchange attempted by the wrong player or with wrong action type');
+    // Make sure the action is properly set up for exchange or swap
+    if ((game.actionInProgress.type !== 'exchange' && game.actionInProgress.type !== 'swap') || 
+        game.actionInProgress.player !== playerIndex) {
+      console.error('Exchange/Swap attempted by the wrong player or with wrong action type');
       return;
     }
     
     // Make sure the exchangeCards array is actually populated
     if (!Array.isArray(game.actionInProgress.exchangeCards) || game.actionInProgress.exchangeCards.length === 0) {
-      console.error('Exchange attempted with no cards available');
+      console.error('Exchange/Swap attempted with no cards available');
       return;
     }
     
@@ -203,21 +216,71 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     }
     
     try {
-      // Process the exchange
+      // Process the exchange/swap
       await respondToAction(playerIndex, {
         type: 'exchange_selection',
         playerId: playerIndex,
         selectedIndices: keptCardIndices
       });
     } catch (error) {
-      console.error('Failed to exchange cards:', error);
+      console.error('Failed to exchange/swap cards:', error);
+    }
+  };
+  
+  const handleCardSelectForInvestigation = async (card: CardType) => {
+    if (!game || !game.actionInProgress || game.actionInProgress.type !== 'investigate') {
+      console.error('Investigation card selection attempted without proper game state');
+      return;
+    }
+    
+    // Make sure the action is properly set up for investigation
+    if (game.actionInProgress.target !== playerIndex) {
+      console.error('Investigation card selection attempted by the wrong player');
+      return;
+    }
+    
+    try {
+      // Process the card selection for investigation
+      await respondToAction(playerIndex, {
+        type: 'select_card_for_investigation',
+        playerId: playerIndex,
+        card
+      });
+    } catch (error) {
+      console.error('Failed to select card for investigation:', error);
+    }
+  };
+  
+  const handleInvestigateDecision = async (keepCard: boolean) => {
+    if (!game || !game.actionInProgress || 
+        game.actionInProgress.type !== 'investigate' || 
+        !game.actionInProgress.investigateCard) {
+      console.error('Investigation decision attempted without proper game state');
+      return;
+    }
+    
+    // Make sure the action is properly set up for investigation decision
+    if (game.actionInProgress.player !== playerIndex) {
+      console.error('Investigation decision attempted by the wrong player');
+      return;
+    }
+    
+    try {
+      // Process the investigation decision
+      await respondToAction(playerIndex, {
+        type: 'investigate_decision',
+        playerId: playerIndex,
+        keepCard
+      });
+    } catch (error) {
+      console.error('Failed to complete investigation decision:', error);
     }
   };
 
   const isPlayerTargetable = (id: number) => {
     const targetPlayer = game.players[id];
     return selectedAction && 
-           ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && 
+           ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type) && 
            id !== playerIndex &&
            !targetPlayer.eliminated;
   };
@@ -343,7 +406,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
           )}
         </div>
 
-        <div className="h-32 relative mt-auto">
+        <div className="h-32 relative mt-auto mb-2">
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 px-6 pb-6">
             <div className="flex justify-between items-end">
@@ -351,11 +414,11 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                 <BottomPlayerInfo player={currentPlayer} />
               </div>
 
-              <div className="absolute left-[58.333%] bottom-6 transform -translate-x-1/2 z-10">
+              <div className="absolute left-[56%] bottom-6 transform -translate-x-1/2 z-10">
                 <InfluenceCards influence={currentPlayer.influence} showFaceUp={true} />
               </div>
 
-              <div className="z-20 relative">
+              <div className="z-20 relative mr-2">
                 {currentPlayer.eliminated ? (
                   // Red skull icon for eliminated players
                   <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center">
@@ -373,11 +436,16 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                       setShowActions(!showActions);
                     }}
                     className="relative group"
-                    disabled={!isCurrentTurn || gameState === 'waiting_for_influence_loss'}
+                    disabled={!canTakeAction || gameState === 'waiting_for_influence_loss'}
                   >
-                    {/* Amber fire ornament circle */}
-                    {isCurrentTurn && (
+                    {/* Amber fire ornament circle for active turn */}
+                    {canTakeAction && (
                       <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/30 to-amber-500/20 fire-pulse" />
+                    )}
+                    
+                    {/* Gray pulse for turn but used action */}
+                    {isCurrentTurn && game.actionUsedThisTurn && (
+                      <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-gray-500/20 via-gray-400/30 to-gray-500/20" />
                     )}
                     
                     <div className={`
@@ -400,8 +468,10 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                       overflow-hidden
                       transition-all duration-300
                       ${showActions ? 'ring-2 ring-slate-400/30' : ''}
-                      ${isCurrentTurn ? 'ring-2 ring-amber-500/30' : ''}
+                      ${canTakeAction ? 'ring-2 ring-amber-500/30' : ''} 
+                      ${isCurrentTurn && game.actionUsedThisTurn ? 'ring-2 ring-gray-500/30' : ''}
                       ${!isCurrentTurn || gameState === 'waiting_for_influence_loss' ? 'opacity-50 cursor-not-allowed' : ''}
+                      ${isCurrentTurn && game.actionUsedThisTurn ? 'opacity-70 cursor-not-allowed' : ''}
                     `}>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/10 to-transparent transform -rotate-45 gem-shine" />
                       
@@ -410,19 +480,23 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                       
                       <div className={`
                         absolute -inset-1
-                        bg-amber-400/20
                         blur-lg
                         transition-opacity duration-300
-                        ${showActions || isCurrentTurn ? 'opacity-100' : 'opacity-0'}
+                        ${canTakeAction ? 'bg-amber-400/20 opacity-100' : ''}
+                        ${isCurrentTurn && game.actionUsedThisTurn ? 'bg-gray-400/20 opacity-100' : ''}
+                        ${!isCurrentTurn ? 'bg-amber-400/20 opacity-0' : ''}
                       `} />
 
                       <Menu className={`
                         relative
                         w-6 h-6
                         transition-all duration-300
-                        ${showActions || isCurrentTurn ? 'text-amber-300' : 'text-slate-400'}
-                        group-hover:text-amber-300
-                        transform group-hover:scale-110
+                        ${showActions ? 'text-amber-300' : ''}
+                        ${canTakeAction ? 'text-amber-300' : ''}
+                        ${isCurrentTurn && game.actionUsedThisTurn ? 'text-gray-400' : ''}
+                        ${!isCurrentTurn ? 'text-slate-400' : ''}
+                        ${canTakeAction ? 'group-hover:text-amber-300' : ''}
+                        ${canTakeAction ? 'transform group-hover:scale-110' : ''}
                       `} />
                     </div>
                   </button>
@@ -465,9 +539,29 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         />
       )}
       
+      {/* Card selection dialog for investigation */}
+      {gameState === 'waiting_for_card_selection' && 
+        actionInProgress?.type === 'investigate' && (
+        <SelectCardForInvestigationDialog
+          playerInfluence={currentPlayer.influence}
+          onCardSelect={handleCardSelectForInvestigation}
+        />
+      )}
+
+      {/* Investigation decision dialog */}
+      {gameState === 'waiting_for_investigate_decision' && 
+        actionInProgress?.type === 'investigate' && 
+        actionInProgress?.investigateCard && (
+        <InvestigateDecisionDialog
+          card={actionInProgress.investigateCard.card}
+          targetName={game.players[actionInProgress.target!].name}
+          onDecision={handleInvestigateDecision}
+        />
+      )}
+      
       {/* Target Selection Overlay - positioned within game container */}
       <div className="pointer-events-none relative">
-        {selectedAction && ['steal', 'assassinate', 'coup'].includes(selectedAction.type) && (
+        {selectedAction && ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type) && (
           <TargetSelectionOverlay 
             actionType={selectedAction.type} 
             onCancel={cancelTargetSelection} 

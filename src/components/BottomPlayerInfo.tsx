@@ -15,20 +15,11 @@ export function BottomPlayerInfo({ player }: BottomPlayerInfoProps) {
           {/* Avatar */}
           <div className="relative shrink-0">
             <div className="w-8 h-8 rounded-full overflow-hidden">
-              {player.avatar ? (
-                <img
-                  src={player.avatar}
-                  alt={player.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div 
-                  className="w-full h-full flex items-center justify-center font-bold text-sm text-white"
-                  style={{ backgroundColor: player.color }}
-                >
-                  {player.name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <img
+                src={player.avatar}
+                alt={player.name}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
 

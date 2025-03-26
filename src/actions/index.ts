@@ -6,6 +6,7 @@ import { assassinateAction } from './assassinate';
 import { stealAction } from './steal';
 import { exchangeAction } from './exchange';
 import { coupAction } from './coup';
+import { investigateAction, swapAction } from './inquisitor';
 import { ResponseType, CardType } from '../types';
 
 // Export the ActionResponse interface directly
@@ -14,6 +15,7 @@ export interface ActionResponse {
   playerId: number;
   card?: CardType;
   selectedIndices?: number[];
+  keepCard?: boolean;
 }
 
 // Map of action handlers
@@ -24,5 +26,7 @@ export const actions: Record<string, ActionHandler> = {
   'assassinate': assassinateAction,
   'steal': stealAction,
   'exchange': exchangeAction,
-  'coup': coupAction
+  'coup': coupAction,
+  'investigate': investigateAction,
+  'swap': swapAction
 };

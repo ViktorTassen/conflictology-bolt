@@ -67,7 +67,8 @@ export function TargetSelectionOverlay({ actionType, onCancel }: TargetSelection
   return (
     <div className="relative z-40 pointer-events-none">
       {/* Compact target selection bar positioned at bottom */}
-      <div className="absolute bottom-36 inset-x-0 flex justify-center pointer-events-auto">
+      <div className="absolute bottom-44
+       inset-x-0 flex justify-center pointer-events-auto">
         <div className={`
           ${classes.bgHint} backdrop-blur-md 
           px-4 py-2 rounded-full
