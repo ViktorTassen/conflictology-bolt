@@ -1,6 +1,6 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { GameMessages } from '../messages';
-import { CardType } from '../types';
+import { CardType, Player } from '../types';
 
 // Inquisitor has two main actions:
 // 1. Investigate: Look at another player's card and decide to keep or swap it
@@ -31,20 +31,16 @@ export const investigateAction: ActionHandler = {
       throw new Error('Target player has no cards to investigate');
     }
 
-    const targetName = game.players[targetId].name;
-    const targetColor = game.players[targetId].color;
-
     const result: ActionResult = {
       logs: [createLog('investigate', player, {
-        target: targetName,
-        targetColor: targetColor,
+        target: targetPlayer.name,
+        targetColor: targetPlayer.color,
         message: GameMessages.claims.investigate
       })],
       actionInProgress: {
         type: 'investigate',
         player: playerId,
         target: targetId,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
@@ -54,7 +50,7 @@ export const investigateAction: ActionHandler = {
   },
 
   respond: async ({ game, player, playerId }, response: ActionResponse) => {
-    if (!game.actionInProgress) return {};
+    if (!game?.actionInProgress) return {};
 
     // Check if player is eliminated
     if (player.eliminated) {
@@ -124,15 +120,14 @@ export const investigateAction: ActionHandler = {
         })];
       } else {
         // If Inquisitor wants to swap the card
-        const updatedDeck = [...game.deck];
-        
-        // Make sure we have cards in the deck
-        if (updatedDeck.length === 0) {
+        // Draw a new card from the deck
+        if (game.deck.length === 0) {
           result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `No cards left in the deck for swap. Card remains unchanged.`
           })];
           
           result.actionInProgress = null;
+          result.players = updatedPlayers;
           
           // Get next turn and reset actionUsedThisTurn flag
           const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
@@ -144,13 +139,16 @@ export const investigateAction: ActionHandler = {
         
         // Get the card to be replaced and add it back to the deck
         const cardToReplace = targetPlayer.influence[investigateCard.cardIndex].card;
-        updatedDeck.push(cardToReplace);
+        game.deck.push(cardToReplace);
         
-        // Shuffle the deck
-        updatedDeck.sort(() => Math.random() - 0.5);
+        // Shuffle the deck thoroughly using Fisher-Yates
+        for (let i = game.deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+        }
         
         // Draw a new card for the target player
-        const newCard = updatedDeck.pop()!;
+        const newCard = game.deck.pop()!;
         updatedPlayers[targetId].influence[investigateCard.cardIndex].card = newCard;
         
         // Log the swap
@@ -159,9 +157,6 @@ export const investigateAction: ActionHandler = {
           targetColor: targetPlayer.color,
           message: GameMessages.results.investigateSwap(targetPlayer.name)
         })];
-        
-        // Update the game's deck
-        game.deck = updatedDeck;
       }
       
       // Update the game state
@@ -204,7 +199,7 @@ export const investigateAction: ActionHandler = {
           playerId !== game.actionInProgress.player &&
           game.actionInProgress.challengeDefense) {
         
-        // First, replace the Inquisitor card that was revealed during challenge
+        // Replace the revealed Inquisitor card
         const replaceResult = replaceRevealedCard(
           updatedPlayers[game.actionInProgress.player],
           'Inquisitor',
@@ -259,7 +254,7 @@ export const investigateAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
+          challengeDefense: true,
           responses: updatedResponses
         };
       } else {
@@ -311,7 +306,6 @@ export const investigateAction: ActionHandler = {
         
         return result;
       }
-      
 
       return result;
     }
@@ -334,7 +328,6 @@ export const swapAction: ActionHandler = {
       actionInProgress: {
         type: 'swap',
         player: playerId,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
@@ -344,7 +337,7 @@ export const swapAction: ActionHandler = {
   },
 
   respond: async ({ game, player, playerId }, response: ActionResponse) => {
-    if (!game.actionInProgress) return {};
+    if (!game?.actionInProgress) return {};
 
     // Check if player is eliminated
     if (player.eliminated) {
@@ -412,30 +405,19 @@ export const swapAction: ActionHandler = {
         }
       });
       
-      // Cards not selected go back to the deck
-      const cardsToReturnToDeck: CardType[] = [];
-      availableCards.forEach((card, idx) => {
-        if (!response.selectedIndices?.includes(idx)) {
-          cardsToReturnToDeck.push(card.card);
-        }
-      });
+      // Return all unchosen cards to the deck
+      const cardsToReturnToDeck: CardType[] = availableCards
+        .filter((_, idx) => !response.selectedIndices?.includes(idx))
+        .map(card => card.card);
       
-      // Create a new deck ensuring we don't exceed 3 of each card type
-      const updatedDeck = [...game.deck];
-      cardsToReturnToDeck.forEach(card => {
-        // Count current occurrences of this card type in the deck
-        const cardCount = updatedDeck.filter(c => c === card).length;
-        // Only add if we haven't reached the limit of 3
-        if (cardCount < 3) {
-          updatedDeck.push(card);
-        }
-      });
+      // Add cards back to deck and shuffle
+      game.deck.push(...cardsToReturnToDeck);
       
-      // Shuffle the updated deck
-      updatedDeck.sort(() => Math.random() - 0.5);
-      
-      // Update the deck in the game
-      game.deck = updatedDeck;
+      // Shuffle the deck thoroughly using Fisher-Yates
+      for (let i = game.deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+      }
       
       // Log the swap completion
       result.logs = [createLog('swap-complete', player, {
@@ -482,7 +464,7 @@ export const swapAction: ActionHandler = {
           playerId !== game.actionInProgress.player &&
           game.actionInProgress.challengeDefense) {
         
-        // First, replace the Inquisitor card that was revealed during challenge
+        // Replace the revealed Inquisitor card
         const replaceResult = replaceRevealedCard(
           updatedPlayers[game.actionInProgress.player],
           'Inquisitor',
@@ -492,9 +474,9 @@ export const swapAction: ActionHandler = {
         
         // Set up for swap phase
         // Draw 1 card from the deck for swap
-        const updatedDeck = [...updatedGame.deck]; 
+        const drawnCards = game.deck.splice(0, 1);
         
-        if (updatedDeck.length < 1) {
+        if (drawnCards.length < 1) {
           // Not enough cards in deck
           result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `Not enough cards in the deck for swap. Swap canceled.`
@@ -511,9 +493,6 @@ export const swapAction: ActionHandler = {
           return result;
         }
         
-        // Draw 1 card for swap
-        const drawnCards = updatedDeck.splice(0, 1);
-        
         result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `${actionPlayer.name} will now swap cards.`
         }));
@@ -527,11 +506,7 @@ export const swapAction: ActionHandler = {
           responses: {} // Clear responses for swap phase
         };
         
-        // Use the updated game state with the replaced card and updated deck
         result.players = updatedPlayers;
-        // Update the game's deck
-        game.deck = updatedDeck;
-        
         return result;
       }
       
@@ -557,14 +532,14 @@ export const swapAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Inquisitor claim and failed.`
+          message: `challenges Inquisitor claim! Fails`
         })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
+          challengeDefense: true,
           responses: updatedResponses
         };
       } else {
@@ -572,7 +547,7 @@ export const swapAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Inquisitor claim and succeeded.`
+          message: `challenges Inquisitor claim! Success`
         })];
 
         result.actionInProgress = {
@@ -598,14 +573,9 @@ export const swapAction: ActionHandler = {
         index !== game.actionInProgress!.player && !p.eliminated
       );
       
-      console.log('Other players who need to respond to Swap:', otherPlayers.map(p => ({ name: p.name, id: p.id, index: game.players.indexOf(p) })));
-      console.log('Current responses for Swap:', updatedResponses);
-      
       const allResponded = otherPlayers.every(p => {
-        // Get the player's index which is used as the key in responses
         const playerIdx = game.players.indexOf(p);
         const hasResponded = updatedResponses[playerIdx] !== undefined;
-        console.log(`Player ${p.name} (index ${playerIdx}) has responded:`, hasResponded);
         return hasResponded;
       });
 
@@ -616,15 +586,10 @@ export const swapAction: ActionHandler = {
         return response && response.type === 'allow';
       });
       
-      console.log('All players have allowed Swap action?', allPlayersAllowed);
-      
       if (allPlayersAllowed) {
         // All players allowed - process swap action
-        const updatedPlayers = [...game.players];
-        const updatedDeck = [...game.deck];
-        
-        // Draw 1 card for the swap (instead of 2 for exchange)
-        const drawnCards = updatedDeck.splice(0, 1);
+        // Draw 1 card for the swap
+        const drawnCards = game.deck.splice(0, 1);
         
         result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `Swap allowed. ${actionPlayer.name} selecting cards.`
@@ -637,8 +602,7 @@ export const swapAction: ActionHandler = {
           responses: {} // Clear responses for swap phase
         };
         
-        result.players = updatedPlayers;
-        game.deck = updatedDeck;
+        result.players = [...game.players];
       }
 
       return result;

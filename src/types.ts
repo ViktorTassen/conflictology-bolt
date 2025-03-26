@@ -108,7 +108,6 @@ export interface Game {
     type: ActionType;
     player: number;
     target?: number;
-    responseDeadline: number;
     blockingPlayer?: number;
     blockingCard?: CardType;
     losingPlayer?: number;

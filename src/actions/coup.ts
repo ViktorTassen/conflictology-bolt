@@ -1,4 +1,4 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss } from './types';
 import { GameMessages } from '../messages';
 
 export const coupAction: ActionHandler = {
@@ -18,10 +18,17 @@ export const coupAction: ActionHandler = {
       throw new Error('Coup requires 7 coins');
     }
     
-    // Verify target player isn't eliminated
+    // Get target player
     const targetPlayer = game.players[game.actionInProgress.target];
+    
+    // Verify target player isn't eliminated
     if (targetPlayer.eliminated) {
       throw new Error('Cannot target an eliminated player');
+    }
+    
+    // Verify target has influence to lose
+    if (!targetPlayer.influence.some(i => !i.revealed)) {
+      throw new Error('Target player has no influence to lose');
     }
 
     // Deduct the 7 coins cost
@@ -33,7 +40,8 @@ export const coupAction: ActionHandler = {
       logs: [createLog('coup', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.claims.coup
+        coins: player.coins >= 10 ? player.coins : undefined,
+        message: player.coins >= 10 ? GameMessages.claims.coupWithExcess : GameMessages.claims.coup
       })],
       actionInProgress: {
         type: 'coup',
@@ -41,7 +49,6 @@ export const coupAction: ActionHandler = {
         target: game.actionInProgress.target,
         // Mark target as needing to lose influence immediately
         losingPlayer: game.actionInProgress.target,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
@@ -51,7 +58,7 @@ export const coupAction: ActionHandler = {
   },
 
   respond: async ({ game, player, playerId }, response: ActionResponse) => {
-    if (!game.actionInProgress) return {};
+    if (!game?.actionInProgress) return {};
 
     // Check if player is eliminated
     if (player.eliminated) {
@@ -87,6 +94,9 @@ export const coupAction: ActionHandler = {
       const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+    } else {
+      // Invalid response type for coup
+      throw new Error('Invalid response type for coup action');
     }
 
     return result;

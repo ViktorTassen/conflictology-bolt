@@ -1,6 +1,6 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
-import { GameMessages } from '../messages';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
 import { CardType } from '../types';
+import { GameMessages } from '../messages';
 
 export const exchangeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -16,7 +16,6 @@ export const exchangeAction: ActionHandler = {
       actionInProgress: {
         type: 'exchange',
         player: playerId,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
@@ -26,7 +25,7 @@ export const exchangeAction: ActionHandler = {
   },
 
   respond: async ({ game, player, playerId }, response: ActionResponse) => {
-    if (!game.actionInProgress) return {};
+    if (!game?.actionInProgress) return {};
 
     // Check if player is eliminated
     if (player.eliminated) {
@@ -94,30 +93,19 @@ export const exchangeAction: ActionHandler = {
         }
       });
       
-      // Cards not selected go back to the deck
-      const cardsToReturnToDeck: CardType[] = [];
-      availableCards.forEach((card, idx) => {
-        if (!response.selectedIndices?.includes(idx)) {
-          cardsToReturnToDeck.push(card.card);
-        }
-      });
+      // Return all unchosen cards to the deck
+      const cardsToReturnToDeck: CardType[] = availableCards
+        .filter((_, idx) => !response.selectedIndices?.includes(idx))
+        .map(card => card.card);
       
-      // Create a new deck ensuring we don't exceed 3 of each card type
-      const updatedDeck = [...game.deck];
-      cardsToReturnToDeck.forEach(card => {
-        // Count current occurrences of this card type in the deck
-        const cardCount = updatedDeck.filter(c => c === card).length;
-        // Only add if we haven't reached the limit of 3
-        if (cardCount < 3) {
-          updatedDeck.push(card);
-        }
-      });
+      // Add cards back to deck and shuffle
+      game.deck.push(...cardsToReturnToDeck);
       
-      // Shuffle the updated deck
-      updatedDeck.sort(() => Math.random() - 0.5);
-      
-      // Update the deck in the game
-      game.deck = updatedDeck;
+      // Shuffle the deck thoroughly using Fisher-Yates
+      for (let i = game.deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+      }
       
       // Log the exchange completion
       result.logs = [createLog('exchange-complete', player, {
@@ -173,11 +161,10 @@ export const exchangeAction: ActionHandler = {
         result.logs = result.logs.concat(replaceResult.logs);
         
         // Set up for exchange phase
-        // Draw 2 cards from the deck for exchange - using the updated deck from replaceRevealedCard
-        // Make sure we're using the updated deck from updatedGame, which contains changes from replaceRevealedCard
-        const updatedDeck = [...updatedGame.deck]; 
+        // Draw 2 cards from the deck for exchange
+        const drawnCards = game.deck.splice(0, 2);
         
-        if (updatedDeck.length < 2) {
+        if (drawnCards.length < 2) {
           // Not enough cards in deck
           result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `Not enough cards in the deck for exchange. Exchange canceled.`
@@ -194,9 +181,6 @@ export const exchangeAction: ActionHandler = {
           return result;
         }
         
-        // Draw 2 cards for exchange
-        const drawnCards = updatedDeck.splice(0, 2);
-        
         result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `${actionPlayer.name} will now exchange cards.`
         }));
@@ -210,11 +194,7 @@ export const exchangeAction: ActionHandler = {
           responses: {} // Clear responses for exchange phase
         };
         
-        // Use the updated game state with the replaced card and updated deck
         result.players = updatedPlayers;
-        // Update the game's deck
-        game.deck = updatedDeck;
-        
         return result;
       }
       
@@ -240,7 +220,7 @@ export const exchangeAction: ActionHandler = {
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Ambassador claim and failed.`
+          message: `challenges Ambassador claim! Fails`
         })];
 
         result.actionInProgress = {
@@ -255,7 +235,7 @@ export const exchangeAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `${player.name} challenged ${actionPlayer.name}'s Ambassador claim and succeeded.`
+          message: `challenges Ambassador claim! Success`
         })];
 
         result.actionInProgress = {
@@ -277,19 +257,13 @@ export const exchangeAction: ActionHandler = {
       };
 
       // Check if all other non-eliminated players have allowed
-      // Already using correct index-based filtering
       const otherPlayers = game.players.filter((p, index) => 
         index !== game.actionInProgress!.player && !p.eliminated
       );
       
-      console.log('Other players who need to respond to Exchange:', otherPlayers.map(p => ({ name: p.name, id: p.id, index: game.players.indexOf(p) })));
-      console.log('Current responses for Exchange:', updatedResponses);
-      
       const allResponded = otherPlayers.every(p => {
-        // Get the player's index which is used as the key in responses
         const playerIdx = game.players.indexOf(p);
         const hasResponded = updatedResponses[playerIdx] !== undefined;
-        console.log(`Player ${p.name} (index ${playerIdx}) has responded:`, hasResponded);
         return hasResponded;
       });
 
@@ -300,21 +274,14 @@ export const exchangeAction: ActionHandler = {
         return response && response.type === 'allow';
       });
       
-      console.log('All players have allowed Exchange action?', allPlayersAllowed);
-      
       if (allPlayersAllowed) {
         // All players allowed - process exchange action
-        const updatedPlayers = [...game.players];
-        const updatedDeck = [...game.deck];
-        
-        
         // Draw 2 cards for the exchange
-        const drawnCards = updatedDeck.splice(0, 2);
+        const drawnCards = game.deck.splice(0, 2);
         
         result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `Exchange allowed. ${actionPlayer.name} selecting cards.`
         })];
-        
         
         // Set up for exchange phase
         result.actionInProgress = {
@@ -323,8 +290,7 @@ export const exchangeAction: ActionHandler = {
           responses: {} // Clear responses for exchange phase
         };
         
-        result.players = updatedPlayers;
-        game.deck = updatedDeck;
+        result.players = [...game.players];
       }
 
       return result;

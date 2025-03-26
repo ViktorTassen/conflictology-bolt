@@ -13,7 +13,6 @@ export const foreignAidAction: ActionHandler = {
       actionInProgress: {
         type: 'foreign-aid',
         player: playerId,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }

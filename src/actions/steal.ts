@@ -31,7 +31,6 @@ export const stealAction: ActionHandler = {
         type: 'steal',
         player: playerId,
         target: game.actionInProgress.target,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
@@ -45,7 +44,7 @@ export const stealAction: ActionHandler = {
 
     // Check if player is eliminated
     if (player.eliminated) {
-      throw new Error('Eliminated players cannot perform actions');
+      throw new Error('Eliminated players cannot respond to actions');
     }
 
     const actionPlayer = game.players[game.actionInProgress.player];
@@ -364,7 +363,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-         message: `steals $2M from`
+          message: `steals $2M from`
         }));
 
         result.players = updatedPlayers;

@@ -273,6 +273,14 @@ export const applyInfluenceLoss = (
   return { logs, eliminated: false };
 };
 
+// Helper function to shuffle a deck using Fisher-Yates algorithm
+const shuffleDeck = (deck: CardType[]): void => {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+};
+
 export const replaceRevealedCard = (
   player: Player,
   revealedCardType: CardType,
@@ -288,40 +296,33 @@ export const replaceRevealedCard = (
     return { logs };
   }
   
-  
-  // Try to find a matching card that's not revealed first (this is the ideal case)
+  // Find the revealed card to replace
   let revealedCardIndex = player.influence.findIndex(
     i => !i.revealed && i.card === revealedCardType
   );
   
-  // If not found, check if there's a recently revealed card of the right type
+  // If not found, check for any revealed card of the right type
   if (revealedCardIndex === -1) {
-    logs.push(createSystemLog(`No hidden ${revealedCardType} found, checking for revealed cards`));
-    
-    // Look for any card of the specified type, even if revealed
     revealedCardIndex = player.influence.findIndex(
       i => i.card === revealedCardType
     );
     
+    // If still not found, use any unrevealed card
     if (revealedCardIndex === -1) {
-      // If we still can't find the card, just use any unrevealed card
-      logs.push(createSystemLog(`No ${revealedCardType} card found at all, using first hidden card`));
       revealedCardIndex = player.influence.findIndex(i => !i.revealed);
       
-      // If there are no unrevealed cards, we can't replace anything
       if (revealedCardIndex === -1) {
-        logs.push(createSystemLog(`Player has no hidden cards to replace. Skip card replacement.`));
+        logs.push(createSystemLog(`Player has no cards to replace. Skip card replacement.`));
         return { logs };
       }
     }
   }
   
-
-  // Shuffle the deck (Fisher-Yates algorithm)
-  for (let i = game.deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-  }
+  // Return the revealed card to the deck
+  game.deck.push(revealedCardType);
+  
+  // Shuffle the deck thoroughly
+  shuffleDeck(game.deck);
   
   // Draw a new card for the player
   if (game.deck.length === 0) {
@@ -331,7 +332,9 @@ export const replaceRevealedCard = (
   
   const newCard = game.deck.pop()!;
   player.influence[revealedCardIndex].card = newCard;
-
+  
+  // Log the card replacement
+  logs.push(createSystemLog(GameMessages.system.cardReveal(player.name, revealedCardType)));
   
   return { logs };
 };

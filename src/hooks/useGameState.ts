@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Game, GameState, ResponseType, CardType, ResponseOptions } from '../types';
+import { Game, GameState, CardType, ResponseOptions } from '../types';
 
 interface GameStateHelpers {
   getGameState: (playerId: number) => GameState;
@@ -106,7 +106,6 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
 
       // Handle responses to blocks
       if (actionInProgress.blockingPlayer !== undefined) {
-        const blockingCard = actionInProgress.blockingCard as CardType;
         
         // If you're the action player or not the blocker, you can challenge or allow
         if (actionInProgress.player === playerId || actionInProgress.blockingPlayer !== playerId) {

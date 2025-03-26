@@ -264,7 +264,6 @@ export function useGame(gameId?: string) {
             type: action.type,
             player: playerId,
             target: action.target,
-            responseDeadline: Date.now() + 10000,
             responses: {},
             resolved: false
           };

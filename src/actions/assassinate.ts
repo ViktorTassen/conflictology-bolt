@@ -42,7 +42,6 @@ export const assassinateAction: ActionHandler = {
         type: 'assassinate',
         player: playerId,
         target: targetId,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
@@ -340,7 +339,7 @@ export const assassinateAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.blockingPlayer,
           challengeInProgress: true,
-          blockingCardType: 'Contessa', // Store the claimed card type for reference
+          blockingCard: 'Contessa', // Store the claimed card type for reference
           challengeDefense: false, // Explicitly mark as failed defense
           responses: updatedResponses
         };

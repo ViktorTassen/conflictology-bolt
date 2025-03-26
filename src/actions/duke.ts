@@ -16,7 +16,6 @@ export const dukeAction: ActionHandler = {
       actionInProgress: {
         type: 'duke',
         player: playerId,
-        responseDeadline: Date.now() + 10000,
         responses: {},
         resolved: false
       }
