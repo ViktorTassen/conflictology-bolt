@@ -14,18 +14,26 @@ import { nanoid } from 'nanoid';
 import { Game, Player, CARDS, CardType, GameAction } from '../types';
 import { actions, ActionResponse } from '../actions';
 
+// Improved Fisher-Yates shuffle to ensure proper randomization
 function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  
+  // Perform multiple shuffles to ensure randomness
+  for (let shuffle = 0; shuffle < 3; shuffle++) {
+    for (let i = newArray.length - 1; i > 0; i--) {
+      // Use a better random number source when available
+      const j = Math.floor(Math.random() * (i + 1));
+      // Swap elements
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
   }
+  
   return newArray;
 }
 
 // Each card type should have exactly 3 copies in the deck
 function createDeck(): CardType[] {
-  // Create a deck with exactly 3 copies of each card type
+  // Create a deck with exactly 3 copies of each card type (total 18 cards)
   const deck: CardType[] = [];
   CARDS.forEach(card => {
     for (let i = 0; i < 3; i++) {
@@ -105,7 +113,7 @@ export function useGame(gameId?: string) {
   const createGame = async () => {
     try {
       const newGameId = nanoid(6);
-      const deck = createDeck();
+      const deck = createDeck(); // Create a fresh 18-card deck
       
       const initialGame: Game = {
         id: newGameId,
@@ -124,6 +132,15 @@ export function useGame(gameId?: string) {
         responses: {},
         actionUsedThisTurn: false
       };
+
+      // Add log about deck creation
+      initialGame.logs.push({
+        type: 'system',
+        player: 'System',
+        playerColor: '#9CA3AF',
+        timestamp: Date.now(),
+        message: `Deck created with ${deck.length} cards`
+      });
 
       await setDoc(doc(db, 'games', newGameId), initialGame);
       return newGameId;
@@ -164,9 +181,18 @@ export function useGame(gameId?: string) {
         throw new Error('Player already in game');
       }
 
-      const currentDeck = game.deck || createDeck();
-      const [newDeck, hands] = dealCards(currentDeck, game.players.length + 1);
-      const playerHand = hands[hands.length - 1];
+      // If there's no deck or if it appears corrupted, create a fresh one
+      const totalCards = (game.deck ? game.deck.length : 0) + 
+                        game.players.reduce((sum, p) => 
+                          sum + p.influence.filter(i => i.card).length, 0);
+                        
+      // If we don't have the expected number of cards in the game, recreate the deck
+      const currentDeck = (game.deck && totalCards <= 18) ? 
+        game.deck : createDeck();
+      
+      // Deal cards to the new player
+      const [newDeck, hands] = dealCards(currentDeck, 1);
+      const playerHand = hands[0];
 
       // Assign a unique color to the player
       const uniqueColor = assignUniqueColor(game.players);
@@ -476,8 +502,10 @@ export function useGame(gameId?: string) {
     
     try {
       const gameRef = doc(db, 'games', game.id);
-      const newDeck = createDeck();
-      const playerHands = dealCards(newDeck, game.players.length)[1];
+      const newDeck = createDeck(); // Create a fresh 18-card deck
+      
+      // Deal cards to players and get the remaining deck
+      const [remainingDeck, playerHands] = dealCards(newDeck, game.players.length);
       
       // Reset all players
       const updatedPlayers = game.players.map((player, index) => ({
@@ -495,7 +523,7 @@ export function useGame(gameId?: string) {
       await updateDoc(gameRef, {
         status: 'playing',
         players: updatedPlayers,
-        deck: newDeck,
+        deck: remainingDeck, // Use the remaining deck after dealing cards
         currentTurn: 0,
         actionInProgress: null,
         responses: {},

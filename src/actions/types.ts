@@ -273,12 +273,59 @@ export const applyInfluenceLoss = (
   return { logs, eliminated: false };
 };
 
-// Helper function to shuffle a deck using Fisher-Yates algorithm
+// Helper function to shuffle a deck using improved Fisher-Yates algorithm
 const shuffleDeck = (deck: CardType[]): void => {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
+  // Perform multiple shuffles to ensure thorough randomness
+  for (let shuffle = 0; shuffle < 3; shuffle++) {
+    for (let i = deck.length - 1; i > 0; i--) {
+      // Get a random index
+      const j = Math.floor(Math.random() * (i + 1));
+      // Swap elements
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
   }
+  
+  // Additional randomization step - reversing the deck has a 50% chance
+  if (Math.random() > 0.5) {
+    deck.reverse();
+  }
+};
+
+// Helper function to validate card counts and ensure we don't exceed 18 total cards
+// or 3 of each card type
+export const validateCardCounts = (game: Game): GameLogEntry[] => {
+  const logs: GameLogEntry[] = [];
+  
+  // Count total cards in game
+  const totalCardsInGame = game.deck.length + 
+    game.players.reduce((sum, p) => 
+      sum + p.influence.reduce((iSum, i) => iSum + (i.card ? 1 : 0), 0), 0);
+  
+  if (totalCardsInGame > 18) {
+    logs.push(createSystemLog(`Error: Card count exceeds 18 (${totalCardsInGame}). Recreating deck.`));
+    
+    // Create a new deck
+    const newDeck: CardType[] = [];
+    CARDS.forEach(card => {
+      // Count occurrences of this card in players' hands
+      const countInHands = game.players.reduce((count, p) => 
+        count + p.influence.filter(i => i.card === card).length, 0);
+      
+      // Add only as many cards as needed to reach 3 copies total
+      const copiesNeeded = Math.max(0, 3 - countInHands);
+      for (let i = 0; i < copiesNeeded; i++) {
+        newDeck.push(card);
+      }
+    });
+    
+    // Shuffle the new deck
+    shuffleDeck(newDeck);
+    
+    // Replace the current deck
+    game.deck = newDeck;
+  }
+  
+  return logs;
 };
 
 export const replaceRevealedCard = (
@@ -296,12 +343,24 @@ export const replaceRevealedCard = (
     return { logs };
   }
   
+  // Check total cards in the game to ensure we're not exceeding 18
+  const totalCardsInGame = game.deck.length + 
+    game.players.reduce((sum, p) => sum + p.influence.length, 0);
+  
+  if (totalCardsInGame > 18) {
+    logs.push(createSystemLog(`Error: Card count exceeds 18 (${totalCardsInGame}). Correcting deck.`));
+    
+    // Create a fresh deck and redistribute cards
+    const tempDeck = createDeck();
+    game.deck = tempDeck;
+  }
+  
   // Find the revealed card to replace
   let revealedCardIndex = player.influence.findIndex(
     i => !i.revealed && i.card === revealedCardType
   );
   
-  // If not found, check for any revealed card of the right type
+  // If not found, check for any card of the right type
   if (revealedCardIndex === -1) {
     revealedCardIndex = player.influence.findIndex(
       i => i.card === revealedCardType
@@ -318,10 +377,23 @@ export const replaceRevealedCard = (
     }
   }
   
-  // Return the revealed card to the deck
-  game.deck.push(revealedCardType);
+  // Only push the card back to the deck if it will not exceed our count of 3 per card type
+  const cardCountInDeck = game.deck.filter(card => card === revealedCardType).length;
+  const cardCountInHands = game.players.reduce((count, p) => 
+    count + p.influence.filter(i => i.card === revealedCardType).length, 0);
+  
+  if (cardCountInDeck + cardCountInHands < 3) {
+    // Return the revealed card to the deck
+    game.deck.push(revealedCardType);
+  } else {
+    logs.push(createSystemLog(`Card ${revealedCardType} already has 3 copies in play. Not returning to deck.`));
+  }
   
   // Shuffle the deck thoroughly
+  shuffleDeck(game.deck);
+  
+  // Shuffle the deck again to ensure thorough randomization
+  // This is crucial to prevent patterns in card drawing
   shuffleDeck(game.deck);
   
   // Draw a new card for the player

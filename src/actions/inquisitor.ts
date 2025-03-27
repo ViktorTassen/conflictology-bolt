@@ -1,4 +1,4 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard, validateCardCounts } from './types';
 import { GameMessages } from '../messages';
 import { CardType, Player } from '../types';
 
@@ -137,11 +137,39 @@ export const investigateAction: ActionHandler = {
           return result;
         }
         
-        // Get the card to be replaced and add it back to the deck
+        // Get the card to be replaced
         const cardToReplace = targetPlayer.influence[investigateCard.cardIndex].card;
-        game.deck.push(cardToReplace);
+        
+        // Validate card counts and correct the deck if needed
+        const validationLogs = validateCardCounts(game);
+        if (validationLogs.length > 0) {
+          // Add validation logs to the result
+          result.logs = [...validationLogs, ...result.logs];
+        }
+        
+        // Count occurrences of this card type in the game
+        const countInDeck = game.deck.filter(c => c === cardToReplace).length;
+        const countInHands = game.players.reduce((count, p) => 
+          count + p.influence.filter(i => i.card === cardToReplace).length, 0
+        );
+        
+        // Only add the card back if it wouldn't exceed the limit of 3 per type
+        if (countInDeck + countInHands < 3) {
+          game.deck.push(cardToReplace);
+        } else {
+          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+            message: `Card ${cardToReplace} already has 3 copies in play. Not returning to deck.`
+          }));
+        }
         
         // Shuffle the deck thoroughly using Fisher-Yates
+        for (let i = game.deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+        }
+        
+        // Make sure the deck is thoroughly shuffled before drawing the new card
+        // Shuffle the deck again to ensure randomness
         for (let i = game.deck.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
@@ -410,8 +438,26 @@ export const swapAction: ActionHandler = {
         .filter((_, idx) => !response.selectedIndices?.includes(idx))
         .map(card => card.card);
       
-      // Add cards back to deck and shuffle
-      game.deck.push(...cardsToReturnToDeck);
+      // Validate card counts and correct the deck if needed
+      const validationLogs = validateCardCounts(game);
+      if (validationLogs.length > 0) {
+        // Add validation logs to the result
+        result.logs = [...validationLogs, ...result.logs];
+      }
+      
+      // Add cards back to deck and count cards of each type to ensure we don't exceed 3 per type
+      cardsToReturnToDeck.forEach(card => {
+        // Count occurrences of this card type in the game
+        const countInDeck = game.deck.filter(c => c === card).length;
+        const countInHands = game.players.reduce((count, p) => 
+          count + p.influence.filter(i => i.card === card).length, 0
+        );
+        
+        // Only add the card back if it wouldn't exceed the limit of 3 per type
+        if (countInDeck + countInHands < 3) {
+          game.deck.push(card);
+        }
+      });
       
       // Shuffle the deck thoroughly using Fisher-Yates
       for (let i = game.deck.length - 1; i > 0; i--) {
@@ -473,6 +519,13 @@ export const swapAction: ActionHandler = {
         result.logs = result.logs.concat(replaceResult.logs);
         
         // Set up for swap phase
+        // Ensure the deck is properly shuffled before drawing
+        // Shuffle the deck thoroughly using Fisher-Yates
+        for (let i = game.deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+        }
+        
         // Draw 1 card from the deck for swap
         const drawnCards = game.deck.splice(0, 1);
         
@@ -588,6 +641,13 @@ export const swapAction: ActionHandler = {
       
       if (allPlayersAllowed) {
         // All players allowed - process swap action
+        // Ensure the deck is properly shuffled before drawing
+        // Shuffle the deck thoroughly using Fisher-Yates
+        for (let i = game.deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
+        }
+        
         // Draw 1 card for the swap
         const drawnCards = game.deck.splice(0, 1);
         
