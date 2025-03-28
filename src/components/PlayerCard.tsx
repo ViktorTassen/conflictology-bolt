@@ -1,7 +1,8 @@
 import React from 'react';
 import { DollarSign, Skull } from 'lucide-react';
-import { Player } from '../types';
+import { Player, Card } from '../types';
 import backImage from '../assets/images/back.png';
+import { getPlayerCards } from '../utils/cardUtils';
 
 interface PlayerCardProps {
   player: Player;
@@ -10,6 +11,7 @@ interface PlayerCardProps {
   isTargeted?: boolean;
   onTargetSelect?: () => void;
   isCurrentPlayer?: boolean;
+  cards: Card[];
 }
 
 export function PlayerCard({ 
@@ -18,14 +20,15 @@ export function PlayerCard({
   isTargetable = false,
   isTargeted = false,
   onTargetSelect,
-  isCurrentPlayer = false
+  isCurrentPlayer = false,
+  cards
 }: PlayerCardProps) {
   const truncateName = (name: string) => {
     return name.length > 13 ? `${name.slice(0, 12)}...` : name;
   };
 
-  // Only show unrevealed cards
-  const activeCards = player.influence.filter(i => !i.revealed);
+  // Get player's active (non-revealed) cards
+  const activeCards = getPlayerCards(cards, player.id);
 
   return (
     <div 
@@ -139,7 +142,7 @@ export function PlayerCard({
       <div className="flex gap-0.5 -mt-2 justify-center">
         {activeCards.map((card, index) => (
           <div
-            key={index}
+            key={card.id}
             className={`
               w-7 h-10 rounded 
               overflow-hidden

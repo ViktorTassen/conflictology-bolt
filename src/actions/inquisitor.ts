@@ -1,6 +1,6 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard, validateCardCounts } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
-import { CardType, Player } from '../types';
+import { hasCardType, revealCard, replaceCard, drawCards, returnCardsToDeck, getPlayerCards } from '../utils/cardUtils';
 
 // Inquisitor has two main actions:
 // 1. Investigate: Look at another player's card and decide to keep or swap it
@@ -26,8 +26,8 @@ export const investigateAction: ActionHandler = {
 
     // Check if target has any non-revealed cards
     const targetPlayer = game.players[targetId];
-    const targetHasCards = targetPlayer.influence.some(i => !i.revealed);
-    if (!targetHasCards) {
+    const targetCards = getPlayerCards(game.cards, targetId);
+    if (targetCards.length === 0) {
       throw new Error('Target player has no cards to investigate');
     }
 
@@ -59,25 +59,19 @@ export const investigateAction: ActionHandler = {
 
     const actionPlayer = game.players[game.actionInProgress.player];
     const result: ActionResult = {};
-
-    // If we have a target, get their information
-    let targetPlayer: Player | undefined;
-    let targetPlayerId: number | undefined;
-    if (game.actionInProgress.target !== undefined) {
-      targetPlayerId = game.actionInProgress.target;
-      targetPlayer = game.players[targetPlayerId];
-    }
     
     // Handle card selection for investigation
-    if (response.type === 'select_card_for_investigation' && response.card && targetPlayerId !== undefined && playerId === targetPlayerId) {
+    if (response.type === 'select_card_for_investigation' && response.card) {
       // Make sure this is the target player responding
       if (playerId !== game.actionInProgress.target) {
         throw new Error('Only the targeted player can select a card for investigation');
       }
       
-      // Find the index of the card the player wants to show
-      const cardIndex = player.influence.findIndex(i => !i.revealed && i.card === response.card);
-      if (cardIndex === -1) {
+      // Find the card to show
+      const playerCards = getPlayerCards(game.cards, playerId);
+      const selectedCard = playerCards.find(c => c.name === response.card);
+      
+      if (!selectedCard) {
         throw new Error('Selected card not found or already revealed');
       }
       
@@ -89,8 +83,8 @@ export const investigateAction: ActionHandler = {
       result.actionInProgress = {
         ...game.actionInProgress,
         investigateCard: {
-          card: response.card,
-          cardIndex: cardIndex
+          cardId: selectedCard.id,
+          cardIndex: game.cards.indexOf(selectedCard)
         }
       };
       
@@ -109,8 +103,6 @@ export const investigateAction: ActionHandler = {
       const investigateCard = game.actionInProgress.investigateCard;
       const keepCard = response.keepCard === true;
       
-      const updatedPlayers = [...game.players];
-      
       if (keepCard) {
         // If Inquisitor lets target keep the card
         result.logs = [createLog('investigate-result', player, {
@@ -121,65 +113,37 @@ export const investigateAction: ActionHandler = {
       } else {
         // If Inquisitor wants to swap the card
         // Draw a new card from the deck
-        if (game.deck.length === 0) {
+        const updatedCards = drawCards(game.cards, 1, 'investigate');
+        const drawnCard = updatedCards.find(c => c.location === 'investigate');
+        
+        if (!drawnCard) {
           result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `No cards left in the deck for swap. Card remains unchanged.`
           })];
           
           result.actionInProgress = null;
-          result.players = updatedPlayers;
           
           // Get next turn and reset actionUsedThisTurn flag
-          const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
           result.currentTurn = nextTurn.currentTurn;
           result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
           
           return result;
         }
         
-        // Get the card to be replaced
-        const cardToReplace = targetPlayer.influence[investigateCard.cardIndex].card;
+        // Return the old card to the deck
+        const cardsWithReturnedCard = returnCardsToDeck(updatedCards, [investigateCard.cardId]);
         
-        // Validate card counts and correct the deck if needed
-        const validationLogs = validateCardCounts(game);
-        if (validationLogs.length > 0) {
-          // Add validation logs to the result
-          result.logs = [...validationLogs, ...result.logs];
-        }
-        
-        // Count occurrences of this card type in the game
-        const countInDeck = game.deck.filter(c => c === cardToReplace).length;
-        const countInHands = game.players.reduce((count, p) => 
-          count + p.influence.filter(i => i.card === cardToReplace).length, 0
+        // Give the new card to the target player
+        const finalCards = cardsWithReturnedCard.map(card => 
+          card.id === drawnCard.id ? {
+            ...card,
+            playerId: targetId,
+            location: 'player'
+          } : card
         );
         
-        // Only add the card back if it wouldn't exceed the limit of 3 per type
-        if (countInDeck + countInHands < 3) {
-          game.deck.push(cardToReplace);
-        } else {
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `Card ${cardToReplace} already has 3 copies in play. Not returning to deck.`
-          }));
-        }
-        
-        // Shuffle the deck thoroughly using Fisher-Yates
-        for (let i = game.deck.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-        }
-        
-        // Make sure the deck is thoroughly shuffled before drawing the new card
-        // Shuffle the deck again to ensure randomness
-        for (let i = game.deck.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-        }
-        
-        // Draw a new card for the target player
-        const newCard = game.deck.pop()!;
-        updatedPlayers[targetId].influence[investigateCard.cardIndex].card = newCard;
-        
-        // Log the swap
+        result.cards = finalCards;
         result.logs = [createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
@@ -188,11 +152,10 @@ export const investigateAction: ActionHandler = {
       }
       
       // Update the game state
-      result.players = updatedPlayers;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
@@ -210,17 +173,42 @@ export const investigateAction: ActionHandler = {
 
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      const updatedPlayers = [...game.players];
-      const updatedGame = {...game, players: updatedPlayers};
+      // Find the card to reveal
+      const playerCards = getPlayerCards(game.cards, playerId);
       
-      // Apply influence loss
-      const lossResult = applyInfluenceLoss(
-        updatedPlayers[playerId], 
-        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
-        updatedPlayers
-      );
-      
-      result.logs = lossResult.logs;
+      if (playerCards.length === 0) {
+        // Player has no cards left to lose
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        
+        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+          message: `${player.name} has no more cards to lose.`
+        })];
+        
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
+      }
+
+      // If a specific card was chosen, find it
+      let cardToReveal = response.card ? 
+        playerCards.find(c => c.name === response.card) : 
+        playerCards[0];
+
+      if (!cardToReveal) {
+        cardToReveal = playerCards[0];
+      }
+
+      // Reveal the card
+      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      result.cards = updatedCards;
+      result.logs = [createLog('lose-influence', player)];
 
       // If challenger lost influence (failed challenge) and action player should replace their card
       if (game.actionInProgress.losingPlayer === playerId && 
@@ -228,12 +216,8 @@ export const investigateAction: ActionHandler = {
           game.actionInProgress.challengeDefense) {
         
         // Replace the revealed Inquisitor card
-        const replaceResult = replaceRevealedCard(
-          updatedPlayers[game.actionInProgress.player],
-          'Inquisitor',
-          updatedGame
-        );
-        result.logs = result.logs.concat(replaceResult.logs);
+        const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
+        result.cards = updatedCards;
         
         // Resume with the original action
         result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
@@ -248,18 +232,15 @@ export const investigateAction: ActionHandler = {
           responses: {} // Clear responses for investigation phase
         };
         
-        result.players = updatedPlayers;
-        
         return result;
       }
       
       // Action player lost influence (successful challenge)
       // No investigation happens
-      result.players = updatedPlayers;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
@@ -268,14 +249,14 @@ export const investigateAction: ActionHandler = {
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasInquisitor = verifyPlayerHasRole(actionPlayer, 'Inquisitor');
+      const hasInquisitor = hasCardType(game.cards, game.actionInProgress.player, 'Inquisitor');
 
       if (hasInquisitor) {
         // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `challenges Inquisitor claim! Fails`
+          message: GameMessages.challenges.failInquisitor
         })];
 
         result.actionInProgress = {
@@ -290,7 +271,7 @@ export const investigateAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `challenges Inquisitor claim! Success`
+          message: GameMessages.challenges.succeedInquisitor
         })];
 
         result.actionInProgress = {
@@ -375,7 +356,7 @@ export const swapAction: ActionHandler = {
     const actionPlayer = game.players[game.actionInProgress.player];
     const result: ActionResult = {};
     
-    // Handle swap selection (similar to exchange_selection)
+    // Handle swap selection
     if (response.type === 'exchange_selection' && response.selectedIndices) {
       // Make sure this is the player who initiated the swap
       if (playerId !== game.actionInProgress.player) {
@@ -387,83 +368,42 @@ export const swapAction: ActionHandler = {
         throw new Error('No swap cards available');
       }
       
-      // Process the swap (similar to exchange)
-      const updatedPlayers = [...game.players];
-      const playerInfluence = updatedPlayers[playerId].influence;
-      const exchangeCards = game.actionInProgress.exchangeCards;
-      
       // Get all available cards (player's non-revealed cards + drawn cards)
-      const availableCards: { 
-        card: CardType; 
-        isPlayerCard: boolean;
-        originalIndex: number;
-      }[] = [
-        // Player's active cards
-        ...playerInfluence
-          .map((infl, idx) => ({ 
-            card: infl.card, 
-            isPlayerCard: true,
-            revealed: infl.revealed,
-            originalIndex: idx
-          }))
-          .filter(card => !card.revealed),
-          
-        // Drawn cards from deck
-        ...exchangeCards.map((card, idx) => ({ 
-          card, 
-          isPlayerCard: false,
-          revealed: false,
-          originalIndex: idx
-        }))
-      ];
+      const playerCards = getPlayerCards(game.cards, playerId);
+      const exchangeCards = game.cards.filter(c => 
+        game.actionInProgress!.exchangeCards!.includes(c.id)
+      );
+      
+      const availableCards = [...playerCards, ...exchangeCards];
+      
+      // Validate selection count matches active cards
+      if (response.selectedIndices.length !== playerCards.length) {
+        throw new Error(`Must select ${playerCards.length} cards to keep`);
+      }
       
       // Get the cards the player wants to keep
-      const keptCards = response.selectedIndices.map(idx => availableCards[idx]);
+      const keptCardIds = response.selectedIndices.map(idx => availableCards[idx].id);
       
-      // Get the active influence slots
-      const activeSlots = playerInfluence
-        .map((infl, idx) => ({ revealed: infl.revealed, index: idx }))
-        .filter(slot => !slot.revealed)
-        .map(slot => slot.index);
+      // Get the cards to return to the deck
+      const returnCardIds = availableCards
+        .filter(card => !keptCardIds.includes(card.id))
+        .map(card => card.id);
       
-      // Assign the kept cards to the player's active influence slots
-      keptCards.forEach((keptCard, index) => {
-        if (index < activeSlots.length) {
-          playerInfluence[activeSlots[index]].card = keptCard.card;
+      // Update kept cards to be player's cards
+      let updatedCards = [...game.cards];
+      keptCardIds.forEach(cardId => {
+        const cardIndex = updatedCards.findIndex(c => c.id === cardId);
+        if (cardIndex !== -1) {
+          updatedCards[cardIndex] = {
+            ...updatedCards[cardIndex],
+            playerId,
+            location: 'player'
+          };
         }
       });
       
-      // Return all unchosen cards to the deck
-      const cardsToReturnToDeck: CardType[] = availableCards
-        .filter((_, idx) => !response.selectedIndices?.includes(idx))
-        .map(card => card.card);
-      
-      // Validate card counts and correct the deck if needed
-      const validationLogs = validateCardCounts(game);
-      if (validationLogs.length > 0) {
-        // Add validation logs to the result
-        result.logs = [...validationLogs, ...result.logs];
-      }
-      
-      // Add cards back to deck and count cards of each type to ensure we don't exceed 3 per type
-      cardsToReturnToDeck.forEach(card => {
-        // Count occurrences of this card type in the game
-        const countInDeck = game.deck.filter(c => c === card).length;
-        const countInHands = game.players.reduce((count, p) => 
-          count + p.influence.filter(i => i.card === card).length, 0
-        );
-        
-        // Only add the card back if it wouldn't exceed the limit of 3 per type
-        if (countInDeck + countInHands < 3) {
-          game.deck.push(card);
-        }
-      });
-      
-      // Shuffle the deck thoroughly using Fisher-Yates
-      for (let i = game.deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-      }
+      // Return unchosen cards to deck
+      updatedCards = returnCardsToDeck(updatedCards, returnCardIds);
       
       // Log the swap completion
       result.logs = [createLog('swap-complete', player, {
@@ -471,11 +411,11 @@ export const swapAction: ActionHandler = {
       })];
       
       // Update the game state
-      result.players = updatedPlayers;
+      result.cards = updatedCards;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
@@ -493,17 +433,42 @@ export const swapAction: ActionHandler = {
 
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      const updatedPlayers = [...game.players];
-      const updatedGame = {...game, players: updatedPlayers};
+      // Find the card to reveal
+      const playerCards = getPlayerCards(game.cards, playerId);
       
-      // Apply influence loss
-      const lossResult = applyInfluenceLoss(
-        updatedPlayers[playerId], 
-        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
-        updatedPlayers
-      );
-      
-      result.logs = lossResult.logs;
+      if (playerCards.length === 0) {
+        // Player has no cards left to lose
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        
+        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+          message: `${player.name} has no more cards to lose.`
+        })];
+        
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
+      }
+
+      // If a specific card was chosen, find it
+      let cardToReveal = response.card ? 
+        playerCards.find(c => c.name === response.card) : 
+        playerCards[0];
+
+      if (!cardToReveal) {
+        cardToReveal = playerCards[0];
+      }
+
+      // Reveal the card
+      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      result.cards = updatedCards;
+      result.logs = [createLog('lose-influence', player)];
 
       // If challenger lost influence (failed challenge) and action player should replace their card
       if (game.actionInProgress.losingPlayer === playerId && 
@@ -511,40 +476,14 @@ export const swapAction: ActionHandler = {
           game.actionInProgress.challengeDefense) {
         
         // Replace the revealed Inquisitor card
-        const replaceResult = replaceRevealedCard(
-          updatedPlayers[game.actionInProgress.player],
-          'Inquisitor',
-          updatedGame
-        );
-        result.logs = result.logs.concat(replaceResult.logs);
+        const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
+        result.cards = updatedCards;
         
-        // Set up for swap phase
-        // Ensure the deck is properly shuffled before drawing
-        // Shuffle the deck thoroughly using Fisher-Yates
-        for (let i = game.deck.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-        }
-        
-        // Draw 1 card from the deck for swap
-        const drawnCards = game.deck.splice(0, 1);
-        
-        if (drawnCards.length < 1) {
-          // Not enough cards in deck
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `Not enough cards in the deck for swap. Swap canceled.`
-          }));
-          
-          result.players = updatedPlayers;
-          result.actionInProgress = null;
-          
-          // Get next turn and reset actionUsedThisTurn flag
-          const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
-          result.currentTurn = nextTurn.currentTurn;
-          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-          
-          return result;
-        }
+        // Draw 1 card for swap
+        const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');
+        const drawnCardIds = cardsWithExchange
+          .filter(c => c.location === 'exchange')
+          .map(c => c.id);
         
         result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `${actionPlayer.name} will now swap cards.`
@@ -555,21 +494,20 @@ export const swapAction: ActionHandler = {
         
         result.actionInProgress = {
           ...restActionProps,
-          exchangeCards: drawnCards,
+          exchangeCards: drawnCardIds,
           responses: {} // Clear responses for swap phase
         };
         
-        result.players = updatedPlayers;
+        result.cards = cardsWithExchange;
         return result;
       }
       
       // Action player lost influence (successful challenge)
       // No swap happens
-      result.players = updatedPlayers;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
@@ -578,14 +516,14 @@ export const swapAction: ActionHandler = {
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasInquisitor = verifyPlayerHasRole(actionPlayer, 'Inquisitor');
+      const hasInquisitor = hasCardType(game.cards, game.actionInProgress.player, 'Inquisitor');
 
       if (hasInquisitor) {
         // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `challenges Inquisitor claim! Fails`
+          message: GameMessages.challenges.failInquisitor
         })];
 
         result.actionInProgress = {
@@ -600,7 +538,7 @@ export const swapAction: ActionHandler = {
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `challenges Inquisitor claim! Success`
+          message: GameMessages.challenges.succeedInquisitor
         })];
 
         result.actionInProgress = {
@@ -640,16 +578,11 @@ export const swapAction: ActionHandler = {
       });
       
       if (allPlayersAllowed) {
-        // All players allowed - process swap action
-        // Ensure the deck is properly shuffled before drawing
-        // Shuffle the deck thoroughly using Fisher-Yates
-        for (let i = game.deck.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-        }
-        
         // Draw 1 card for the swap
-        const drawnCards = game.deck.splice(0, 1);
+        const updatedCards = drawCards(game.cards, 1, 'exchange');
+        const drawnCardIds = updatedCards
+          .filter(c => c.location === 'exchange')
+          .map(c => c.id);
         
         result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `Swap allowed. ${actionPlayer.name} selecting cards.`
@@ -658,11 +591,11 @@ export const swapAction: ActionHandler = {
         // Set up for swap phase
         result.actionInProgress = {
           ...game.actionInProgress,
-          exchangeCards: drawnCards,
+          exchangeCards: drawnCardIds,
           responses: {} // Clear responses for swap phase
         };
         
-        result.players = [...game.players];
+        result.cards = updatedCards;
       }
 
       return result;

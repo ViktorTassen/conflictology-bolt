@@ -1,5 +1,6 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
+import { hasCardType, revealCard, replaceCard, getPlayerCards } from '../utils/cardUtils';
 
 export const assassinateAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -13,10 +14,9 @@ export const assassinateAction: ActionHandler = {
       throw new Error('Assassinate requires a target');
     }
     
-    // Get the target ID from the game state
-    const targetId = game.actionInProgress.target;
-    const targetPlayer = game.players[targetId];
-
+    // Get target player
+    const targetPlayer = game.players[game.actionInProgress.target];
+    
     // Check if target player is eliminated
     if (targetPlayer.eliminated) {
       throw new Error('Cannot target an eliminated player');
@@ -41,7 +41,7 @@ export const assassinateAction: ActionHandler = {
       actionInProgress: {
         type: 'assassinate',
         player: playerId,
-        target: targetId,
+        target: game.actionInProgress.target,
         responses: {},
         resolved: false
       }
@@ -71,31 +71,41 @@ export const assassinateAction: ActionHandler = {
       [playerId]: responseData
     };
 
-    // Handle losing influence after a challenge or as a result of assassination
+    // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      const updatedPlayers = [...game.players];
-      const updatedGame = {...game, players: updatedPlayers};
+      // Find the card to reveal
+      const playerCards = getPlayerCards(game.cards, playerId);
       
-      // Find card index if a specific card was chosen
-      let cardIndex = undefined;
-      if (response.card) {
-        cardIndex = updatedPlayers[playerId].influence.findIndex(
-          i => !i.revealed && i.card === response.card
-        );
-        // If card not found or already revealed, default to first hidden card
-        if (cardIndex === -1) {
-          cardIndex = undefined; // Let applyInfluenceLoss find the first hidden card
-        }
+      if (playerCards.length === 0) {
+        // Player has no cards left to lose
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        
+        result.logs = [createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
       }
-      
-      // Apply influence loss
-      const lossResult = applyInfluenceLoss(
-        updatedPlayers[playerId], 
-        cardIndex,
-        updatedPlayers
-      );
-      
-      result.logs = lossResult.logs;
+
+      // If a specific card was chosen, find it
+      let cardToReveal = response.card ? 
+        playerCards.find(c => c.name === response.card) : 
+        playerCards[0];
+
+      if (!cardToReveal) {
+        cardToReveal = playerCards[0];
+      }
+
+      // Reveal the card
+      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      result.cards = updatedCards;
+      result.logs = [createLog('lose-influence', player)];
 
       // If the action player was challenged regarding Assassin and won
       if (playerId !== game.actionInProgress.player && 
@@ -104,26 +114,8 @@ export const assassinateAction: ActionHandler = {
           game.actionInProgress.player !== game.actionInProgress.losingPlayer) {
         
         // Replace the revealed Assassin card
-        const replaceResult = replaceRevealedCard(
-          updatedPlayers[game.actionInProgress.player],
-          'Assassin',
-          updatedGame
-        );
-        result.logs = result.logs.concat(replaceResult.logs);
-      }
-      
-      // If the Assassin player lost a challenge (when they're the losingPlayer and the one losing an influence)
-      if (playerId === game.actionInProgress.player && 
-          playerId === game.actionInProgress.losingPlayer) {
-        // Assassin challenge succeeded, end action and move to next turn
-        result.players = updatedPlayers;
-        result.actionInProgress = null;
-        
-        // Get next turn and reset actionUsedThisTurn flag
-        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
-        result.currentTurn = nextTurn.currentTurn;
-        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-        return result;
+        const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
+        result.cards = updatedCards;
       }
       
       // If a blocking player was challenged regarding Contessa and won
@@ -133,54 +125,25 @@ export const assassinateAction: ActionHandler = {
         
         // If this was the challenger losing influence (failed challenge to Contessa)
         if (playerId === game.actionInProgress.losingPlayer) {
-          // Make sure the blocking player has a Contessa card to replace
-          const blockingPlayerHasContessa = updatedPlayers[game.actionInProgress.blockingPlayer].influence
-            .some(card => card.card === 'Contessa');
-            
-          if (blockingPlayerHasContessa) {
-            // Replace the revealed Contessa card
-            const replaceResult = replaceRevealedCard(
-              updatedPlayers[game.actionInProgress.blockingPlayer],
-              'Contessa',
-              updatedGame
-            );
-            result.logs = result.logs.concat(replaceResult.logs);
-          } else {
-            // Log a warning but continue
-            result.logs.push(createSystemLog(`Note: Contessa card not found to replace for player ${updatedPlayers[game.actionInProgress.blockingPlayer].name}`));
+          // Replace the revealed Contessa card
+          const blockingPlayerCards = getPlayerCards(game.cards, game.actionInProgress.blockingPlayer);
+          const contessaCard = blockingPlayerCards.find(c => c.name === 'Contessa');
+          
+          if (contessaCard) {
+            const updatedCards = replaceCard(result.cards || game.cards, contessaCard.id);
+            result.cards = updatedCards;
           }
         }
       }
-      
-      // SPECIAL CASE: If target challenged the Assassin and lost
-      const specialCase = playerId === game.actionInProgress.target && 
-                         game.actionInProgress.challengeDefense === true;
 
-      if (specialCase && !lossResult.eliminated) {
-        // Target loses a second influence card if they unsuccessfully challenged Assassin
-        const secondLoss = applyInfluenceLoss(
-          updatedPlayers[playerId],
-          undefined,
-          updatedPlayers
-        );
-        
-        result.logs.push(...secondLoss.logs);
-        if (secondLoss.logs.length > 0) {
-          // Use the GameMessages for consistent system messages
-          result.logs.push(createSystemLog(GameMessages.system.secondInfluenceLoss(player.name)));
-        }
-      }
-
-      // If this was the blocking player losing influence after a failed challenge
-      // (This means they claimed Contessa, were challenged, and failed)
+      // If this was the blocking player losing influence (failed block)
       if (game.actionInProgress.blockingPlayer === playerId) {
         // In this case, we do NOT need to replace the card - just reveal it and proceed
         // Contessa block failed, assassination proceeds
         // Check if target still has influence to lose
         const targetId = game.actionInProgress.target ?? 0;
         
-        if (!updatedPlayers[targetId].eliminated) {
-          
+        if (!game.players[targetId].eliminated) {
           // Set up for target to lose influence next
           result.actionInProgress = {
             ...game.actionInProgress,
@@ -189,7 +152,7 @@ export const assassinateAction: ActionHandler = {
             responses: {}
           };
           
-          result.players = updatedPlayers;
+          result.players = game.players;
           return result;
         }
       } 
@@ -200,14 +163,9 @@ export const assassinateAction: ActionHandler = {
         
         // If the challenge to the Assassin claim failed, and it was from a third party
         // Reset game state to allow target to respond with block
+        const targetHasContessa = hasCardType(game.cards, game.actionInProgress.target ?? 0, 'Contessa');
         
-        // Only show the block message if we haven't already seen the target's Contessa
-        // Check if player has already revealed Contessa previously
-        const targetHasRevealedContessa = updatedPlayers[game.actionInProgress.target ?? 0].influence
-          .some(card => card.revealed && card.card === 'Contessa');
-        
-        if (!targetHasRevealedContessa) {
-          // Use the GameMessages for consistent system messages
+        if (targetHasContessa) {
           result.logs.push(createSystemLog(GameMessages.system.contessaBlock(targetPlayer.name)));
         }
         
@@ -220,17 +178,16 @@ export const assassinateAction: ActionHandler = {
           responses: {} // Clear responses
         };
         
-        result.players = updatedPlayers;
+        result.players = game.players;
         return result;
       }
 
-      // If we reach here, we're finishing the assassination action
-      // Complete the action
-      result.players = updatedPlayers;
+      // Complete action
+      result.players = game.players;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
@@ -248,7 +205,7 @@ export const assassinateAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Contessa',
-        message: `claim Contessa to block Assassin`
+        message: GameMessages.blocks.contessa
       })];
 
       result.actionInProgress = {
@@ -265,7 +222,7 @@ export const assassinateAction: ActionHandler = {
 
     // Handle challenge to the Assassin claim
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const hasAssassin = verifyPlayerHasRole(actionPlayer, 'Assassin');
+      const hasAssassin = hasCardType(game.cards, game.actionInProgress.player, 'Assassin');
 
       if (hasAssassin) {
         // Challenge fails, challenger loses influence
@@ -273,17 +230,14 @@ export const assassinateAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Assassin',
-          message: `challenges Assassin claim! Fails`
+          message: GameMessages.challenges.failAssassin
         })];
 
-        // SPECIAL CASE: If target challenged the Assassin and lost, flag for double influence loss
-        const specialCase = playerId === game.actionInProgress.target;
-        
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: specialCase,
+          challengeDefense: true,
           responses: updatedResponses
         };
       } else {
@@ -292,7 +246,7 @@ export const assassinateAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Assassin',
-          message: `challenges Assassin claim! Success`
+          message: GameMessages.challenges.succeedAssassin
         })];
 
         result.actionInProgress = {
@@ -307,40 +261,37 @@ export const assassinateAction: ActionHandler = {
     }
     // Handle challenge to a Contessa block
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
-      const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-      const hasContessa = verifyPlayerHasRole(blockingPlayer, 'Contessa');
+      const hasContessa = hasCardType(game.cards, game.actionInProgress.blockingPlayer, 'Contessa');
 
       if (hasContessa) {
         // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
-          target: blockingPlayer.name,
-          targetColor: blockingPlayer.color,
+          target: targetPlayer.name,
+          targetColor: targetPlayer.color,
           card: 'Contessa',
-          message: `challenges Contessa block! Fails`
+          message: GameMessages.challenges.failContessa
         })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: true, // Add flag to indicate card should be replaced
+          challengeDefense: true,
           responses: updatedResponses
         };
       } else {
         // Challenge succeeds, blocker loses influence
         result.logs = [createLog('challenge-success', player, {
-          target: blockingPlayer.name,
-          targetColor: blockingPlayer.color,
+          target: targetPlayer.name,
+          targetColor: targetPlayer.color,
           card: 'Contessa',
-          message: `challenges Contessa block! Success`
+          message: GameMessages.challenges.succeedContessa
         })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.blockingPlayer,
           challengeInProgress: true,
-          blockingCard: 'Contessa', // Store the claimed card type for reference
-          challengeDefense: false, // Explicitly mark as failed defense
           responses: updatedResponses
         };
       }
@@ -364,10 +315,9 @@ export const assassinateAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `allows Contessa block`
+            message: GameMessages.responses.allowBlock
           })];
           
-          // Use the GameMessages for consistent system messages
           result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
 
           result.actionInProgress = null;
@@ -398,7 +348,7 @@ export const assassinateAction: ActionHandler = {
         result.logs = [createLog('allow', targetPlayer, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `allows assassination`
+          message: GameMessages.responses.allowAssassination
         })];
       }
 

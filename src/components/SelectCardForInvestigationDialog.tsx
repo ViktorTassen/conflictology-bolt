@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CardType, Influence } from '../types';
+import React from 'react';
+import { Card, CardType } from '../types';
 import { Eye } from 'lucide-react';
 
 // Import card images
@@ -21,33 +21,24 @@ const cardImages: Record<CardType, string> = {
 };
 
 interface SelectCardForInvestigationDialogProps {
-  playerInfluence: Influence[];
+  cards: Card[];
+  playerId: number;
   onCardSelect: (card: CardType) => void;
 }
 
 export function SelectCardForInvestigationDialog({ 
-  playerInfluence, 
+  cards,
+  playerId,
   onCardSelect
 }: SelectCardForInvestigationDialogProps) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  
-  // Create an array of non-revealed influence cards with their indices
-  const availableInfluence = playerInfluence
-    .map((infl, index) => ({ infl, index }))
-    .filter(item => !item.infl.revealed);
+  // Get player's active (non-revealed) cards
+  const playerCards = cards.filter(card => 
+    card.playerId === playerId && 
+    card.location === 'player' && 
+    !card.revealed
+  );
 
-  const handleCardSelect = (index: number) => {
-    setSelectedIndex(index);
-  };
-  
-  const handleConfirmSelection = () => {
-    if (selectedIndex !== null) {
-      const selectedCard = playerInfluence[selectedIndex].card;
-      onCardSelect(selectedCard);
-    }
-  };
-
-  if (availableInfluence.length === 0) return null;
+  if (playerCards.length === 0) return null;
 
   return (
     <div className="absolute inset-x-0 bottom-0 z-50 animate-in fade-in slide-in-from-bottom-4">
@@ -75,62 +66,40 @@ export function SelectCardForInvestigationDialog({
           {/* Cards */}
           <div className="mb-8">
             <div className="flex justify-center gap-3 flex-wrap">
-              {availableInfluence.map((item, i) => {
-                const card = item.infl.card;
-                const originalIndex = item.index;
-                
-                return (
-                  <button
-                    key={`card-${originalIndex}`}
-                    onClick={() => handleCardSelect(originalIndex)}
-                    className={`group relative ${selectedIndex === originalIndex ? 'ring-2 ring-purple-500' : ''}`}
-                  >
-                    <div className={`absolute -inset-2 rounded-xl ${selectedIndex === originalIndex ? 'bg-purple-500/30' : 'bg-purple-500/0 group-hover:bg-purple-500/20'} transition-all duration-300`} />
-                    <div className="relative">
-                      {/* Card */}
-                      <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                        <img
-                          src={cardImages[card]}
-                          alt={card}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                          <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                            {card}
-                          </div>
-                          <div className="absolute top-2 right-2 text-white/70 text-xs">
-                            Card {i+1}
-                          </div>
+              {playerCards.map((card, i) => (
+                <button
+                  key={card.id}
+                  onClick={() => onCardSelect(card.name)}
+                  className="group relative"
+                >
+                  <div className="absolute -inset-2 rounded-xl bg-purple-500/0 group-hover:bg-purple-500/20 transition-all duration-300" />
+                  <div className="relative">
+                    {/* Card */}
+                    <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                      <img
+                        src={cardImages[card.name]}
+                        alt={card.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
+                        <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                          {card.name}
                         </div>
-                        
-                        {/* Hover overlay */}
-                        <div className={`absolute inset-0 ${selectedIndex === originalIndex ? 'bg-purple-500/30' : 'bg-purple-500/0 group-hover:bg-purple-500/20'} transition-colors duration-300`} />
+                        <div className="absolute top-2 right-2 text-white/70 text-xs">
+                          Card {i+1}
+                        </div>
                       </div>
-
-                      {/* Selection indicator */}
-                      <div className={`absolute -bottom-1 inset-x-0 h-1 bg-purple-500 transform ${selectedIndex === originalIndex ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                      
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/20 transition-colors duration-300" />
                     </div>
-                  </button>
-                );
-              })}
+
+                    {/* Selection indicator */}
+                    <div className="absolute -bottom-1 inset-x-0 h-1 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                  </div>
+                </button>
+              ))}
             </div>
-          </div>
-          
-          {/* Confirm button */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleConfirmSelection}
-              disabled={selectedIndex === null}
-              className={`
-                px-6 py-2 rounded-full 
-                ${selectedIndex !== null ? 
-                  'bg-purple-600 hover:bg-purple-700 text-white' : 
-                  'bg-gray-700 text-gray-400 cursor-not-allowed'}
-                transition-colors duration-300
-              `}
-            >
-              Confirm Selection
-            </button>
           </div>
         </div>
       </div>

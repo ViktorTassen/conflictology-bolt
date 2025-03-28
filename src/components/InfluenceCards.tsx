@@ -1,28 +1,32 @@
 import React from 'react';
-import { Influence } from '../types';
+import { Card } from '../types';
 import backImage from '../assets/images/back.png';
 
 interface InfluenceCardsProps {
-  influence: Influence[];
+  playerId: number;
+  cards: Card[];
   showFaceUp?: boolean;
 }
 
-export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCardsProps) {
-  // Only show unrevealed cards
-  const availableCards = influence.filter(card => !card.revealed);
+export function InfluenceCards({ playerId, cards, showFaceUp = false }: InfluenceCardsProps) {
+  // Get player's active (non-revealed) cards
+  const playerCards = cards.filter(card => 
+    card.playerId === playerId && 
+    card.location === 'player' && 
+    !card.revealed
+  );
 
   return (
     <div className="flex gap-1 transform -rotate-6">
-      {availableCards.map((card, index) => {
+      {playerCards.map((card, index) => {
         // Import dynamically from assets for face-up cards
-        // Using the correct relative import path that will work in production
         const cardImage = showFaceUp 
-          ? new URL(`../assets/images/${card.card.toLowerCase()}.png`, import.meta.url).href
+          ? new URL(`../assets/images/${card.name.toLowerCase()}.png`, import.meta.url).href
           : backImage;
 
         return (
           <div
-            key={index}
+            key={card.id}
             className={`w-[75px] h-[105px] rounded-md overflow-hidden transform ${
               index === 1 ? 'rotate-6' : ''
             }`}
@@ -32,10 +36,10 @@ export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCards
           >
             <img
               src={cardImage}
-              alt={showFaceUp ? card.card : "Card back"}
+              alt={showFaceUp ? card.name : "Card back"}
               className="w-full h-full object-cover"
               onError={(e) => {
-                console.warn(`Failed to load card image: ${card.card}`);
+                console.warn(`Failed to load card image: ${card.name}`);
                 // Apply a colored background with text as fallback
                 const target = e.currentTarget;
                 target.style.display = 'none';
@@ -46,7 +50,7 @@ export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCards
                 fallback.style.color = 'white';
                 fallback.style.fontWeight = 'bold';
                 fallback.style.fontSize = '14px';
-                fallback.textContent = card.card;
+                fallback.textContent = card.name;
                 
                 // Add to parent
                 if (target.parentElement) {
@@ -57,7 +61,7 @@ export function InfluenceCards({ influence, showFaceUp = false }: InfluenceCards
             {showFaceUp && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
                 <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
-                  {card.card}
+                  {card.name}
                 </div>
               </div>
             )}

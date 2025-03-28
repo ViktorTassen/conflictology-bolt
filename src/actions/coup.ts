@@ -1,5 +1,6 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, applyInfluenceLoss } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
+import { getPlayerCards, revealCard } from '../utils/cardUtils';
 
 export const coupAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -27,7 +28,8 @@ export const coupAction: ActionHandler = {
     }
     
     // Verify target has influence to lose
-    if (!targetPlayer.influence.some(i => !i.revealed)) {
+    const targetCards = getPlayerCards(game.cards, game.actionInProgress.target);
+    if (targetCards.length === 0) {
       throw new Error('Target player has no influence to lose');
     }
 
@@ -75,23 +77,44 @@ export const coupAction: ActionHandler = {
         throw new Error('Only the target can lose influence from a coup');
       }
 
-      const updatedPlayers = [...game.players];
+      // Find the card to reveal
+      const playerCards = getPlayerCards(game.cards, playerId);
       
-      // Apply influence loss
-      const lossResult = applyInfluenceLoss(
-        updatedPlayers[playerId], 
-        response.card ? updatedPlayers[playerId].influence.findIndex(i => !i.revealed && i.card === response.card) : undefined,
-        updatedPlayers
-      );
-      
-      result.logs = lossResult.logs;
+      if (playerCards.length === 0) {
+        // Player has no cards left to lose
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
+      }
+
+      // If a specific card was chosen, find it
+      let cardToReveal = response.card ? 
+        playerCards.find(c => c.name === response.card) : 
+        playerCards[0];
+
+      if (!cardToReveal) {
+        cardToReveal = playerCards[0];
+      }
+
+      // Reveal the card
+      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      result.cards = updatedCards;
+      result.logs = [createLog('lose-influence', player)];
       
       // Move to next player's turn
-      result.players = updatedPlayers;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
     } else {

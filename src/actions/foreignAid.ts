@@ -1,5 +1,6 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, markPlayerAsLosing, replaceRevealedCard } from './types';
+import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
+import { hasCardType, revealCard, replaceCard, getPlayerCards } from '../utils/cardUtils';
 
 export const foreignAidAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -43,29 +44,39 @@ export const foreignAidAction: ActionHandler = {
 
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      const updatedPlayers = [...game.players];
-      const updatedGame = {...game, players: updatedPlayers};
+      // Find the card to reveal
+      const playerCards = getPlayerCards(game.cards, playerId);
       
-      // Find card index if a specific card was chosen
-      let cardIndex = undefined;
-      if (response.card) {
-        cardIndex = updatedPlayers[playerId].influence.findIndex(
-          i => !i.revealed && i.card === response.card
-        );
-        // If card not found or already revealed, default to first hidden card
-        if (cardIndex === -1) {
-          cardIndex = undefined; // Let applyInfluenceLoss find the first hidden card
-        }
+      if (playerCards.length === 0) {
+        // Player has no cards left to lose
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        
+        result.logs = [createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
       }
-      
-      // Apply influence loss
-      const lossResult = applyInfluenceLoss(
-        updatedPlayers[playerId], 
-        cardIndex,
-        updatedPlayers
-      );
-      
-      result.logs = lossResult.logs;
+
+      // If a specific card was chosen, find it
+      let cardToReveal = response.card ? 
+        playerCards.find(c => c.name === response.card) : 
+        playerCards[0];
+
+      if (!cardToReveal) {
+        cardToReveal = playerCards[0];
+      }
+
+      // Reveal the card
+      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      result.cards = updatedCards;
+      result.logs = [createLog('lose-influence', player)];
       
       // If a blocking player won a challenge and needs to replace their Duke card
       if (game.actionInProgress.blockingPlayer !== undefined && 
@@ -73,30 +84,34 @@ export const foreignAidAction: ActionHandler = {
           game.actionInProgress.challengeDefense) {
         
         // If this was a challenger losing influence (failed challenge to Duke)
-        const replaceResult = replaceRevealedCard(
-          updatedPlayers[game.actionInProgress.blockingPlayer],
-          'Duke',
-          updatedGame
-        );
-        result.logs = result.logs.concat(replaceResult.logs);
+        const blockingPlayerCards = getPlayerCards(game.cards, game.actionInProgress.blockingPlayer);
+        const dukeCard = blockingPlayerCards.find(c => c.name === 'Duke');
+        
+        if (dukeCard) {
+          const updatedCards = replaceCard(result.cards || game.cards, dukeCard.id);
+          result.cards = updatedCards;
+        }
       }
 
       // If this was the blocking player losing influence after a failed block
       if (game.actionInProgress.blockingPlayer === playerId) {
         // Original player gets Foreign Aid
+        const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 2;
+        
         // Create a player-specific message showing who got the Foreign Aid
         result.logs.push(createLog('foreign-aid', actionPlayer, {
           coins: 2, 
           message: GameMessages.results.foreignAidSuccess
         }));
+        
+        result.players = updatedPlayers;
       }
 
-      result.players = updatedPlayers;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
 
@@ -142,7 +157,6 @@ export const foreignAidAction: ActionHandler = {
             targetColor: blockingPlayer.color,
             message: GameMessages.responses.allowBlock
           })];
-          
 
           result.actionInProgress = null;
           
@@ -162,12 +176,9 @@ export const foreignAidAction: ActionHandler = {
           index !== game.actionInProgress!.blockingPlayer
         );
         
-        console.log('Other players who need to respond to block:', otherPlayers.map(p => ({ name: p.name, index: game.players.indexOf(p) })));
-        
         const allOtherPlayersResponded = otherPlayers.every(p => {
           const playerIdx = game.players.indexOf(p);
           const hasResponded = updatedResponses[playerIdx] !== undefined;
-          console.log(`Player ${p.name} (index ${playerIdx}) has responded to block:`, hasResponded);
           return hasResponded;
         });
         
@@ -184,32 +195,23 @@ export const foreignAidAction: ActionHandler = {
       // No block yet, handling regular allow responses to the Foreign Aid
       
       // Check if all other non-eliminated players have allowed
-      // Use index-based filtering instead of ID-based to avoid mismatches
       const otherPlayers = game.players.filter((p, index) => 
         index !== game.actionInProgress!.player && !p.eliminated
       );
       
-      console.log('Other players who need to respond to Foreign Aid:', otherPlayers.map(p => ({ name: p.name, id: p.id, index: game.players.indexOf(p) })));
-      console.log('Current responses for Foreign Aid:', updatedResponses);
-      
       const allResponded = otherPlayers.every(p => {
-        // Get the player's index which is used as the key in responses
         const playerIdx = game.players.indexOf(p);
         const hasResponded = updatedResponses[playerIdx] !== undefined;
-        console.log(`Player ${p.name} (index ${playerIdx}) has responded:`, hasResponded);
         return hasResponded;
       });
 
       if (allResponded) {
-        // Check if anyone blocked using the specific player responses
+        // Check if anyone blocked
         const anyPlayerBlocked = otherPlayers.some(p => {
           const playerIdx = game.players.indexOf(p);
           const response = updatedResponses[playerIdx];
           return response && response.type === 'block';
         });
-        
-        console.log('Any player blocked Foreign Aid?', anyPlayerBlocked);
-        console.log('Should complete Foreign Aid?', allResponded && !anyPlayerBlocked);
         
         // If no one blocked, complete Foreign Aid
         if (!anyPlayerBlocked) {
@@ -236,7 +238,7 @@ export const foreignAidAction: ActionHandler = {
     // Handle challenge of a block
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
       const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-      const hasDuke = verifyPlayerHasRole(blockingPlayer, 'Duke');
+      const hasDuke = hasCardType(game.cards, game.actionInProgress.blockingPlayer, 'Duke');
 
       if (hasDuke) {
         // Challenge fails, challenger loses influence
@@ -254,9 +256,6 @@ export const foreignAidAction: ActionHandler = {
           challengeDefense: true, // Flag to indicate the blocking player successfully defended and needs to replace their card
           responses: updatedResponses
         };
-        
-        // // Add specific message for the Duke block being valid using createSystemLog
-        // result.logs.push(createSystemLog(GameMessages.system.dukeRevealedSuccess(blockingPlayer.name)));
       } else {
         // Challenge succeeds, blocker loses influence
         result.logs = [createLog('challenge-success', player, {
@@ -272,7 +271,6 @@ export const foreignAidAction: ActionHandler = {
           challengeInProgress: true,
           responses: updatedResponses
         };
-        
       }
 
       return result;

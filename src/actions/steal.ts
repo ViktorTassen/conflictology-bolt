@@ -1,6 +1,7 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn, applyInfluenceLoss, verifyPlayerHasRole, replaceRevealedCard } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn } from './types';
 import { CardType } from '../types';
 import { GameMessages } from '../messages';
+import { hasCardType, revealCard, replaceCard, getPlayerCards } from '../utils/cardUtils';
 
 export const stealAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -51,12 +52,10 @@ export const stealAction: ActionHandler = {
     const targetPlayer = game.players[game.actionInProgress.target ?? 0];
     const result: ActionResult = {};
     
-    // Create response data with card if provided
     const responseData = response.card 
       ? { type: response.type, card: response.card }
       : { type: response.type };
       
-    // Update responses
     const updatedResponses = {
       ...game.actionInProgress.responses,
       [playerId]: responseData
@@ -64,30 +63,40 @@ export const stealAction: ActionHandler = {
 
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      const updatedPlayers = [...game.players];
-      const updatedGame = {...game, players: updatedPlayers};
+      // Find the card to reveal
+      const playerCards = getPlayerCards(game.cards, playerId);
       
-      // Find card index if a specific card was chosen
-      let cardIndex = undefined;
-      if (response.card) {
-        cardIndex = updatedPlayers[playerId].influence.findIndex(
-          i => !i.revealed && i.card === response.card
-        );
-        // If card not found or already revealed, default to first hidden card
-        if (cardIndex === -1) {
-          cardIndex = undefined; // Let applyInfluenceLoss find the first hidden card
-        }
+      if (playerCards.length === 0) {
+        // Player has no cards left to lose
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        
+        result.logs = [createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.players = updatedPlayers;
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
       }
-      
-      // Apply influence loss
-      const lossResult = applyInfluenceLoss(
-        updatedPlayers[playerId], 
-        cardIndex,
-        updatedPlayers
-      );
-      
-      result.logs = lossResult.logs;
-      
+
+      // If a specific card was chosen, find it
+      let cardToReveal = response.card ? 
+        playerCards.find(c => c.name === response.card) : 
+        playerCards[0];
+
+      if (!cardToReveal) {
+        cardToReveal = playerCards[0];
+      }
+
+      // Reveal the card
+      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      result.cards = updatedCards;
+      result.logs = [createLog('lose-influence', player)];
+
       // If the action player was challenged regarding Captain and won
       if (playerId !== game.actionInProgress.player && 
           game.actionInProgress.challengeInProgress && 
@@ -96,12 +105,8 @@ export const stealAction: ActionHandler = {
           game.actionInProgress.challengeDefense) {
         
         // Replace the revealed Captain card
-        const replaceResult = replaceRevealedCard(
-          updatedPlayers[game.actionInProgress.player],
-          'Captain',
-          updatedGame
-        );
-        result.logs = result.logs.concat(replaceResult.logs);
+        const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
+        result.cards = updatedCards;
       }
       
       // If a blocking player was challenged regarding their blocking card and won
@@ -113,12 +118,15 @@ export const stealAction: ActionHandler = {
         // If this was the challenger losing influence (failed challenge to blocking card)
         if (playerId === game.actionInProgress.losingPlayer) {
           // Replace the revealed blocking card
-          const replaceResult = replaceRevealedCard(
-            updatedPlayers[game.actionInProgress.blockingPlayer],
-            game.actionInProgress.blockingCard as CardType,
-            updatedGame
+          const blockingPlayerCards = getPlayerCards(game.cards, game.actionInProgress.blockingPlayer);
+          const blockingCard = blockingPlayerCards.find(c => 
+            c.name === game.actionInProgress!.blockingCard
           );
-          result.logs = result.logs.concat(replaceResult.logs);
+          
+          if (blockingCard) {
+            const updatedCards = replaceCard(result.cards || game.cards, blockingCard.id);
+            result.cards = updatedCards;
+          }
         }
       }
 
@@ -128,6 +136,7 @@ export const stealAction: ActionHandler = {
         const stolenCoins = Math.min(targetPlayer.coins, 2);
         
         // Transfer coins
+        const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
         updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
         
@@ -135,8 +144,10 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $2M from`
+          message: `steals $${stolenCoins}M from`
         }));
+        
+        result.players = updatedPlayers;
       }
       // If this was the challenger losing influence (failed challenge)
       else if (game.actionInProgress.losingPlayer === playerId && 
@@ -145,7 +156,6 @@ export const stealAction: ActionHandler = {
         // If this was a challenge to the Captain claim, and target hasn't blocked yet
         if (playerId !== game.actionInProgress.target) {
           // Reset game state to action_response to allow target to block
-          // Use the GameMessages for consistent system messages
           result.logs.push(createSystemLog(GameMessages.system.blockingOptions(targetPlayer.name)));
           
           // Reset state by removing specific properties
@@ -156,7 +166,6 @@ export const stealAction: ActionHandler = {
             responses: {} // Clear all responses to allow new response phase
           };
           
-          result.players = updatedPlayers;
           return result;
         }
         
@@ -164,6 +173,7 @@ export const stealAction: ActionHandler = {
         const stolenCoins = Math.min(targetPlayer.coins, 2);
         
         // Transfer coins
+        const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
         updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
         
@@ -171,16 +181,17 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $2M from`
+          message: `steals $${stolenCoins}M from`
         }));
+        
+        result.players = updatedPlayers;
       }
       
       // Complete action
-      result.players = updatedPlayers;
       result.actionInProgress = null;
       
       // Get next turn and reset actionUsedThisTurn flag
-      const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+      const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       
@@ -189,11 +200,8 @@ export const stealAction: ActionHandler = {
 
     // Handle block with Captain, Ambassador, or Inquisitor
     if (response.type === 'block') {
-      console.log('Processing block response with card:', response.card);
-      
       // Verify a valid block card is specified
       if (!response.card || !['Captain', 'Ambassador', 'Inquisitor'].includes(response.card)) {
-        console.error('Invalid block card:', response.card);
         throw new Error('Must block with Captain, Ambassador, or Inquisitor');
       }
       
@@ -202,7 +210,6 @@ export const stealAction: ActionHandler = {
         throw new Error('Only the target can block a steal');
       }
       
-      // Create the block log
       result.logs = [createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
@@ -210,7 +217,6 @@ export const stealAction: ActionHandler = {
         message: `claims ${response.card} to block steal`
       })];
 
-      // Set up the block in the game state
       result.actionInProgress = {
         ...game.actionInProgress,
         blockingPlayer: playerId,
@@ -225,7 +231,7 @@ export const stealAction: ActionHandler = {
 
     // Handle challenge to Captain claim
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const hasCaptain = verifyPlayerHasRole(actionPlayer, 'Captain');
+      const hasCaptain = hasCardType(game.cards, game.actionInProgress.player, 'Captain');
 
       if (hasCaptain) {
         // Challenge fails, challenger loses influence
@@ -233,14 +239,14 @@ export const stealAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Captain',
-          message: `challenges Captain claim! Fails`
+          message: GameMessages.challenges.failCaptain
         })];
 
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
+          challengeDefense: true,
           responses: updatedResponses
         };
       } else {
@@ -249,7 +255,7 @@ export const stealAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Captain',
-          message: `challenges Captain claim! Success`
+          message: GameMessages.challenges.succeedCaptain
         })];
 
         result.actionInProgress = {
@@ -266,7 +272,7 @@ export const stealAction: ActionHandler = {
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
       const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
       const blockingCard = game.actionInProgress.blockingCard as CardType;
-      const hasCard = verifyPlayerHasRole(blockingPlayer, blockingCard);
+      const hasCard = hasCardType(game.cards, game.actionInProgress.blockingPlayer, blockingCard);
 
       if (hasCard) {
         // Challenge fails, challenger loses influence
@@ -281,7 +287,7 @@ export const stealAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: true, // Flag to indicate the blocking player successfully defended and needs to replace their card
+          challengeDefense: true,
           responses: updatedResponses
         };
       } else {
@@ -320,10 +326,9 @@ export const stealAction: ActionHandler = {
           result.logs = [createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: `allows block`
+            message: GameMessages.responses.allowBlock
           })];
           
-          // Use the GameMessages for consistent system messages
           result.logs.push(createSystemLog(GameMessages.system.stealBlocked));
 
           result.actionInProgress = null;
@@ -356,14 +361,14 @@ export const stealAction: ActionHandler = {
         result.logs = [createLog('allow', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: `allows steal`
+          message: GameMessages.responses.allowSteal
         })];
 
         result.logs.push(createLog('steal', actionPlayer, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $2M from`
+          message: `steals $${stolenCoins}M from`
         }));
 
         result.players = updatedPlayers;
@@ -415,7 +420,7 @@ export const stealAction: ActionHandler = {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: `steals $2M from`
+            message: `steals $${stolenCoins}M from`
           })];
 
           result.players = updatedPlayers;

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, ArrowLeft, Info, Skull } from 'lucide-react';
-import { Player, GameLogEntry, GameAction, GameState, CardType } from '../types';
+import { Game, Player, GameLogEntry, GameAction, GameState, CardType } from '../types';
 import { GameLog } from './GameLog';
 import { PlayerCard } from './PlayerCard';
 import { EmptyPlayerCard } from './EmptyPlayerCard';
@@ -18,6 +18,7 @@ import { ConfirmationDialog } from './ConfirmationDialog';
 import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
+import { getPlayerCards } from '../utils/cardUtils';
 
 interface GameViewProps {
   gameId: string;
@@ -76,17 +77,14 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     return (
       <GameLobby 
         game={game}
-        isHost={currentPlayer.id === game.players[0]?.id} // First player is host
+        isHost={currentPlayer.id === game.players[0]?.id}
         currentPlayerId={playerId}
         onStartGame={startGame}
         onReturnToMainMenu={onReturnToLobby || (() => {})}
       />
     );
   }
-  
-  // We'll show the game over screen as an overlay, not as a replacement
 
-  // Find current player's index for turn-based game logic
   const playerIndex = game.players.findIndex(player => player.id === playerId);
   const isCurrentTurn = game.currentTurn === playerIndex && !currentPlayer.eliminated;
   const canTakeAction = isCurrentTurn && !game.actionUsedThisTurn;
@@ -95,16 +93,14 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const handleActionSelect = async (action: GameAction) => {
     if (!canTakeAction || currentPlayer.eliminated) return;
     
-    // Check if the player has enough coins for the action
     if (action.cost && currentPlayer.coins < action.cost) {
       console.error(`Not enough coins for ${action.type}. Need ${action.cost}, have ${currentPlayer.coins}`);
       return;
     }
     
     setSelectedAction(action);
-    setTargetedPlayerId(null); // Reset any previous target
+    setTargetedPlayerId(null);
     
-    // For actions that require a target
     if (['steal', 'assassinate', 'coup', 'investigate'].includes(action.type)) {
       setShowActions(false);
     } else {
@@ -119,14 +115,11 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
 
   const handlePlayerTarget = async (targetId: number) => {
     if (selectedAction && ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type)) {
-      // First set the targeted player to provide visual feedback
       setTargetedPlayerId(targetId);
       
       try {
-        // Create a modified action with target included
         const actionWithTarget = {
           ...selectedAction,
-          // Add target to the action object itself
           target: targetId
         };
         
@@ -135,7 +128,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         setTargetedPlayerId(null);
       } catch (error) {
         console.error('Failed to target player:', error);
-        // Keep the selected action so they can try again
       }
     }
   };
@@ -148,26 +140,18 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const handleResponse = async (response: 'allow' | 'block' | 'challenge', card?: CardType) => {
     if (!actionInProgress || currentPlayer.eliminated) return;
     
-    console.log('Sending response:', response, 'with card:', card);
-    
     try {
-      // Create a clean response object without undefined values
       let responseData: any = { 
         type: response,
         playerId: playerIndex
       };
       
-      // Only include card if it's defined and needed (block actions)
       if (card && response === 'block') {
         responseData.card = card;
       }
       
-      console.log('Final response data being sent:', responseData);
-      console.log('Player index responding:', playerIndex);
-      
       await respondToAction(playerIndex, responseData);
       
-      // Show confirmation in console
       console.log(`Player ${currentPlayer.name} (index ${playerIndex}) responded with ${response}`);
     } catch (error) {
       console.error('Failed to respond:', error);
@@ -194,28 +178,26 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
     
-    // Make sure the action is properly set up for exchange or swap
     if ((game.actionInProgress.type !== 'exchange' && game.actionInProgress.type !== 'swap') || 
         game.actionInProgress.player !== playerIndex) {
       console.error('Exchange/Swap attempted by the wrong player or with wrong action type');
       return;
     }
     
-    // Make sure the exchangeCards array is actually populated
     if (!Array.isArray(game.actionInProgress.exchangeCards) || game.actionInProgress.exchangeCards.length === 0) {
       console.error('Exchange/Swap attempted with no cards available');
       return;
     }
     
-    // Validate that we have selected the correct number of cards
-    const activeCardCount = currentPlayer.influence.filter(card => !card.revealed).length;
+    // Get active card count from current cards
+    const activeCardCount = getPlayerCards(game.cards, playerId).length;
+    
     if (keptCardIndices.length !== activeCardCount) {
       console.error(`Wrong number of cards selected: got ${keptCardIndices.length}, expected ${activeCardCount}`);
       return;
     }
     
     try {
-      // Process the exchange/swap
       await respondToAction(playerIndex, {
         type: 'exchange_selection',
         playerId: playerIndex,
@@ -232,14 +214,12 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
     
-    // Make sure the action is properly set up for investigation
     if (game.actionInProgress.target !== playerIndex) {
       console.error('Investigation card selection attempted by the wrong player');
       return;
     }
     
     try {
-      // Process the card selection for investigation
       await respondToAction(playerIndex, {
         type: 'select_card_for_investigation',
         playerId: playerIndex,
@@ -258,14 +238,12 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
     
-    // Make sure the action is properly set up for investigation decision
     if (game.actionInProgress.player !== playerIndex) {
       console.error('Investigation decision attempted by the wrong player');
       return;
     }
     
     try {
-      // Process the investigation decision
       await respondToAction(playerIndex, {
         type: 'investigate_decision',
         playerId: playerIndex,
@@ -285,17 +263,14 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   };
 
   const getGameState = (): GameState => {
-    // Use the gameStateHelpers to get the game state
     return gameStateHelpers.getGameState(playerIndex);
   };
 
   const shouldShowResponseButtons = () => {
-    // Use the gameStateHelpers to determine if response buttons should be shown
     return gameStateHelpers.shouldShowResponseButtons(playerIndex);
   };
 
   const getResponseButtons = () => {
-    // Use the gameStateHelpers to get the response options
     return gameStateHelpers.getResponseOptions(playerIndex);
   };
 
@@ -331,11 +306,9 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Return to lobby button */}
       <button 
         className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute left-4 top-4 z-20 border border-zinc-800/30"
         onClick={() => {
-          // Show a confirmation dialog if a game is in progress and the player is not eliminated
           if (game.status === 'playing' && !currentPlayer.eliminated) {
             setShowLeaveConfirmation(true);
           } else {
@@ -346,7 +319,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         <ArrowLeft className="w-5 h-5 text-white/80" />
       </button>
       
-      {/* Independent button - right side */}
       <button 
         className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute right-4 top-4 z-20 border border-zinc-800/30"
       >
@@ -363,6 +335,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
               {player ? (
                 <PlayerCard 
                   player={player}
+                  cards={game.cards}
                   isActive={game.currentTurn === index && !player.eliminated}
                   isTargetable={isPlayerTargetable(index)}
                   isTargeted={targetedPlayerId === index}
@@ -387,10 +360,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
           />
           {responseButtons && shouldShowResponseButtons() && (
             <ResponseButtons 
-              onBlock={(card) => {
-                console.log('Block selected with card:', card);
-                handleResponse('block', card);
-              }}
+              onBlock={(card) => handleResponse('block', card)}
               onChallenge={() => handleResponse('challenge')}
               onAllow={() => handleResponse('allow')}
               visible={true}
@@ -414,12 +384,15 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
               </div>
 
               <div className="absolute left-[56%] bottom-6 transform -translate-x-1/2 z-10">
-                <InfluenceCards influence={currentPlayer.influence} showFaceUp={true} />
+                <InfluenceCards 
+                  playerId={playerId} 
+                  cards={game.cards} 
+                  showFaceUp={true} 
+                />
               </div>
 
               <div className="z-20 relative mr-2">
                 {currentPlayer.eliminated ? (
-                  // Red skull icon for eliminated players
                   <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center">
                     <Skull className="w-8 h-8 text-red-500" />
                   </div>
@@ -427,7 +400,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                   <button
                     ref={actionButtonRef}
                     onClick={() => {
-                      // Cancel any active target selection when opening action menu
                       if (selectedAction) {
                         setSelectedAction(null);
                         setTargetedPlayerId(null);
@@ -437,12 +409,10 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                     className="relative group"
                     disabled={!canTakeAction || gameState === 'waiting_for_influence_loss'}
                   >
-                    {/* Amber fire ornament circle for active turn */}
                     {canTakeAction && (
                       <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/30 to-amber-500/20 fire-pulse" />
                     )}
                     
-                    {/* Gray pulse for turn but used action */}
                     {isCurrentTurn && game.actionUsedThisTurn && (
                       <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-gray-500/20 via-gray-400/30 to-gray-500/20" />
                     )}
@@ -530,35 +500,34 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       )}
       
       {gameState === 'waiting_for_exchange' && 
-        actionInProgress?.exchangeCards && ( // Fixed: Show dialog to the player in waiting_for_exchange state
+        actionInProgress?.exchangeCards && (
         <ExchangeCardsDialog
-          playerInfluence={currentPlayer.influence}
-          drawnCards={actionInProgress.exchangeCards}
+          cards={game.cards}
+          playerId={playerId}
+          exchangeCardIds={actionInProgress.exchangeCards}
           onExchangeComplete={handleExchangeCards}
         />
       )}
       
-      {/* Card selection dialog for investigation */}
       {gameState === 'waiting_for_card_selection' && 
         actionInProgress?.type === 'investigate' && (
         <SelectCardForInvestigationDialog
-          playerInfluence={currentPlayer.influence}
+          cards={game.cards}
+          playerId={playerId}
           onCardSelect={handleCardSelectForInvestigation}
         />
       )}
 
-      {/* Investigation decision dialog */}
       {gameState === 'waiting_for_investigate_decision' && 
         actionInProgress?.type === 'investigate' && 
         actionInProgress?.investigateCard && (
         <InvestigateDecisionDialog
-          card={actionInProgress.investigateCard.card}
+          card={game.cards[actionInProgress.investigateCard.cardIndex].name}
           targetName={game.players[actionInProgress.target!].name}
           onDecision={handleInvestigateDecision}
         />
       )}
       
-      {/* Target Selection Overlay - positioned within game container */}
       <div className="pointer-events-none relative">
         {selectedAction && ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type) && (
           <TargetSelectionOverlay 
@@ -568,7 +537,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         )}
       </div>
       
-      {/* Game Over Overlay - shows only when game is over */}
       {isGameOver && (
         <div className="absolute inset-0 z-50">
           <GameOverScreen
@@ -583,7 +551,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         </div>
       )}
 
-      {/* Leave game confirmation dialog */}
       {showLeaveConfirmation && (
         <ConfirmationDialog
           title="Leave Game"
@@ -591,7 +558,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
           confirmText="Leave Game"
           cancelText="Stay"
           onConfirm={() => {
-            // Eliminate the player from the game when they leave
             leaveGame(playerIndex);
             setShowLeaveConfirmation(false);
             onReturnToLobby?.();

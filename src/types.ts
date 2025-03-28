@@ -1,7 +1,10 @@
 // Core game types
-export interface Influence {
-  card: CardType;
-  revealed: boolean;
+export interface Card {
+  id: string;
+  name: CardType;
+  playerId: number | null;
+  location: 'player' | 'deck' | 'exchange' | 'investigate';
+  revealed?: boolean;
 }
 
 export interface Player {
@@ -10,7 +13,6 @@ export interface Player {
   coins: number;
   color: string;
   avatar: string;
-  influence: Influence[];
   eliminated?: boolean;
 }
 
@@ -53,7 +55,7 @@ export interface GameAction {
   cost?: number;
   target?: number;
   requiresTarget?: boolean;
-  cardImage?: string; // Path to card image for character actions
+  cardImage?: string;
 }
 
 // Response option types
@@ -100,10 +102,10 @@ export interface Game {
   id: string;
   players: Player[];
   currentTurn: number;
-  deck: CardType[];
+  cards: Card[]; // Replace deck with cards array
   logs: GameLogEntry[];
   status: GameStatus;
-  actionUsedThisTurn?: boolean; // Flag to track if the current player has used an action during their turn
+  actionUsedThisTurn?: boolean;
   actionInProgress?: {
     type: ActionType;
     player: number;
@@ -111,11 +113,11 @@ export interface Game {
     blockingPlayer?: number;
     blockingCard?: CardType;
     losingPlayer?: number;
-    challengeDefense?: boolean; // Indicates if a player successfully defended a challenge and should replace their card
+    challengeDefense?: boolean;
     challengeInProgress?: boolean;
-    exchangeCards?: CardType[];
+    exchangeCards?: string[]; // Now stores card IDs instead of CardType
     investigateCard?: {
-      card: CardType;
+      cardId: string;
       cardIndex: number;
     };
     responses: Record<number, { 
@@ -129,10 +131,9 @@ export interface Game {
     type: ResponseType;
     card?: CardType;
   }>;
-  // Record of player IDs who have voted for the next match
   voteNextMatch?: Record<number, boolean>;
-  winner?: number; // ID of the winning player
-  newMatchCountdownStarted?: boolean; // Whether countdown to new match has started
-  newMatchStartTime?: number; // Timestamp when the new match will start
-  redirectToLobby?: boolean; // Whether to redirect players to lobby
+  winner?: number;
+  newMatchCountdownStarted?: boolean;
+  newMatchStartTime?: number;
+  redirectToLobby?: boolean;
 }

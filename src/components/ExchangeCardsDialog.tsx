@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CardType, Influence } from '../types';
+import { CardType, Card } from '../types';
 import { Shuffle } from 'lucide-react';
 
 // Import card images
@@ -21,61 +21,53 @@ const cardImages: Record<CardType, string> = {
 };
 
 interface ExchangeCardsDialogProps {
-  playerInfluence: Influence[];
-  drawnCards: CardType[];
-  onExchangeComplete: (keptIndices: number[]) => void;
+  cards: Card[];
+  playerId: number;
+  exchangeCardIds: string[];
+  onExchangeComplete: (selectedIndices: number[]) => void;
 }
 
 export function ExchangeCardsDialog({ 
-  playerInfluence, 
-  drawnCards, 
+  cards,
+  playerId,
+  exchangeCardIds,
   onExchangeComplete 
 }: ExchangeCardsDialogProps) {
-  const [selectedCards, setSelectedCards] = useState<number[]>([]);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   
-  // Count active (not revealed) player cards
-  const activeCardCount = playerInfluence.filter(card => !card.revealed).length;
+  // Get player's active cards and exchange cards
+  const playerCards = cards.filter(c => 
+    c.playerId === playerId && 
+    c.location === 'player' && 
+    !c.revealed
+  );
+  
+  const exchangeCards = cards.filter(c => 
+    exchangeCardIds.includes(c.id)
+  );
+  
+  // Combine all available cards
+  const availableCards = [...playerCards, ...exchangeCards];
+  
+  // Player must select exactly the same number of cards they currently have
+  const requiredSelectionCount = playerCards.length;
 
-  // Combine player's active cards with drawn cards for selection
-  const availableCards: { 
-    card: CardType; 
-    isPlayerCard: boolean;
-    originalIndex: number;
-  }[] = [
-    // Player's cards
-    ...playerInfluence
-      .map((infl, idx) => ({ 
-        card: infl.card, 
-        isPlayerCard: true,
-        revealed: infl.revealed,
-        originalIndex: idx
-      }))
-      .filter(card => !card.revealed),
-      
-    // Drawn cards from deck
-    ...drawnCards.map((card, idx) => ({ 
-      card, 
-      isPlayerCard: false,
-      revealed: false,
-      originalIndex: idx
-    }))
-  ];
-  
   const handleCardSelect = (index: number) => {
-    if (selectedCards.includes(index)) {
-      // Deselect the card
-      setSelectedCards(selectedCards.filter(i => i !== index));
+    if (selectedIndices.includes(index)) {
+      // Deselect card
+      setSelectedIndices(selectedIndices.filter(i => i !== index));
     } else {
-      // Check if we've already selected the required number of cards
-      if (selectedCards.length < activeCardCount) {
-        setSelectedCards([...selectedCards, index]);
+      // Only allow selection if we haven't reached the required count
+      if (selectedIndices.length < requiredSelectionCount) {
+        setSelectedIndices([...selectedIndices, index]);
       }
     }
   };
   
   const handleConfirmSelection = () => {
-    if (selectedCards.length === activeCardCount) {
-      onExchangeComplete(selectedCards);
+    // Only allow confirmation when exactly the required number of cards are selected
+    if (selectedIndices.length === requiredSelectionCount) {
+      onExchangeComplete(selectedIndices);
     }
   };
 
@@ -100,7 +92,7 @@ export function ExchangeCardsDialog({
           <div className="text-center mb-6">
             <h3 className="text-lg font-bold text-white mb-1">Exchange Cards</h3>
             <p className="text-blue-400/80 text-sm">
-              Select {activeCardCount} card{activeCardCount !== 1 ? 's' : ''} to keep
+              Select {requiredSelectionCount} card{requiredSelectionCount !== 1 ? 's' : ''} to keep
             </p>
           </div>
 
@@ -110,45 +102,40 @@ export function ExchangeCardsDialog({
             <div>
               <h4 className="text-white/80 text-sm font-semibold mb-3 text-center">Your Current Cards</h4>
               <div className="flex justify-center gap-3 flex-wrap">
-                {availableCards
-                  .filter(card => card.isPlayerCard)
-                  .map((cardInfo, i) => {
-                    // Calculate the actual index in the combined array
-                    const index = availableCards.findIndex(c => 
-                      c.isPlayerCard && c.originalIndex === cardInfo.originalIndex
-                    );
-                    
-                    return (
-                      <button
-                        key={`current-${i}`}
-                        onClick={() => handleCardSelect(index)}
-                        className={`group relative ${selectedCards.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
-                      >
-                        <div className={`absolute -inset-2 rounded-xl ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
-                        <div className="relative">
-                          {/* Card */}
-                          <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                            <img
-                              src={cardImages[cardInfo.card]}
-                              alt={cardInfo.card}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                              <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                                {cardInfo.card}
-                              </div>
+                {playerCards.map((card, i) => {
+                  const index = availableCards.findIndex(c => c.id === card.id);
+                  
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => handleCardSelect(index)}
+                      className={`group relative ${selectedIndices.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
+                    >
+                      <div className={`absolute -inset-2 rounded-xl ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
+                      <div className="relative">
+                        {/* Card */}
+                        <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                          <img
+                            src={cardImages[card.name]}
+                            alt={card.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
+                            <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                              {card.name}
                             </div>
-                            
-                            {/* Hover overlay */}
-                            <div className={`absolute inset-0 ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
                           </div>
-
-                          {/* Selection indicator */}
-                          <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedCards.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                          
+                          {/* Hover overlay */}
+                          <div className={`absolute inset-0 ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
                         </div>
-                      </button>
-                    );
-                  })}
+
+                        {/* Selection indicator */}
+                        <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedIndices.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
@@ -156,45 +143,40 @@ export function ExchangeCardsDialog({
             <div>
               <h4 className="text-white/80 text-sm font-semibold mb-3 text-center">New Cards From Deck</h4>
               <div className="flex justify-center gap-3 flex-wrap">
-                {availableCards
-                  .filter(card => !card.isPlayerCard)
-                  .map((cardInfo, i) => {
-                    // Calculate the actual index in the combined array
-                    const index = availableCards.findIndex(c => 
-                      !c.isPlayerCard && c.originalIndex === cardInfo.originalIndex
-                    );
-                    
-                    return (
-                      <button
-                        key={`drawn-${i}`}
-                        onClick={() => handleCardSelect(index)}
-                        className={`group relative ${selectedCards.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
-                      >
-                        <div className={`absolute -inset-2 rounded-xl ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
-                        <div className="relative">
-                          {/* Card */}
-                          <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                            <img
-                              src={cardImages[cardInfo.card]}
-                              alt={cardInfo.card}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                              <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                                {cardInfo.card}
-                              </div>
+                {exchangeCards.map((card, i) => {
+                  const index = availableCards.findIndex(c => c.id === card.id);
+                  
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => handleCardSelect(index)}
+                      className={`group relative ${selectedIndices.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
+                    >
+                      <div className={`absolute -inset-2 rounded-xl ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
+                      <div className="relative">
+                        {/* Card */}
+                        <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                          <img
+                            src={cardImages[card.name]}
+                            alt={card.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
+                            <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                              {card.name}
                             </div>
-                            
-                            {/* Hover overlay */}
-                            <div className={`absolute inset-0 ${selectedCards.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
                           </div>
-
-                          {/* Selection indicator */}
-                          <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedCards.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                          
+                          {/* Hover overlay */}
+                          <div className={`absolute inset-0 ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
                         </div>
-                      </button>
-                    );
-                  })}
+
+                        {/* Selection indicator */}
+                        <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedIndices.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -203,16 +185,16 @@ export function ExchangeCardsDialog({
           <div className="flex justify-center">
             <button
               onClick={handleConfirmSelection}
-              disabled={selectedCards.length !== activeCardCount}
+              disabled={selectedIndices.length !== requiredSelectionCount}
               className={`
                 px-6 py-2 rounded-full 
-                ${selectedCards.length === activeCardCount ? 
+                ${selectedIndices.length === requiredSelectionCount ? 
                   'bg-blue-600 hover:bg-blue-700 text-white' : 
                   'bg-gray-700 text-gray-400 cursor-not-allowed'}
                 transition-colors duration-300
               `}
             >
-              Confirm Selection
+              Confirm Selection ({selectedIndices.length}/{requiredSelectionCount})
             </button>
           </div>
         </div>
