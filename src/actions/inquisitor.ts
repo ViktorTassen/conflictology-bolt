@@ -26,7 +26,7 @@ export const investigateAction: ActionHandler = {
 
     // Check if target has any non-revealed cards
     const targetPlayer = game.players[targetId];
-    const targetCards = getPlayerCards(game.cards, targetId);
+    const targetCards = getPlayerCards(game.cards, targetPlayer.id);
     if (targetCards.length === 0) {
       throw new Error('Target player has no cards to investigate');
     }
@@ -68,7 +68,7 @@ export const investigateAction: ActionHandler = {
       }
       
       // Find the card to show
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       const selectedCard = playerCards.find(c => c.name === response.card);
       
       if (!selectedCard) {
@@ -138,7 +138,7 @@ export const investigateAction: ActionHandler = {
         const finalCards = cardsWithReturnedCard.map(card => 
           card.id === drawnCard.id ? {
             ...card,
-            playerId: targetId,
+            playerId: targetPlayer.id,
             location: 'player'
           } : card
         );
@@ -174,7 +174,7 @@ export const investigateAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -249,7 +249,8 @@ export const investigateAction: ActionHandler = {
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasInquisitor = hasCardType(game.cards, game.actionInProgress.player, 'Inquisitor');
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const hasInquisitor = hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
 
       if (hasInquisitor) {
         // Challenge fails, challenger loses influence
@@ -369,7 +370,8 @@ export const swapAction: ActionHandler = {
       }
       
       // Get all available cards (player's non-revealed cards + drawn cards)
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const playerCards = getPlayerCards(game.cards, actionPlayer.id);
       const exchangeCards = game.cards.filter(c => 
         game.actionInProgress!.exchangeCards!.includes(c.id)
       );
@@ -396,7 +398,7 @@ export const swapAction: ActionHandler = {
         if (cardIndex !== -1) {
           updatedCards[cardIndex] = {
             ...updatedCards[cardIndex],
-            playerId,
+            playerId: actionPlayer.id,
             location: 'player'
           };
         }
@@ -434,7 +436,7 @@ export const swapAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -516,7 +518,8 @@ export const swapAction: ActionHandler = {
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasInquisitor = hasCardType(game.cards, game.actionInProgress.player, 'Inquisitor');
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const hasInquisitor = hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
 
       if (hasInquisitor) {
         // Challenge fails, challenger loses influence

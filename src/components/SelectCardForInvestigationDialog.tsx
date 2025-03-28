@@ -85,9 +85,6 @@ export function SelectCardForInvestigationDialog({
                         <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
                           {card.name}
                         </div>
-                        <div className="absolute top-2 right-2 text-white/70 text-xs">
-                          Card {i+1}
-                        </div>
                       </div>
                       
                       {/* Hover overlay */}
