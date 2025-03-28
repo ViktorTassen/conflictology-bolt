@@ -96,12 +96,18 @@ export const foreignAidAction: ActionHandler = {
         
         // Find the Duke card that was challenged
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const dukeCard = getPlayerCards(game.cards, blockingPlayer.id)
-          .find(c => c.name === 'Duke');
+        
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const dukeCard = updatedCards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Duke'
+        );
         
         if (dukeCard) {
-          const updatedCards = replaceCard(result.cards || game.cards, dukeCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
+          result.cards = cardsAfterReplacement;
         }
       }
 

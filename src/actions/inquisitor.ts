@@ -231,13 +231,18 @@ export const investigateAction: ActionHandler = {
           game.actionInProgress.challengeDefense) { // The action player successfully defended
         
         // Find the card that matches the claim (Inquisitor)
-        const inquisitorCard = getPlayerCards(game.cards, player.id)
-          .find(c => c.name === 'Inquisitor');
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const inquisitorCard = updatedCards.find(
+          c => c.playerId === player.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Inquisitor'
+        );
         
         if (inquisitorCard) {
           // Replace the revealed Inquisitor card
-          const updatedCards = replaceCard(result.cards || game.cards, inquisitorCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, inquisitorCard.id);
+          result.cards = cardsAfterReplacement;
           
           // Resume with the original action
           result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
@@ -557,13 +562,18 @@ export const swapAction: ActionHandler = {
           game.actionInProgress.challengeDefense) { // The action player successfully defended
         
         // Find the card that matches the claim (Inquisitor)
-        const inquisitorCard = getPlayerCards(game.cards, player.id)
-          .find(c => c.name === 'Inquisitor');
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const inquisitorCard = updatedCards.find(
+          c => c.playerId === player.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Inquisitor'
+        );
         
         if (inquisitorCard) {
           // Replace the Inquisitor card
-          const updatedCards = replaceCard(result.cards || game.cards, inquisitorCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, inquisitorCard.id);
+          result.cards = cardsAfterReplacement;
           
           // Draw 1 card for swap
           const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');

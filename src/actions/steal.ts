@@ -116,13 +116,18 @@ export const stealAction: ActionHandler = {
           !game.actionInProgress.blockingPlayer) {
         
         // Find the Captain card that was revealed
-        const captainCard = getPlayerCards(game.cards, player.id)
-          .find(c => c.name === 'Captain');
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const captainCard = updatedCards.find(
+          c => c.playerId === player.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Captain'
+        );
           
         if (captainCard) {
           // Replace the revealed Captain card
-          const updatedCards = replaceCard(result.cards || game.cards, captainCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, captainCard.id);
+          result.cards = cardsAfterReplacement;
         }
       }
       
@@ -136,13 +141,19 @@ export const stealAction: ActionHandler = {
         // Find the blocking card that was challenged
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
         const blockingCardName = game.actionInProgress.blockingCard as CardType;
-        const blockingCard = getPlayerCards(game.cards, blockingPlayer.id)
-          .find(c => c.name === blockingCardName);
+        
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const blockingCard = updatedCards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === blockingCardName
+        );
         
         if (blockingCard) {
           // Replace the revealed blocking card
-          const updatedCards = replaceCard(result.cards || game.cards, blockingCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, blockingCard.id);
+          result.cards = cardsAfterReplacement;
         }
       }
 
@@ -174,13 +185,19 @@ export const stealAction: ActionHandler = {
           // Find the blocker's card and replace it
           const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
           const blockingCardName = game.actionInProgress.blockingCard as CardType;
-          const blockingCard = getPlayerCards(game.cards, blockingPlayer.id)
-            .find(c => c.name === blockingCardName);
+          
+          // Note: We need to find the card that is still marked as "player" but is revealed
+          const blockingCard = updatedCards.find(
+            c => c.playerId === blockingPlayer.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === blockingCardName
+          );
           
           if (blockingCard) {
             // Replace the revealed blocking card
-            const updatedCards = replaceCard(result.cards || game.cards, blockingCard.id);
-            result.cards = updatedCards;
+            const cardsAfterReplacement = replaceCard(updatedCards, blockingCard.id);
+            result.cards = cardsAfterReplacement;
             
             // Block succeeds, steal is blocked
             result.logs.push(createSystemLog(`${blockingPlayer.name}'s ${blockingCardName} blocks the steal.`));

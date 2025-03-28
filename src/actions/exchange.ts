@@ -172,13 +172,18 @@ export const exchangeAction: ActionHandler = {
           game.actionInProgress.challengeDefense) { // The action player successfully defended
         
         // Find the card that matches the claim (Ambassador)
-        const ambassadorCard = getPlayerCards(game.cards, player.id)
-          .find(c => c.name === 'Ambassador');
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const ambassadorCard = updatedCards.find(
+          c => c.playerId === player.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Ambassador'
+        );
         
         if (ambassadorCard) {
           // Replace the Ambassador card
-          const updatedCards = replaceCard(result.cards || game.cards, ambassadorCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, ambassadorCard.id);
+          result.cards = cardsAfterReplacement;
           
           // Draw 2 cards for exchange
           const cardsWithExchange = drawCards(updatedCards, 2, 'exchange');

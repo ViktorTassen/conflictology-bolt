@@ -138,17 +138,22 @@ export const dukeAction: ActionHandler = {
               game.actionInProgress.challengeInProgress && 
               game.actionInProgress.challengeDefense) {
           
-          // Find the Duke card to replace
-          const dukeCard = getPlayerCards(game.cards, player.id)
-            .find(c => c.name === 'Duke');
+          // Find the Duke card to replace - it's the revealed one
+          // Note: We need to find the card that is still marked as "player" but is revealed
+          const dukeCard = updatedCards.find(
+            c => c.playerId === player.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === 'Duke'
+          );
             
           if (!dukeCard) {
             return result; // No Duke found, shouldn't happen
           }
             
           // Replace the revealed Duke card
-          const updatedCards = replaceCard(result.cards || game.cards, dukeCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
+          result.cards = cardsAfterReplacement;
           
           // Duke action succeeds - action player gains 3 coins
           const updatedPlayers = [...game.players];

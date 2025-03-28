@@ -126,13 +126,18 @@ export const assassinateAction: ActionHandler = {
           !game.actionInProgress.blockingPlayer) {
         
         // Find the Assassin card that was revealed
-        const assassinCard = getPlayerCards(game.cards, player.id)
-          .find(c => c.name === 'Assassin');
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const assassinCard = updatedCards.find(
+          c => c.playerId === player.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Assassin'
+        );
           
         if (assassinCard) {
           // Replace the revealed Assassin card
-          const updatedCards = replaceCard(result.cards || game.cards, assassinCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, assassinCard.id);
+          result.cards = cardsAfterReplacement;
         }
       }
       
@@ -145,13 +150,19 @@ export const assassinateAction: ActionHandler = {
         
         // Find the Contessa card that was challenged
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const contessaCard = getPlayerCards(game.cards, blockingPlayer.id)
-          .find(c => c.name === 'Contessa');
+        
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const contessaCard = updatedCards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Contessa'
+        );
         
         if (contessaCard) {
           // Replace the revealed Contessa card
-          const updatedCards = replaceCard(result.cards || game.cards, contessaCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
+          result.cards = cardsAfterReplacement;
         }
       }
 
@@ -180,13 +191,19 @@ export const assassinateAction: ActionHandler = {
                game.actionInProgress.blockingPlayer !== undefined) {
         // Find the blocker's Contessa card and replace it
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const contessaCard = getPlayerCards(game.cards, blockingPlayer.id)
-          .find(c => c.name === 'Contessa');
+        
+        // Note: We need to find the card that is still marked as "player" but is revealed
+        const contessaCard = updatedCards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          c.revealed === true && 
+          c.name === 'Contessa'
+        );
         
         if (contessaCard) {
           // Replace the revealed Contessa card
-          const updatedCards = replaceCard(result.cards || game.cards, contessaCard.id);
-          result.cards = updatedCards;
+          const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
+          result.cards = cardsAfterReplacement;
           
           // Block succeeds, assassination is blocked
           result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
