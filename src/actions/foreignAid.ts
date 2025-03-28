@@ -78,6 +78,16 @@ export const foreignAidAction: ActionHandler = {
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
       
+      // Check if player has any unrevealed cards left after this card is revealed
+      const remainingCards = getPlayerCards(updatedCards, player.id);
+      if (remainingCards.length === 0) {
+        // Player has no more cards - mark them as eliminated
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        result.players = updatedPlayers;
+        result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
+      }
+      
       // If a blocking player is responding after winning a challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
           playerId === game.actionInProgress.losingPlayer && 

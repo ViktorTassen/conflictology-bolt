@@ -150,6 +150,16 @@ export const exchangeAction: ActionHandler = {
       const updatedCards = revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
+      
+      // Check if player has any unrevealed cards left after this card is revealed
+      const remainingCards = getPlayerCards(updatedCards, player.id);
+      if (remainingCards.length === 0) {
+        // Player has no more cards - mark them as eliminated
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        result.players = updatedPlayers;
+        result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
+      }
 
       // Only the action player should replace their revealed card and draw for exchange
       // This happens when:

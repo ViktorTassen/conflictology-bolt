@@ -96,6 +96,16 @@ export const stealAction: ActionHandler = {
       const updatedCards = revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
+      
+      // Check if player has any unrevealed cards left after this card is revealed
+      const remainingCards = getPlayerCards(updatedCards, player.id);
+      if (remainingCards.length === 0) {
+        // Player has no more cards - mark them as eliminated
+        const updatedPlayers = [...game.players];
+        updatedPlayers[playerId].eliminated = true;
+        result.players = updatedPlayers;
+        result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
+      }
 
       // Only if the action player is responding after a failed challenge against them
       // should they replace their revealed Captain card
