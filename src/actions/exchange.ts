@@ -115,7 +115,7 @@ export const exchangeAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -197,7 +197,8 @@ export const exchangeAction: ActionHandler = {
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasAmbassador = hasCardType(game.cards, game.actionInProgress.player, 'Ambassador');
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const hasAmbassador = hasCardType(game.cards, actionPlayer.id, 'Ambassador');
 
       if (hasAmbassador) {
         // Challenge fails, challenger loses influence

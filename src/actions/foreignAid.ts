@@ -45,7 +45,7 @@ export const foreignAidAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -238,7 +238,7 @@ export const foreignAidAction: ActionHandler = {
     // Handle challenge of a block
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
       const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-      const hasDuke = hasCardType(game.cards, game.actionInProgress.blockingPlayer, 'Duke');
+      const hasDuke = hasCardType(game.cards, blockingPlayer.id, 'Duke');
 
       if (hasDuke) {
         // Challenge fails, challenger loses influence

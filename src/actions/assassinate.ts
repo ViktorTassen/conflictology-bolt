@@ -74,7 +74,7 @@ export const assassinateAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -126,7 +126,8 @@ export const assassinateAction: ActionHandler = {
         // If this was the challenger losing influence (failed challenge to Contessa)
         if (playerId === game.actionInProgress.losingPlayer) {
           // Replace the revealed Contessa card
-          const blockingPlayerCards = getPlayerCards(game.cards, game.actionInProgress.blockingPlayer);
+          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+          const blockingPlayerCards = getPlayerCards(game.cards, blockingPlayer.id);
           const contessaCard = blockingPlayerCards.find(c => c.name === 'Contessa');
           
           if (contessaCard) {
@@ -222,7 +223,8 @@ export const assassinateAction: ActionHandler = {
 
     // Handle challenge to the Assassin claim
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const hasAssassin = hasCardType(game.cards, game.actionInProgress.player, 'Assassin');
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const hasAssassin = hasCardType(game.cards, actionPlayer.id, 'Assassin');
 
       if (hasAssassin) {
         // Challenge fails, challenger loses influence
@@ -261,7 +263,8 @@ export const assassinateAction: ActionHandler = {
     }
     // Handle challenge to a Contessa block
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
-      const hasContessa = hasCardType(game.cards, game.actionInProgress.blockingPlayer, 'Contessa');
+      const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+      const hasContessa = hasCardType(game.cards, blockingPlayer.id, 'Contessa');
 
       if (hasContessa) {
         // Challenge fails, challenger loses influence

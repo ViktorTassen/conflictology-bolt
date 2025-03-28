@@ -64,7 +64,7 @@ export const stealAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -118,7 +118,8 @@ export const stealAction: ActionHandler = {
         // If this was the challenger losing influence (failed challenge to blocking card)
         if (playerId === game.actionInProgress.losingPlayer) {
           // Replace the revealed blocking card
-          const blockingPlayerCards = getPlayerCards(game.cards, game.actionInProgress.blockingPlayer);
+          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+          const blockingPlayerCards = getPlayerCards(game.cards, blockingPlayer.id);
           const blockingCard = blockingPlayerCards.find(c => 
             c.name === game.actionInProgress!.blockingCard
           );
@@ -231,7 +232,8 @@ export const stealAction: ActionHandler = {
 
     // Handle challenge to Captain claim
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const hasCaptain = hasCardType(game.cards, game.actionInProgress.player, 'Captain');
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const hasCaptain = hasCardType(game.cards, actionPlayer.id, 'Captain');
 
       if (hasCaptain) {
         // Challenge fails, challenger loses influence
@@ -272,7 +274,7 @@ export const stealAction: ActionHandler = {
     else if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
       const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
       const blockingCard = game.actionInProgress.blockingCard as CardType;
-      const hasCard = hasCardType(game.cards, game.actionInProgress.blockingPlayer, blockingCard);
+      const hasCard = hasCardType(game.cards, blockingPlayer.id, blockingCard);
 
       if (hasCard) {
         // Challenge fails, challenger loses influence

@@ -1,6 +1,6 @@
 import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, createSystemLog } from './types';
 import { GameMessages } from '../messages';
-import { hasCardType, revealCard, replaceCard } from '../utils/cardUtils';
+import { hasCardType, revealCard, replaceCard, getPlayerCards } from '../utils/cardUtils';
 
 export const dukeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -48,11 +48,7 @@ export const dukeAction: ActionHandler = {
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
       // Find the card to reveal
-      const playerCards = game.cards.filter(c => 
-        c.playerId === playerId && 
-        c.location === 'player' && 
-        !c.revealed
-      );
+      const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         // Player has no cards left to lose
@@ -127,7 +123,8 @@ export const dukeAction: ActionHandler = {
 
     // Handle challenge
     if (response.type === 'challenge') {
-      const hasDuke = hasCardType(game.cards, game.actionInProgress.player, 'Duke');
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const hasDuke = hasCardType(game.cards, actionPlayer.id, 'Duke');
       
       if (hasDuke) {
         // Challenge fails - challenger loses influence and action player will replace their card

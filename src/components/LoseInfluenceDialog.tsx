@@ -1,5 +1,5 @@
 import React from 'react';
-import { Influence, CardType } from '../types';
+import { Card, CardType } from '../types';
 import { Skull } from 'lucide-react';
 
 // Import card images
@@ -8,6 +8,7 @@ import assassinImg from '../assets/images/assassin.png';
 import captainImg from '../assets/images/captain.png';
 import contessaImg from '../assets/images/contessa.png';
 import dukeImg from '../assets/images/duke.png';
+import inquisitorImg from '../assets/images/inquisitor.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {
@@ -15,16 +16,22 @@ const cardImages: Record<CardType, string> = {
   'Assassin': assassinImg,
   'Captain': captainImg,
   'Contessa': contessaImg,
-  'Duke': dukeImg
+  'Duke': dukeImg,
+  'Inquisitor': inquisitorImg
 };
 
 interface LoseInfluenceDialogProps {
-  influence: Influence[];
-  onCardSelect: (index: number) => void;
+  cards: Card[];
+  playerId: number;
+  onCardSelect: (cardName: CardType) => void;
 }
 
-export function LoseInfluenceDialog({ influence, onCardSelect }: LoseInfluenceDialogProps) {
-  const availableCards = influence.filter(card => !card.revealed);
+export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInfluenceDialogProps) {
+  const availableCards = cards.filter(card => 
+    card.playerId === playerId && 
+    card.location === 'player' && 
+    !card.revealed
+  );
 
   if (availableCards.length === 0) return null;
 
@@ -53,37 +60,35 @@ export function LoseInfluenceDialog({ influence, onCardSelect }: LoseInfluenceDi
 
           {/* Cards */}
           <div className="flex justify-center gap-4">
-            {influence.map((card, index) => (
-              !card.revealed && (
-                <button
-                  key={index}
-                  onClick={() => onCardSelect(index)}
-                  className="group relative"
-                >
-                  <div className="absolute -inset-2 rounded-xl bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative">
-                    {/* Card */}
-                    <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                      <img
-                        src={cardImages[card.card]}
-                        alt={card.card}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                        <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                          {card.card}
-                        </div>
+            {availableCards.map((card) => (
+              <button
+                key={card.id}
+                onClick={() => onCardSelect(card.name)}
+                className="group relative"
+              >
+                <div className="absolute -inset-2 rounded-xl bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative">
+                  {/* Card */}
+                  <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                    <img
+                      src={cardImages[card.name]}
+                      alt={card.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
+                      <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                        {card.name}
                       </div>
-                      
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 transition-colors duration-300" />
                     </div>
-
-                    {/* Selection indicator */}
-                    <div className="absolute -bottom-1 inset-x-0 h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                    
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 transition-colors duration-300" />
                   </div>
-                </button>
-              )
+
+                  {/* Selection indicator */}
+                  <div className="absolute -bottom-1 inset-x-0 h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                </div>
+              </button>
             ))}
           </div>
         </div>

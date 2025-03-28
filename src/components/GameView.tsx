@@ -158,14 +158,14 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     }
   };
 
-  const handleLoseInfluence = async (cardIndex: number) => {
+  const handleLoseInfluence = async (cardName: CardType) => {
     if (!actionInProgress) return;
     
     try {
       await respondToAction(playerIndex, {
         type: 'lose_influence',
         playerId: playerIndex,
-        card: cardIndex
+        card: cardName
       });
     } catch (error) {
       console.error('Failed to lose influence:', error);
@@ -496,7 +496,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
 
       {gameState === 'waiting_for_influence_loss' && (
         <LoseInfluenceDialog
-          influence={currentPlayer.influence}
+          cards={game.cards}
+          playerId={currentPlayer.id}
           onCardSelect={handleLoseInfluence}
         />
       )}
