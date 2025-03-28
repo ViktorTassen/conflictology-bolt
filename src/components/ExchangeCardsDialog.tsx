@@ -36,15 +36,45 @@ export function ExchangeCardsDialog({
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   
   // Get player's active cards and exchange cards
+  console.log('Exchange dialog - playerId:', playerId);
+  console.log('Exchange dialog - cards:', cards.map(c => ({ 
+    id: c.id, 
+    name: c.name, 
+    playerId: c.playerId, 
+    location: c.location, 
+    revealed: c.revealed 
+  })));
+  console.log('Exchange dialog - exchangeCardIds:', exchangeCardIds);
+  
+  // Filter for cards belonging to the player who initiated the exchange (playerId)
+  // In this component, playerId is the player's index from game.actionInProgress.player
   const playerCards = cards.filter(c => 
     c.playerId === playerId && 
     c.location === 'player' && 
     !c.revealed
   );
   
+  // If we don't find any player cards but we have exchange cards,
+  // this might be an edge case where the player's cards aren't properly assigned
+  if (playerCards.length === 0 && exchangeCardIds.length > 0) {
+    console.warn('No player cards found for player index', playerId, 
+      '- this could indicate an issue with card assignment');
+  }
+  
+  console.log('Exchange dialog - filtered playerCards:', playerCards.map(c => ({ 
+    id: c.id, 
+    name: c.name, 
+    playerId: c.playerId 
+  })));
+  
   const exchangeCards = cards.filter(c => 
     exchangeCardIds.includes(c.id)
   );
+  
+  console.log('Exchange dialog - filtered exchangeCards:', exchangeCards.map(c => ({ 
+    id: c.id, 
+    name: c.name 
+  })));
   
   // Combine all available cards
   const availableCards = [...playerCards, ...exchangeCards];

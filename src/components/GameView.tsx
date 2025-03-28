@@ -189,8 +189,10 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
     
-    // Get active card count from current cards
-    const activeCardCount = getPlayerCards(game.cards, playerId).length;
+    // Get active card count from the player who initiated the exchange (not necessarily the current player)
+    // Use player's actual ID, not their array index
+    const initiatingPlayer = game.players[game.actionInProgress.player];
+    const activeCardCount = getPlayerCards(game.cards, initiatingPlayer.id).length;
     
     if (keptCardIndices.length !== activeCardCount) {
       console.error(`Wrong number of cards selected: got ${keptCardIndices.length}, expected ${activeCardCount}`);
@@ -503,7 +505,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         actionInProgress?.exchangeCards && (
         <ExchangeCardsDialog
           cards={game.cards}
-          playerId={playerId}
+          playerId={game.players[actionInProgress.player].id} // Convert player index to player ID
           exchangeCardIds={actionInProgress.exchangeCards}
           onExchangeComplete={handleExchangeCards}
         />

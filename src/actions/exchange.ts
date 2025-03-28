@@ -48,7 +48,9 @@ export const exchangeAction: ActionHandler = {
       }
       
       // Get all available cards (player's non-revealed cards + drawn cards)
-      const playerCards = getPlayerCards(game.cards, playerId);
+      // Use player's actual ID (from player object), not the array index
+      const actionPlayer = game.players[game.actionInProgress.player];
+      const playerCards = getPlayerCards(game.cards, actionPlayer.id);
       const exchangeCards = game.cards.filter(c => 
         game.actionInProgress!.exchangeCards!.includes(c.id)
       );
@@ -68,14 +70,14 @@ export const exchangeAction: ActionHandler = {
         .filter(card => !keptCardIds.includes(card.id))
         .map(card => card.id);
       
-      // Update kept cards to be player's cards
+      // Update kept cards to be assigned to the player who initiated the exchange
       let updatedCards = [...game.cards];
       keptCardIds.forEach(cardId => {
         const cardIndex = updatedCards.findIndex(c => c.id === cardId);
         if (cardIndex !== -1) {
           updatedCards[cardIndex] = {
             ...updatedCards[cardIndex],
-            playerId,
+            playerId: actionPlayer.id, // Use action initiator's player ID (not index)
             location: 'player'
           };
         }
