@@ -97,37 +97,42 @@ export const stealAction: ActionHandler = {
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
 
-      // If the action player was challenged regarding Captain and won
-      if (playerId !== game.actionInProgress.player && 
-          game.actionInProgress.challengeInProgress && 
-          !game.actionInProgress.blockingPlayer &&
-          game.actionInProgress.player !== game.actionInProgress.losingPlayer &&
-          game.actionInProgress.challengeDefense) {
+      // Only if the action player is responding after a failed challenge against them
+      // should they replace their revealed Captain card
+      if (playerId === game.actionInProgress.player && 
+          game.actionInProgress.losingPlayer !== undefined &&
+          game.actionInProgress.losingPlayer !== game.actionInProgress.player &&
+          game.actionInProgress.challengeDefense &&
+          !game.actionInProgress.blockingPlayer) {
         
-        // Replace the revealed Captain card
-        const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
-        result.cards = updatedCards;
+        // Find the Captain card that was revealed
+        const captainCard = getPlayerCards(game.cards, player.id)
+          .find(c => c.name === 'Captain');
+          
+        if (captainCard) {
+          // Replace the revealed Captain card
+          const updatedCards = replaceCard(result.cards || game.cards, captainCard.id);
+          result.cards = updatedCards;
+        }
       }
       
-      // If a blocking player was challenged regarding their blocking card and won
+      // If a blocking player is responding after winning a challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
-          game.actionInProgress.challengeInProgress && 
+          game.actionInProgress.losingPlayer !== undefined &&
+          playerId === game.actionInProgress.blockingPlayer &&
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        // If this was the challenger losing influence (failed challenge to blocking card)
-        if (playerId === game.actionInProgress.losingPlayer) {
+        // Find the blocking card that was challenged
+        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+        const blockingCardName = game.actionInProgress.blockingCard as CardType;
+        const blockingCard = getPlayerCards(game.cards, blockingPlayer.id)
+          .find(c => c.name === blockingCardName);
+        
+        if (blockingCard) {
           // Replace the revealed blocking card
-          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-          const blockingPlayerCards = getPlayerCards(game.cards, blockingPlayer.id);
-          const blockingCard = blockingPlayerCards.find(c => 
-            c.name === game.actionInProgress!.blockingCard
-          );
-          
-          if (blockingCard) {
-            const updatedCards = replaceCard(result.cards || game.cards, blockingCard.id);
-            result.cards = updatedCards;
-          }
+          const updatedCards = replaceCard(result.cards || game.cards, blockingCard.id);
+          result.cards = updatedCards;
         }
       }
 
@@ -153,6 +158,34 @@ export const stealAction: ActionHandler = {
       // If this was the challenger losing influence (failed challenge)
       else if (game.actionInProgress.losingPlayer === playerId && 
                playerId !== game.actionInProgress.player) {
+        
+        // Special case: If this was a challenger losing after challenging a block
+        if (game.actionInProgress.blockingPlayer !== undefined) {
+          // Find the blocker's card and replace it
+          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+          const blockingCardName = game.actionInProgress.blockingCard as CardType;
+          const blockingCard = getPlayerCards(game.cards, blockingPlayer.id)
+            .find(c => c.name === blockingCardName);
+          
+          if (blockingCard) {
+            // Replace the revealed blocking card
+            const updatedCards = replaceCard(result.cards || game.cards, blockingCard.id);
+            result.cards = updatedCards;
+            
+            // Block succeeds, steal is blocked
+            result.logs.push(createSystemLog(`${blockingPlayer.name}'s ${blockingCardName} blocks the steal.`));
+            
+            // End the action
+            result.actionInProgress = null;
+            
+            // Get next turn and reset actionUsedThisTurn flag
+            const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+            result.currentTurn = nextTurn.currentTurn;
+            result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+            
+            return result;
+          }
+        }
         
         // If this was a challenge to the Captain claim, and target hasn't blocked yet
         if (playerId !== game.actionInProgress.target) {

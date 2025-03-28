@@ -78,14 +78,16 @@ export const foreignAidAction: ActionHandler = {
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
       
-      // If a blocking player won a challenge and needs to replace their Duke card
+      // If a blocking player is responding after winning a challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
-          playerId !== game.actionInProgress.blockingPlayer && 
+          playerId === game.actionInProgress.losingPlayer && 
+          game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        // If this was a challenger losing influence (failed challenge to Duke)
-        const blockingPlayerCards = getPlayerCards(game.cards, game.actionInProgress.blockingPlayer);
-        const dukeCard = blockingPlayerCards.find(c => c.name === 'Duke');
+        // Find the Duke card that was challenged
+        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+        const dukeCard = getPlayerCards(game.cards, blockingPlayer.id)
+          .find(c => c.name === 'Duke');
         
         if (dukeCard) {
           const updatedCards = replaceCard(result.cards || game.cards, dukeCard.id);

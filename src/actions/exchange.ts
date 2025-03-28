@@ -151,35 +151,95 @@ export const exchangeAction: ActionHandler = {
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
 
-      // If challenger lost influence (failed challenge) and action player should replace their card
-      if (game.actionInProgress.losingPlayer === playerId && 
-          playerId !== game.actionInProgress.player &&
-          game.actionInProgress.challengeDefense) {
+      // Only the action player should replace their revealed card and draw for exchange
+      // This happens when:
+      // 1. They were challenged about having Ambassador
+      // 2. They revealed Ambassador (proved they had it)
+      // 3. The challenger lost influence
+      if (game.actionInProgress.losingPlayer !== undefined &&  // Someone lost influence
+          game.actionInProgress.losingPlayer !== game.actionInProgress.player && // Not the action player
+          playerId === game.actionInProgress.player && // This player is the action player
+          game.actionInProgress.challengeDefense) { // The action player successfully defended
         
-        // Replace the revealed Ambassador card
-        const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
-        result.cards = updatedCards;
+        // Find the card that matches the claim (Ambassador)
+        const ambassadorCard = getPlayerCards(game.cards, player.id)
+          .find(c => c.name === 'Ambassador');
         
-        // Draw 2 cards for exchange
-        const cardsWithExchange = drawCards(updatedCards, 2, 'exchange');
-        const drawnCardIds = cardsWithExchange
-          .filter(c => c.location === 'exchange')
-          .map(c => c.id);
+        if (ambassadorCard) {
+          // Replace the Ambassador card
+          const updatedCards = replaceCard(result.cards || game.cards, ambassadorCard.id);
+          result.cards = updatedCards;
+          
+          // Draw 2 cards for exchange
+          const cardsWithExchange = drawCards(updatedCards, 2, 'exchange');
+          const drawnCardIds = cardsWithExchange
+            .filter(c => c.location === 'exchange')
+            .map(c => c.id);
+          
+          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+            message: `${actionPlayer.name} will now exchange cards.`
+          }));
+          
+          // Reset action state for exchange phase
+          const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
+          
+          result.actionInProgress = {
+            ...restActionProps,
+            exchangeCards: drawnCardIds,
+            responses: {} // Clear responses for exchange phase
+          };
+          
+          result.cards = cardsWithExchange;
+          return result;
+        }
+      }
+      
+      // If this is the challenger who lost influence (failed challenge)
+      // We need to trigger the action player to finish the exchange action
+      if (game.actionInProgress.losingPlayer === playerId &&
+          playerId !== game.actionInProgress.player) {
+        // Already revealed the card above - now the Ambassador player should proceed with exchange
+        const actionPlayer = game.players[game.actionInProgress.player];
         
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${actionPlayer.name} will now exchange cards.`
-        }));
+        // Find the Ambassador card to replace
+        const ambassadorCard = getPlayerCards(game.cards, actionPlayer.id)
+          .find(c => c.name === 'Ambassador');
         
-        // Reset action state for exchange phase
-        const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
+        if (ambassadorCard) {
+          // Replace the revealed Ambassador card
+          const updatedCards = replaceCard(result.cards || game.cards, ambassadorCard.id);
+          
+          // Draw 2 cards for exchange
+          const cardsWithExchange = drawCards(updatedCards, 2, 'exchange');
+          const drawnCardIds = cardsWithExchange
+            .filter(c => c.location === 'exchange')
+            .map(c => c.id);
+          
+          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+            message: `${actionPlayer.name} will now exchange cards.`
+          }));
+          
+          // Reset action state for exchange phase - without losingPlayer field
+          result.actionInProgress = {
+            type: game.actionInProgress.type,
+            player: game.actionInProgress.player,
+            exchangeCards: drawnCardIds,
+            responses: {},
+            resolved: false
+          };
+          
+          result.cards = cardsWithExchange;
+        } else {
+          // No Ambassador card found (shouldn't happen)
+          // End the action
+          result.actionInProgress = null;
+          
+          // Get next turn and reset actionUsedThisTurn flag
+          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        }
         
-        result.actionInProgress = {
-          ...restActionProps,
-          exchangeCards: drawnCardIds,
-          responses: {} // Clear responses for exchange phase
-        };
-        
-        result.cards = cardsWithExchange;
         return result;
       }
       

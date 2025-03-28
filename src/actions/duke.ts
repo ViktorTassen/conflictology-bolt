@@ -9,11 +9,13 @@ export const dukeAction: ActionHandler = {
       throw new Error('Eliminated players cannot perform actions');
     }
 
-    // Create the initial action state
+    // Player must have at least 0 coins
+    if (player.coins < 0) {
+      throw new Error('Player does not have enough coins');
+    }
+
     const result: ActionResult = {
-      logs: [createLog('duke', player, {
-        message: GameMessages.claims.tax
-      })],
+      logs: [createLog('duke', player)],
       actionInProgress: {
         type: 'duke',
         player: playerId,
@@ -92,11 +94,50 @@ export const dukeAction: ActionHandler = {
         result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       } 
       // Challenger lost influence due to failed challenge
-      else {
-        // If this was a failed challenge and action player needs to replace their Duke
-        if (game.actionInProgress.challengeInProgress && game.actionInProgress.challengeDefense) {
+      else if (playerId !== game.actionInProgress.player && 
+               game.actionInProgress.losingPlayer === playerId) {
+        // When challenger has lost influence, we need to:
+        // 1. Reset the losingPlayer field
+        // 2. Give the Duke player their tax money
+        // 3. End the action
+        const dukePlayer = game.players[game.actionInProgress.player];
+        
+        // Give Duke player 3 coins
+        const updatedPlayers = [...game.players];
+        updatedPlayers[game.actionInProgress.player].coins += 3;
+        
+        result.logs.push(createLog('duke', dukePlayer, {
+          coins: 3,
+          message: GameMessages.results.tax
+        }));
+        
+        result.players = updatedPlayers;
+        
+        // End the action and advance to next turn
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
+      }
+      // Action player handling replacement of Duke card
+      else if (playerId === game.actionInProgress.player && 
+              game.actionInProgress.challengeInProgress && 
+              game.actionInProgress.challengeDefense) {
+          
+          // Find the Duke card to replace
+          const dukeCard = getPlayerCards(game.cards, player.id)
+            .find(c => c.name === 'Duke');
+            
+          if (!dukeCard) {
+            return result; // No Duke found, shouldn't happen
+          }
+            
           // Replace the revealed Duke card
-          const updatedCards = replaceCard(result.cards || game.cards, cardToReveal.id);
+          const updatedCards = replaceCard(result.cards || game.cards, dukeCard.id);
           result.cards = updatedCards;
           
           // Duke action succeeds - action player gains 3 coins
@@ -115,7 +156,6 @@ export const dukeAction: ActionHandler = {
           const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
           result.currentTurn = nextTurn.currentTurn;
           result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-        }
       }
 
       return result;
@@ -158,11 +198,11 @@ export const dukeAction: ActionHandler = {
           responses: updatedResponses
         };
       }
-      
+
       return result;
     }
-    
-    // Handle allow
+
+    // Handle allow response
     if (response.type === 'allow') {
       result.actionInProgress = {
         ...game.actionInProgress,
@@ -171,7 +211,7 @@ export const dukeAction: ActionHandler = {
       
       // Check if all other non-eliminated players have allowed
       const otherPlayers = game.players.filter((p, index) => 
-        index !== game.actionInProgress!.player && !p.eliminated
+        index !== game.actionInProgress.player && !p.eliminated
       );
       
       const allResponded = otherPlayers.every(p => {
@@ -179,7 +219,7 @@ export const dukeAction: ActionHandler = {
         const hasResponded = updatedResponses[playerIdx] !== undefined;
         return hasResponded;
       });
-      
+
       // Check that each response from other players is 'allow'
       const allPlayersAllowed = allResponded && otherPlayers.every(p => {
         const playerIdx = game.players.indexOf(p);
@@ -188,14 +228,15 @@ export const dukeAction: ActionHandler = {
       });
       
       if (allPlayersAllowed) {
+        // Duke action succeeds - action player gains 3 coins
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
-        
+
         result.logs = [createLog('duke', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
         })];
-        
+
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -207,7 +248,7 @@ export const dukeAction: ActionHandler = {
       
       return result;
     }
-    
+
     return result;
   }
 };
