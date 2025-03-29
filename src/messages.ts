@@ -33,7 +33,7 @@ export const GameMessages = {
     investigate: 'claims Inquisitor to investigate',
     swap: 'claims Inquisitor to swap cards',
     coup: 'pays $7M to Coup',
-    coupWithExcess: 'has $10M! Must coup'
+    coupWithExcess: 'has >$10M! Must coup'
   },
 
   // Action results
