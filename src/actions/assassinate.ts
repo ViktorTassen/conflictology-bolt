@@ -266,6 +266,26 @@ export const assassinateAction: ActionHandler = {
         result.players = game.players;
         return result;
       }
+      // If this was the challenger losing influence (failed challenge to Assassin claim) AND they were the target
+      else if (game.actionInProgress.losingPlayer === playerId && 
+               playerId === game.actionInProgress.target &&
+               !game.actionInProgress.blockingPlayer) {
+        
+        // If the challenge to the Assassin claim failed, and it was from the target
+        // The target needs to lose another influence for the assassination itself
+        result.logs.push(createSystemLog(GameMessages.system.loseSecondInfluence(player.name)));
+        
+        // Mark that player needs to lose another influence
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          challengeInProgress: false,  // Reset challenge state
+          losingPlayer: playerId,      // Same player loses again
+          responses: {}                // Clear responses
+        };
+        
+        result.players = game.players;
+        return result;
+      }
 
       // Complete action
       result.players = game.players;

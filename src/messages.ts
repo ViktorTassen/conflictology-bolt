@@ -19,6 +19,7 @@ export const GameMessages = {
     contessaBlock: (name: string) => `${name} may now block with Contessa.`,
     blockingOptions: (name: string) => `${name} may now block with Captain or Ambassador.`,
     secondInfluenceLoss: (name: string) => `${name} loses a second card for failing to challenge the Assassin.`,
+    loseSecondInfluence: (name: string) => `${name} must lose a second card (assassination target).`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`,
     cardReveal: (name: string, card: string) => `${name} reveals ${card}, draws new card.`
   },
