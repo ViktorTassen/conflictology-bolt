@@ -109,6 +109,27 @@ export const assassinateAction: ActionHandler = {
       
       // Check if player has any unrevealed cards left after this card is revealed
       const remainingCards = getPlayerCards(updatedCards, player.id);
+      
+      // Handle the special case of failed challenge against Assassin
+      // Challenger loses 2 cards instead of 1
+      if (game.actionInProgress.loseTwo && remainingCards.length > 0 && 
+          playerId === game.actionInProgress.losingPlayer &&
+          playerId !== game.actionInProgress.player) {
+        
+        // Set up to lose another card
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          loseTwo: false, // Reset the flag to avoid infinite loop
+          responses: {}, // Clear responses for the second card
+        };
+        
+        result.logs.push(createSystemLog(
+          "Failed challenge against Assassin! " + player.name + " must lose ANOTHER influence card!"
+        ));
+        
+        return result;
+      }
+      
       if (remainingCards.length === 0) {
         // Player has no more cards - mark them as eliminated
         const updatedPlayers = [...game.players];
@@ -117,37 +138,8 @@ export const assassinateAction: ActionHandler = {
         result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
       }
 
-      // Only if the action player is responding after a failed challenge against them
-      // should they replace their revealed Assassin card
-      if (playerId === game.actionInProgress.player && 
-          game.actionInProgress.losingPlayer !== undefined &&
-          game.actionInProgress.losingPlayer !== game.actionInProgress.player &&
-          game.actionInProgress.challengeDefense &&
-          !game.actionInProgress.blockingPlayer) {
-        
-        // Replace the Assassin card that was revealed during a successful defense
-        const revealedAssassinCardId = game.actionInProgress.revealedAssassinCardId;
-        
-        if (revealedAssassinCardId) {
-          // We have the ID of the revealed Assassin card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedAssassinCardId);
-          result.cards = cardsAfterReplacement;
-        } else {
-          // Fallback: try to find the Assassin card by searching for it
-          const assassinCard = updatedCards.find(
-            c => c.playerId === player.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Assassin'
-          );
-            
-          if (assassinCard) {
-            // Replace the revealed Assassin card
-            const cardsAfterReplacement = replaceCard(updatedCards, assassinCard.id);
-            result.cards = cardsAfterReplacement;
-          }
-        }
-      }
+      // The Assassin card is already replaced when it's revealed during the challenge,
+      // so we don't need to replace it again here.
       
       // If a blocking player is responding after winning a challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
@@ -246,6 +238,9 @@ export const assassinateAction: ActionHandler = {
                playerId !== game.actionInProgress.target &&
                !game.actionInProgress.blockingPlayer) {
         
+        // We've already replaced the Assassin card when it was initially revealed
+        // during the challenge response, so we don't need to replace it again here.
+        
         // If the challenge to the Assassin claim failed, and it was from a third party
         // Reset game state to allow target to respond with block
         const targetHasContessa = hasCardType(game.cards, game.actionInProgress.target ?? 0, 'Contessa');
@@ -322,10 +317,14 @@ export const assassinateAction: ActionHandler = {
         if (assassinCard) {
           // Reveal the Assassin card
           const updatedCardsWithReveal = revealCard(game.cards, assassinCard.id);
-          result.cards = updatedCardsWithReveal;
+          
+          // Immediately replace the revealed card with a new one from the deck
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, assassinCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
-        // Challenge fails, challenger loses influence
+        // Challenge fails, challenger loses TWO influence cards
+        // The challenger must lose two influence cards when failing to challenge an Assassin
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
@@ -339,7 +338,8 @@ export const assassinateAction: ActionHandler = {
           challengeInProgress: true,
           challengeDefense: true,
           responses: updatedResponses,
-          revealedAssassinCardId: assassinCard?.id // Store the ID of the revealed Assassin card
+          revealedAssassinCardId: assassinCard?.id, // Store the ID even though we already replaced the card
+          loseTwo: true // Flag to indicate that challenger loses two influence cards
         };
       } else {
         // Challenge succeeds, Assassin player loses influence

@@ -115,6 +115,7 @@ export interface Game {
     losingPlayer?: number;
     challengeDefense?: boolean;
     challengeInProgress?: boolean;
+    loseTwo?: boolean; // Flag to indicate that challenger loses two influence cards (for Assassin)
     exchangeCards?: string[]; // Now stores card IDs instead of CardType
     investigateCard?: {
       cardId: string;

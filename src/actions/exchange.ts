@@ -1,4 +1,4 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn } from './types';
+import { ActionHandler, ActionResponse, ActionResult, createLog, createSystemLog, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
 import { hasCardType, revealCard, replaceCard, drawCards, returnCardsToDeck, getPlayerCards } from '../utils/cardUtils';
 
