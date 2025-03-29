@@ -125,19 +125,27 @@ export const assassinateAction: ActionHandler = {
           game.actionInProgress.challengeDefense &&
           !game.actionInProgress.blockingPlayer) {
         
-        // Find the Assassin card that was revealed
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        const assassinCard = updatedCards.find(
-          c => c.playerId === player.id && 
-          c.location === 'player' && 
-          c.revealed === true && 
-          c.name === 'Assassin'
-        );
-          
-        if (assassinCard) {
-          // Replace the revealed Assassin card
-          const cardsAfterReplacement = replaceCard(updatedCards, assassinCard.id);
+        // Replace the Assassin card that was revealed during a successful defense
+        const revealedAssassinCardId = game.actionInProgress.revealedAssassinCardId;
+        
+        if (revealedAssassinCardId) {
+          // We have the ID of the revealed Assassin card stored
+          const cardsAfterReplacement = replaceCard(updatedCards, revealedAssassinCardId);
           result.cards = cardsAfterReplacement;
+        } else {
+          // Fallback: try to find the Assassin card by searching for it
+          const assassinCard = updatedCards.find(
+            c => c.playerId === player.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === 'Assassin'
+          );
+            
+          if (assassinCard) {
+            // Replace the revealed Assassin card
+            const cardsAfterReplacement = replaceCard(updatedCards, assassinCard.id);
+            result.cards = cardsAfterReplacement;
+          }
         }
       }
       
@@ -148,21 +156,28 @@ export const assassinateAction: ActionHandler = {
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        // Find the Contessa card that was challenged
+        // Replace the Contessa card that was revealed during a successful defense
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+        const revealedContessaCardId = game.actionInProgress.revealedContessaCardId;
         
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        const contessaCard = updatedCards.find(
-          c => c.playerId === blockingPlayer.id && 
-          c.location === 'player' && 
-          c.revealed === true && 
-          c.name === 'Contessa'
-        );
-        
-        if (contessaCard) {
-          // Replace the revealed Contessa card
-          const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
+        if (revealedContessaCardId) {
+          // We have the ID of the revealed Contessa card stored
+          const cardsAfterReplacement = replaceCard(updatedCards, revealedContessaCardId);
           result.cards = cardsAfterReplacement;
+        } else {
+          // Fallback: try to find the Contessa card by searching for it
+          const contessaCard = updatedCards.find(
+            c => c.playerId === blockingPlayer.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === 'Contessa'
+          );
+          
+          if (contessaCard) {
+            // Replace the revealed Contessa card
+            const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
+            result.cards = cardsAfterReplacement;
+          }
         }
       }
 
@@ -189,21 +204,28 @@ export const assassinateAction: ActionHandler = {
       // If this was the challenger losing influence after challenging a block
       else if (game.actionInProgress.losingPlayer === playerId && 
                game.actionInProgress.blockingPlayer !== undefined) {
-        // Find the blocker's Contessa card and replace it
+        // Replace the blocker's Contessa card that was revealed during a successful defense
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+        const revealedContessaCardId = game.actionInProgress.revealedContessaCardId;
         
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        const contessaCard = updatedCards.find(
-          c => c.playerId === blockingPlayer.id && 
-          c.location === 'player' && 
-          c.revealed === true && 
-          c.name === 'Contessa'
-        );
-        
-        if (contessaCard) {
-          // Replace the revealed Contessa card
-          const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
+        if (revealedContessaCardId) {
+          // We have the ID of the revealed Contessa card stored
+          const cardsAfterReplacement = replaceCard(updatedCards, revealedContessaCardId);
           result.cards = cardsAfterReplacement;
+        } else {
+          // Fallback: try to find the Contessa card by searching for it
+          const contessaCard = updatedCards.find(
+            c => c.playerId === blockingPlayer.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === 'Contessa'
+          );
+          
+          if (contessaCard) {
+            // Replace the revealed Contessa card
+            const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
+            result.cards = cardsAfterReplacement;
+          }
           
           // Block succeeds, assassination is blocked
           result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
@@ -289,6 +311,20 @@ export const assassinateAction: ActionHandler = {
       const hasAssassin = hasCardType(game.cards, actionPlayer.id, 'Assassin');
 
       if (hasAssassin) {
+        // Find the Assassin card to reveal - it must be revealed when successfully defending
+        const assassinCard = game.cards.find(
+          c => c.playerId === actionPlayer.id && 
+          c.location === 'player' && 
+          !c.revealed && 
+          c.name === 'Assassin'
+        );
+        
+        if (assassinCard) {
+          // Reveal the Assassin card
+          const updatedCardsWithReveal = revealCard(game.cards, assassinCard.id);
+          result.cards = updatedCardsWithReveal;
+        }
+        
         // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
@@ -302,7 +338,8 @@ export const assassinateAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
-          responses: updatedResponses
+          responses: updatedResponses,
+          revealedAssassinCardId: assassinCard?.id // Store the ID of the revealed Assassin card
         };
       } else {
         // Challenge succeeds, Assassin player loses influence
@@ -329,6 +366,20 @@ export const assassinateAction: ActionHandler = {
       const hasContessa = hasCardType(game.cards, blockingPlayer.id, 'Contessa');
 
       if (hasContessa) {
+        // Find the Contessa card to reveal - it must be revealed when successfully defending
+        const contessaCard = game.cards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          !c.revealed && 
+          c.name === 'Contessa'
+        );
+        
+        if (contessaCard) {
+          // Reveal the Contessa card
+          const updatedCardsWithReveal = revealCard(game.cards, contessaCard.id);
+          result.cards = updatedCardsWithReveal;
+        }
+        
         // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: targetPlayer.name,
@@ -342,7 +393,8 @@ export const assassinateAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
-          responses: updatedResponses
+          responses: updatedResponses,
+          revealedContessaCardId: contessaCard?.id // Store the ID of the revealed Contessa card
         };
       } else {
         // Challenge succeeds, blocker loses influence

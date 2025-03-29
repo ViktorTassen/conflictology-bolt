@@ -94,20 +94,28 @@ export const foreignAidAction: ActionHandler = {
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        // Find the Duke card that was challenged
+        // Replace the Duke card that was revealed during the challenge
+        // First try to use the stored ID if available
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+        const revealedDukeCardId = game.actionInProgress.revealedDukeCardId;
         
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        const dukeCard = updatedCards.find(
-          c => c.playerId === blockingPlayer.id && 
-          c.location === 'player' && 
-          c.revealed === true && 
-          c.name === 'Duke'
-        );
-        
-        if (dukeCard) {
-          const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
+        if (revealedDukeCardId) {
+          // We have the ID of the revealed Duke card stored
+          const cardsAfterReplacement = replaceCard(updatedCards, revealedDukeCardId);
           result.cards = cardsAfterReplacement;
+        } else {
+          // Fallback: try to find the Duke card by searching for it
+          const dukeCard = updatedCards.find(
+            c => c.playerId === blockingPlayer.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === 'Duke'
+          );
+          
+          if (dukeCard) {
+            const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
+            result.cards = cardsAfterReplacement;
+          }
         }
       }
 
@@ -259,6 +267,20 @@ export const foreignAidAction: ActionHandler = {
       const hasDuke = hasCardType(game.cards, blockingPlayer.id, 'Duke');
 
       if (hasDuke) {
+        // Find the Duke card to reveal - it must be revealed when successfully defending
+        const dukeCard = game.cards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          !c.revealed && 
+          c.name === 'Duke'
+        );
+        
+        if (dukeCard) {
+          // Reveal the Duke card
+          const updatedCardsWithReveal = revealCard(game.cards, dukeCard.id);
+          result.cards = updatedCardsWithReveal;
+        }
+        
         // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: blockingPlayer.name,
@@ -272,7 +294,8 @@ export const foreignAidAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true, // Flag to indicate the blocking player successfully defended and needs to replace their card
-          responses: updatedResponses
+          responses: updatedResponses,
+          revealedDukeCardId: dukeCard?.id // Store the ID of the revealed Duke card
         };
       } else {
         // Challenge succeeds, blocker loses influence

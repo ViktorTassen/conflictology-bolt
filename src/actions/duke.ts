@@ -107,10 +107,34 @@ export const dukeAction: ActionHandler = {
       else if (playerId !== game.actionInProgress.player && 
                game.actionInProgress.losingPlayer === playerId) {
         // When challenger has lost influence, we need to:
-        // 1. Reset the losingPlayer field
+        // 1. Find and replace the Duke card that was revealed
         // 2. Give the Duke player their tax money
         // 3. End the action
         const dukePlayer = game.players[game.actionInProgress.player];
+        
+        // Replace the Duke card that was revealed during the challenge
+        // First try to use the stored ID if available
+        const revealedDukeCardId = game.actionInProgress.revealedDukeCardId;
+        
+        if (revealedDukeCardId) {
+          // We have the ID of the revealed Duke card stored
+          const cardsAfterReplacement = replaceCard(updatedCards, revealedDukeCardId);
+          result.cards = cardsAfterReplacement;
+        } else {
+          // Fallback: try to find the Duke card by searching for it
+          const dukeCard = updatedCards.find(
+            c => c.playerId === dukePlayer.id && 
+            c.location === 'player' && 
+            c.revealed === true && 
+            c.name === 'Duke'
+          );
+          
+          if (dukeCard) {
+            // Replace the revealed Duke card
+            const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
+            result.cards = cardsAfterReplacement;
+          }
+        }
         
         // Give Duke player 3 coins
         const updatedPlayers = [...game.players];
@@ -182,6 +206,20 @@ export const dukeAction: ActionHandler = {
       const hasDuke = hasCardType(game.cards, actionPlayer.id, 'Duke');
       
       if (hasDuke) {
+        // Find the Duke card to reveal - it must be marked as revealed when successfully defending
+        const dukeCard = game.cards.find(
+          c => c.playerId === actionPlayer.id && 
+          c.location === 'player' && 
+          !c.revealed && 
+          c.name === 'Duke'
+        );
+        
+        if (dukeCard) {
+          // Reveal the Duke card
+          const updatedCardsWithReveal = revealCard(game.cards, dukeCard.id);
+          result.cards = updatedCardsWithReveal;
+        }
+        
         // Challenge fails - challenger loses influence and action player will replace their card
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
@@ -195,7 +233,8 @@ export const dukeAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
-          responses: updatedResponses
+          responses: updatedResponses,
+          revealedDukeCardId: dukeCard?.id // Store the ID of the revealed Duke card
         };
       } else {
         // Challenge succeeds - action player loses influence

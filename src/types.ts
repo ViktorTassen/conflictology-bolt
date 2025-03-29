@@ -120,6 +120,14 @@ export interface Game {
       cardId: string;
       cardIndex: number;
     };
+    // IDs of cards revealed during successful defense of challenges
+    revealedDukeCardId?: string;
+    revealedCaptainCardId?: string;
+    revealedAmbassadorCardId?: string;
+    revealedAssassinCardId?: string;
+    revealedContessaCardId?: string;
+    revealedInquisitorCardId?: string;
+    revealedBlockingCardId?: string; // Generic for any blocking card
     responses: Record<number, { 
       type: ResponseType;
       card?: CardType;

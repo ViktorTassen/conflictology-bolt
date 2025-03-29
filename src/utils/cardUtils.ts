@@ -133,19 +133,31 @@ export function revealCard(cards: Card[], cardId: string): Card[] {
 
 // Replace a revealed card with a new one from the deck
 export function replaceCard(cards: Card[], cardId: string): Card[] {
+  console.log("REPLACE CARD DEBUG: Starting replacement for card ID:", cardId);
   const updatedCards = [...cards];
   
   // Find the card to replace
   const cardToReplace = updatedCards.find(c => c.id === cardId);
-  if (!cardToReplace) return updatedCards;
+  if (!cardToReplace) {
+    console.log("REPLACE CARD DEBUG: Card to replace not found!");
+    return updatedCards;
+  }
+  
+  console.log("REPLACE CARD DEBUG: Found card to replace:", cardToReplace);
   
   // Find a new card in the deck
   const newCardIndex = updatedCards.findIndex(c => c.location === 'deck' && c.playerId === null);
-  if (newCardIndex === -1) return updatedCards;
+  if (newCardIndex === -1) {
+    console.log("REPLACE CARD DEBUG: No available card in deck!");
+    return updatedCards;
+  }
+  
+  console.log("REPLACE CARD DEBUG: Found new card from deck:", updatedCards[newCardIndex]);
   
   // Update the old card
   const cardIndex = updatedCards.findIndex(c => c.id === cardId);
   if (cardIndex !== -1) {
+    console.log("REPLACE CARD DEBUG: Updating old card at index:", cardIndex);
     updatedCards[cardIndex] = {
       ...updatedCards[cardIndex],
       playerId: null,
@@ -155,13 +167,22 @@ export function replaceCard(cards: Card[], cardId: string): Card[] {
   }
   
   // Update the new card
+  console.log("REPLACE CARD DEBUG: Updating new card at index:", newCardIndex);
   updatedCards[newCardIndex] = {
     ...updatedCards[newCardIndex],
     playerId: cardToReplace.playerId,
     location: 'player'
   };
   
-  return shuffleCards(updatedCards);
+  console.log("REPLACE CARD DEBUG: Cards after replacing before shuffle:",
+    updatedCards.filter(c => c.playerId === cardToReplace.playerId || c.id === cardId));
+  
+  const shuffledResult = shuffleCards(updatedCards);
+  
+  console.log("REPLACE CARD DEBUG: Cards after replacing after shuffle:",
+    shuffledResult.filter(c => c.playerId === cardToReplace.playerId));
+  
+  return shuffledResult;
 }
 
 // Validate card counts
