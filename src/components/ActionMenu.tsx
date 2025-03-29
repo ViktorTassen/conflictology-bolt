@@ -37,6 +37,11 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
   ];
 
   const isActionDisabled = (action: GameAction): boolean => {
+    // If player has 11 or more coins, they can only perform coup
+    if (playerCoins >= 11 && action.type !== 'coup') {
+      return true;
+    }
+    
     // Check if action has a cost and player doesn't have enough coins
     return action.cost !== undefined && playerCoins < action.cost;
   };
@@ -96,6 +101,7 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
                 `}>
                   {action.description}
                   {disabled && action.cost && ` (need ${action.cost} coins)`}
+                  {action.type === 'coup' && playerCoins >= 11 && ' (mandatory with 11+ coins)'}
                 </div>
               </div>
             </div>
