@@ -19,17 +19,37 @@ export const coupAction: ActionHandler = {
       throw new Error('Coup requires 7 coins');
     }
     
-    // Get target player
-    const targetPlayer = game.players[game.actionInProgress.target];
+    // Get target player object
+    const targetPlayerId = game.actionInProgress.target;
+    const targetPlayer = game.players[targetPlayerId];
     
-    // Verify target player isn't eliminated
+    console.log("COUP DEBUG - Action in progress:", game.actionInProgress);
+    console.log("COUP DEBUG - Target player ID:", targetPlayerId);
+    console.log("COUP DEBUG - Target player object:", targetPlayer);
+    
+    // Verify target player exists and isn't eliminated
+    if (!targetPlayer) {
+      throw new Error('Target player not found');
+    }
+    
     if (targetPlayer.eliminated) {
       throw new Error('Cannot target an eliminated player');
     }
     
-    // Verify target has influence to lose
-    const targetCards = getPlayerCards(game.cards, game.actionInProgress.target);
-    if (targetCards.length === 0) {
+    // Check if target player has any cards (revealed or not)
+    // We need to use targetPlayer.id which might be different from the index
+    const targetId = targetPlayer.id;
+    console.log("COUP DEBUG - Target player.id:", targetId);
+    
+    const allTargetCards = game.cards.filter(c => 
+      c.playerId === targetId && 
+      c.location === 'player'
+    );
+    
+    console.log("COUP DEBUG - Target cards:", allTargetCards);
+    
+    // Target must have at least one card
+    if (!allTargetCards || allTargetCards.length === 0) {
       throw new Error('Target player has no influence to lose');
     }
 
@@ -48,9 +68,9 @@ export const coupAction: ActionHandler = {
       actionInProgress: {
         type: 'coup',
         player: playerId,
-        target: game.actionInProgress.target,
+        target: targetPlayerId,
         // Mark target as needing to lose influence immediately
-        losingPlayer: game.actionInProgress.target,
+        losingPlayer: targetPlayerId,
         responses: {},
         resolved: false
       }
@@ -77,16 +97,21 @@ export const coupAction: ActionHandler = {
         throw new Error('Only the target can lose influence from a coup');
       }
 
-      // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, playerId);
+      // Find unrevealed cards to lose
+      // Need to use player.id (the actual player ID) not playerId (index in the array)
+      const playerCards = getPlayerCards(game.cards, player.id);
+      
+      console.log("COUP RESPOND DEBUG - Player ID:", player.id);
+      console.log("COUP RESPOND DEBUG - Player cards:", playerCards);
       
       if (playerCards.length === 0) {
-        // Player has no cards left to lose
+        // Player has no unrevealed cards left - they are eliminated
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
         result.players = updatedPlayers;
         result.actionInProgress = null;
+        result.logs = [createSystemLog(GameMessages.system.noMoreCards(player.name))];
         
         // Get next turn and reset actionUsedThisTurn flag
         const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
@@ -112,6 +137,8 @@ export const coupAction: ActionHandler = {
       
       // Check if player has any unrevealed cards left after this card is revealed
       const remainingCards = getPlayerCards(updatedCards, player.id);
+      console.log("COUP RESPOND DEBUG - Remaining cards after reveal:", remainingCards);
+      
       if (remainingCards.length === 0) {
         // Player has no more cards - mark them as eliminated
         const updatedPlayers = [...game.players];
