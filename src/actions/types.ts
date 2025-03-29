@@ -14,8 +14,8 @@ export interface ActionResponse {
   type: ResponseType;
   playerId: number;
   card?: CardType;
-  selectedIndices?: number[]; // For exchange_selection
-  keepCard?: boolean; // For investigate_decision
+  selectedIndices?: number[];
+  keepCard?: boolean;
 }
 
 export interface ActionResult {
@@ -25,7 +25,7 @@ export interface ActionResult {
   actionInProgress?: Game['actionInProgress'];
   responses?: Game['responses'];
   actionUsedThisTurn?: boolean;
-  cards?: Game['cards']; // Add cards to ActionResult
+  cards?: Game['cards'];
 }
 
 export interface ActionHandler {
@@ -33,7 +33,6 @@ export interface ActionHandler {
   respond: (context: ActionContext, response: ActionResponse) => Promise<ActionResult>;
 }
 
-// Helper functions for common operations
 export const isPlayerEliminated = (player: Player): boolean => {
   return player.eliminated === true;
 };
@@ -46,7 +45,6 @@ export const advanceToNextLivingPlayer = (players: Player[], currentTurn: number
   return nextTurn;
 };
 
-// This function advances to the next player and resets the actionUsedThisTurn flag
 export const advanceToNextTurn = (players: Player[], currentTurn: number): { currentTurn: number, actionUsedThisTurn: boolean } => {
   const nextTurn = advanceToNextLivingPlayer(players, currentTurn);
   return {
@@ -71,7 +69,6 @@ export const createLog = (
   player: Player,
   data?: Partial<Omit<GameLogEntry, 'type' | 'player' | 'playerColor' | 'timestamp'>> & LogMessageOptions
 ): GameLogEntry => {
-  // Format message according to standardized pattern
   let formattedMessage = data?.message;
   
   if (!formattedMessage && data) {
@@ -88,7 +85,6 @@ export const createLog = (
   };
 };
 
-// Helper function to create system logs consistently
 export const createSystemLog = (message: string): GameLogEntry => {
   return {
     type: 'system',
@@ -99,10 +95,9 @@ export const createSystemLog = (message: string): GameLogEntry => {
   };
 };
 
-// Helper function to generate standardized messages
 function generateStandardMessage(type: GameLogEntry['type'], options: LogMessageOptions): string | undefined {
   switch (type) {
-    case 'duke': // Tax
+    case 'duke':
       if (options.isChallenge && options.result === 'success') {
         return GameMessages.responses.taxBluffExposed;
       } else if (!options.result) {
