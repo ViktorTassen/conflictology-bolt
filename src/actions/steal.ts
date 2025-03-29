@@ -107,31 +107,20 @@ export const stealAction: ActionHandler = {
         result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
       }
 
-      // Only if the action player is responding after a failed challenge against them
-      // should they replace their revealed Captain card
+      // The card was already replaced during the challenge, so we don't need to replace it again
+      // Just keeping action state update logic but removing the replacement part
       if (playerId === game.actionInProgress.player && 
           game.actionInProgress.losingPlayer !== undefined &&
           game.actionInProgress.losingPlayer !== game.actionInProgress.player &&
           game.actionInProgress.challengeDefense &&
           !game.actionInProgress.blockingPlayer) {
         
-        // Find the Captain card that was revealed
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        const captainCard = updatedCards.find(
-          c => c.playerId === player.id && 
-          c.location === 'player' && 
-          c.revealed === true && 
-          c.name === 'Captain'
-        );
-          
-        if (captainCard) {
-          // Replace the revealed Captain card
-          const cardsAfterReplacement = replaceCard(updatedCards, captainCard.id);
-          result.cards = cardsAfterReplacement;
-        }
+        // Captain card was already replaced during the challenge
+        // No need to find and replace it again
       }
       
       // If a blocking player is responding after winning a challenge
+      // The blocking card was already replaced during the challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
           game.actionInProgress.losingPlayer !== undefined &&
           playerId === game.actionInProgress.blockingPlayer &&
@@ -142,49 +131,7 @@ export const stealAction: ActionHandler = {
         console.log("CARD REPLACEMENT DEBUG: Blocker ID:", game.actionInProgress.blockingPlayer);
         console.log("CARD REPLACEMENT DEBUG: Current player ID:", playerId);
         console.log("CARD REPLACEMENT DEBUG: Blocking card:", game.actionInProgress.blockingCard);
-        
-        // Replace the blocking card that was revealed during a successful defense
-        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const blockingCardName = game.actionInProgress.blockingCard as CardType;
-        const revealedBlockingCardId = game.actionInProgress.revealedBlockingCardId;
-        
-        console.log("CARD REPLACEMENT DEBUG: Revealed blocking card ID:", revealedBlockingCardId);
-        console.log("CARD REPLACEMENT DEBUG: Blocker's cards:", updatedCards.filter(c => c.playerId === blockingPlayer.id));
-        console.log("CARD REPLACEMENT DEBUG: Revealed cards:", updatedCards.filter(c => c.revealed));
-        
-        if (revealedBlockingCardId) {
-          console.log("CARD REPLACEMENT DEBUG: Using stored ID to replace card");
-          // We have the ID of the revealed blocking card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedBlockingCardId);
-          console.log("CARD REPLACEMENT DEBUG: Cards after replacement (stored ID):", 
-            cardsAfterReplacement.filter(c => c.playerId === blockingPlayer.id));
-          result.cards = cardsAfterReplacement;
-        } else {
-          console.log("CARD REPLACEMENT DEBUG: Falling back to finding the card by attributes");
-          // Fallback: try to find the blocking card by searching for it
-          const blockingCard = updatedCards.find(
-            c => c.playerId === blockingPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === blockingCardName
-          );
-          
-          console.log("CARD REPLACEMENT DEBUG: Found blocking card:", blockingCard);
-          
-          if (blockingCard) {
-            console.log("CARD REPLACEMENT DEBUG: Replacing found card with ID:", blockingCard.id);
-            // Replace the revealed blocking card
-            const cardsAfterReplacement = replaceCard(updatedCards, blockingCard.id);
-            console.log("CARD REPLACEMENT DEBUG: Cards after replacement (found card):", 
-              cardsAfterReplacement.filter(c => c.playerId === blockingPlayer.id));
-            result.cards = cardsAfterReplacement;
-          } else {
-            console.log("CARD REPLACEMENT DEBUG: No revealed blocking card found");
-          }
-        }
-        
-        console.log("CARD REPLACEMENT DEBUG: Final player cards:", 
-          (result.cards || updatedCards).filter(c => c.playerId === blockingPlayer.id));
+        console.log("CARD REPLACEMENT DEBUG: Card was already replaced during the challenge");
       }
 
       // If this was the blocking player losing influence (failed block)
@@ -218,72 +165,15 @@ export const stealAction: ActionHandler = {
           console.log("CHALLENGER LOST DEBUG: Blocking card:", game.actionInProgress.blockingCard);
           console.log("CHALLENGER LOST DEBUG: Challenge defense flag:", game.actionInProgress.challengeDefense);
           
-          // Replace the blocker's card that was revealed during the challenge
+          // The blocker's card was already replaced during the challenge
           const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
           const blockingCardName = game.actionInProgress.blockingCard as CardType;
-          const revealedBlockingCardId = game.actionInProgress.revealedBlockingCardId;
           
-          console.log("CHALLENGER LOST DEBUG: Revealed blocking card ID:", revealedBlockingCardId);
+          console.log("CHALLENGER LOST DEBUG: Card was already replaced during the challenge");
           console.log("CHALLENGER LOST DEBUG: Blocker's cards:", updatedCards.filter(c => c.playerId === blockingPlayer.id));
-          console.log("CHALLENGER LOST DEBUG: Revealed cards:", updatedCards.filter(c => c.revealed));
-          
-          if (revealedBlockingCardId) {
-            console.log("CHALLENGER LOST DEBUG: Using stored ID to replace card");
-            // We have the ID of the revealed blocking card stored
-            const cardsAfterReplacement = replaceCard(updatedCards, revealedBlockingCardId);
-            console.log("CHALLENGER LOST DEBUG: Cards after replacement (stored ID):", 
-              cardsAfterReplacement.filter(c => c.playerId === blockingPlayer.id));
-            result.cards = cardsAfterReplacement;
-          } else {
-            console.log("CHALLENGER LOST DEBUG: Falling back to finding the card by attributes");
-            // Fallback: try to find the blocking card by searching for it
-            const blockingCard = updatedCards.find(
-              c => c.playerId === blockingPlayer.id && 
-              c.location === 'player' && 
-              c.revealed === true && 
-              c.name === blockingCardName
-            );
-            
-            console.log("CHALLENGER LOST DEBUG: Found blocking card:", blockingCard);
-            
-            if (blockingCard) {
-              console.log("CHALLENGER LOST DEBUG: Replacing found card with ID:", blockingCard.id);
-              // Replace the revealed blocking card
-              const cardsAfterReplacement = replaceCard(updatedCards, blockingCard.id);
-              console.log("CHALLENGER LOST DEBUG: Cards after replacement (found card):", 
-                cardsAfterReplacement.filter(c => c.playerId === blockingPlayer.id));
-              result.cards = cardsAfterReplacement;
-            } else {
-              console.log("CHALLENGER LOST DEBUG: No revealed blocking card found");
-            }
-          }
-          
-          console.log("CHALLENGER LOST DEBUG: Final player cards:", 
-            (result.cards || updatedCards).filter(c => c.playerId === blockingPlayer.id));
           
           // Block succeeds, steal is blocked
           result.logs.push(createSystemLog(`${blockingPlayer.name}'s ${blockingCardName} blocks the steal.`));
-          
-          // One more attempt to find and replace any revealed blocking card
-          const allRevealedBlockingCards = updatedCards.filter(
-            c => c.playerId === blockingPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === blockingCardName
-          );
-          
-          console.log("CHALLENGER LOST DEBUG: Final check for any unreplaced revealed cards:", allRevealedBlockingCards);
-          if (allRevealedBlockingCards.length > 0 && !result.cards) {
-            console.log("CHALLENGER LOST DEBUG: Found unreplaced revealed cards, replacing now");
-            let tempCards = [...updatedCards];
-            for (const card of allRevealedBlockingCards) {
-              console.log("CHALLENGER LOST DEBUG: Last chance replacement for card:", card);
-              tempCards = replaceCard(tempCards, card.id);
-            }
-            result.cards = tempCards;
-            console.log("CHALLENGER LOST DEBUG: Cards after last chance replacement:", 
-              result.cards.filter(c => c.playerId === blockingPlayer.id));
-          }
           
           // End the action
           result.actionInProgress = null;
@@ -298,30 +188,8 @@ export const stealAction: ActionHandler = {
         
         // If this was a challenge to the Captain claim, and target hasn't blocked yet
         if (playerId !== game.actionInProgress.target) {
-          // Before resetting state, we need to make sure the Captain card is properly replaced
-          // Find the action player who successfully defended with Captain
+          // Captain card was already replaced during the challenge
           const actionPlayer = game.players[game.actionInProgress.player];
-          const revealedCaptainCardId = game.actionInProgress.revealedCaptainCardId;
-          
-          if (revealedCaptainCardId) {
-            // We have the ID of the revealed Captain card stored
-            const cardsAfterReplacement = replaceCard(updatedCards, revealedCaptainCardId);
-            result.cards = cardsAfterReplacement;
-          } else {
-            // Fallback: try to find the Captain card by searching for it
-            const captainCard = updatedCards.find(
-              c => c.playerId === actionPlayer.id && 
-              c.location === 'player' && 
-              c.revealed === true && 
-              c.name === 'Captain'
-            );
-            
-            if (captainCard) {
-              // Replace the revealed Captain card
-              const cardsAfterReplacement = replaceCard(updatedCards, captainCard.id);
-              result.cards = cardsAfterReplacement;
-            }
-          }
           
           // Reset game state to action_response to allow target to block
           result.logs.push(createSystemLog(GameMessages.system.blockingOptions(targetPlayer.name)));
@@ -339,29 +207,8 @@ export const stealAction: ActionHandler = {
         
         // If target was the one who challenged and lost, proceed with steal
         
-        // First, make sure the Captain card is properly replaced
+        // Captain card was already replaced during the challenge
         const actionPlayer = game.players[game.actionInProgress.player];
-        const revealedCaptainCardId = game.actionInProgress.revealedCaptainCardId;
-        
-        if (revealedCaptainCardId) {
-          // We have the ID of the revealed Captain card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedCaptainCardId);
-          result.cards = cardsAfterReplacement;
-        } else {
-          // Fallback: try to find the Captain card by searching for it
-          const captainCard = updatedCards.find(
-            c => c.playerId === actionPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Captain'
-          );
-          
-          if (captainCard) {
-            // Replace the revealed Captain card
-            const cardsAfterReplacement = replaceCard(updatedCards, captainCard.id);
-            result.cards = cardsAfterReplacement;
-          }
-        }
         
         const stolenCoins = Math.min(targetPlayer.coins, 2);
         
@@ -381,31 +228,13 @@ export const stealAction: ActionHandler = {
       }
       
       // Before completing, ensure all revealed blocking cards are replaced
+      // (This should not be needed anymore since cards are replaced immediately during challenge)
       if (game.actionInProgress.blockingPlayer !== undefined && 
           game.actionInProgress.blockingCard) {
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
         const blockingCardName = game.actionInProgress.blockingCard as CardType;
         console.log("COMPLETE ACTION DEBUG: Checking for unreplaced revealed blocking cards");
-        
-        // Make one final attempt to find and replace any revealed blocking cards
-        const allRevealedBlockingCards = (result.cards || updatedCards).filter(
-          c => c.playerId === blockingPlayer.id && 
-          c.location === 'player' && 
-          c.revealed === true && 
-          c.name === blockingCardName
-        );
-        
-        console.log("COMPLETE ACTION DEBUG: Unreplaced revealed cards:", allRevealedBlockingCards);
-        if (allRevealedBlockingCards.length > 0) {
-          let tempCards = result.cards || updatedCards;
-          for (const card of allRevealedBlockingCards) {
-            console.log("COMPLETE ACTION DEBUG: Last chance replacement for card:", card);
-            tempCards = replaceCard(tempCards, card.id);
-          }
-          result.cards = tempCards;
-          console.log("COMPLETE ACTION DEBUG: Final cards after replacement:", 
-            result.cards.filter(c => c.playerId === blockingPlayer.id));
-        }
+        console.log("COMPLETE ACTION DEBUG: Cards should have been replaced already during challenge");
       }
       
       // Complete action
@@ -467,7 +296,10 @@ export const stealAction: ActionHandler = {
         if (captainCard) {
           // Reveal the Captain card
           const updatedCardsWithReveal = revealCard(game.cards, captainCard.id);
-          result.cards = updatedCardsWithReveal;
+          
+          // Immediately replace the revealed card with a new one from the deck
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, captainCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
         // Challenge fails, challenger loses influence
@@ -537,7 +369,13 @@ export const stealAction: ActionHandler = {
           const updatedCardsWithReveal = revealCard(game.cards, blockingCardObj.id);
           console.log("BLOCK CHALLENGE DEBUG: Cards after revealing:", 
             updatedCardsWithReveal.filter(c => c.playerId === blockingPlayer.id));
-          result.cards = updatedCardsWithReveal;
+          
+          // Immediately replace the revealed card with a new one from the deck
+          console.log("BLOCK CHALLENGE DEBUG: Immediately replacing card with ID:", blockingCardObj.id);
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, blockingCardObj.id);
+          console.log("BLOCK CHALLENGE DEBUG: Cards after replacement:", 
+            cardsAfterReplacement.filter(c => c.playerId === blockingPlayer.id));
+          result.cards = cardsAfterReplacement;
         } else {
           console.log("BLOCK CHALLENGE DEBUG: No matching blocking card found to reveal");
         }

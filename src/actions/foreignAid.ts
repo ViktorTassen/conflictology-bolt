@@ -89,34 +89,14 @@ export const foreignAidAction: ActionHandler = {
       }
       
       // If a blocking player is responding after winning a challenge
+      // Duke card was already replaced during the challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
           playerId === game.actionInProgress.losingPlayer && 
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        // Replace the Duke card that was revealed during the challenge
-        // First try to use the stored ID if available
+        // No need to replace the Duke card again - it was already replaced during the challenge
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const revealedDukeCardId = game.actionInProgress.revealedDukeCardId;
-        
-        if (revealedDukeCardId) {
-          // We have the ID of the revealed Duke card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedDukeCardId);
-          result.cards = cardsAfterReplacement;
-        } else {
-          // Fallback: try to find the Duke card by searching for it
-          const dukeCard = updatedCards.find(
-            c => c.playerId === blockingPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Duke'
-          );
-          
-          if (dukeCard) {
-            const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
-            result.cards = cardsAfterReplacement;
-          }
-        }
       }
 
       // If this was the blocking player losing influence after a failed block
@@ -278,7 +258,10 @@ export const foreignAidAction: ActionHandler = {
         if (dukeCard) {
           // Reveal the Duke card
           const updatedCardsWithReveal = revealCard(game.cards, dukeCard.id);
-          result.cards = updatedCardsWithReveal;
+          
+          // Immediately replace the revealed card with a new one from the deck
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, dukeCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
         // Challenge fails, challenger loses influence

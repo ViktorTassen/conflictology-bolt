@@ -224,107 +224,40 @@ export const investigateAction: ActionHandler = {
       }
 
       // Only the action player should replace their revealed card and continue investigation
-      // This happens when:
-      // 1. They were challenged about having Inquisitor
-      // 2. They revealed Inquisitor (proved they had it)
-      // 3. The challenger lost influence
-      console.log("LOSE_INFLUENCE DEBUG: Checking if action player needs to replace revealed card");
-      console.log("LOSE_INFLUENCE DEBUG: losingPlayer:", game.actionInProgress.losingPlayer);
-      console.log("LOSE_INFLUENCE DEBUG: actionPlayer:", game.actionInProgress.player);
-      console.log("LOSE_INFLUENCE DEBUG: current player:", playerId);
-      console.log("LOSE_INFLUENCE DEBUG: challengeDefense:", game.actionInProgress.challengeDefense);
-      console.log("LOSE_INFLUENCE DEBUG: revealedInquisitorCardId:", game.actionInProgress.revealedInquisitorCardId);
-      
-      if (game.actionInProgress.losingPlayer !== undefined &&  // Someone lost influence
-          game.actionInProgress.losingPlayer !== game.actionInProgress.player && // Not the action player
-          playerId === game.actionInProgress.player && // This player is the action player
-          game.actionInProgress.challengeDefense) { // The action player successfully defended
+      if (game.actionInProgress.losingPlayer !== undefined &&  
+          game.actionInProgress.losingPlayer !== game.actionInProgress.player && 
+          playerId === game.actionInProgress.player && 
+          game.actionInProgress.challengeDefense) {
         
-        // Find the Inquisitor card to replace
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        console.log("INVESTIGATE DEBUG - ACTION PLAYER: Finding Inquisitor card to replace");
-        
-        let inquisitorCard;
-        
-        // First try using the stored ID if available
-        if (game.actionInProgress.revealedInquisitorCardId) {
-          console.log("INVESTIGATE DEBUG - ACTION PLAYER: Using stored Inquisitor card ID");
-          inquisitorCard = updatedCards.find(c => c.id === game.actionInProgress.revealedInquisitorCardId);
-        }
-        
-        // Fallback to searching for the card
-        if (!inquisitorCard) {
-          console.log("INVESTIGATE DEBUG - ACTION PLAYER: Falling back to search for Inquisitor card");
-          inquisitorCard = updatedCards.find(
-            c => c.playerId === player.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Inquisitor'
-          );
-        }
-        
-        console.log("INVESTIGATE DEBUG - ACTION PLAYER: Found inquisitor card:", inquisitorCard);
-        
-        if (inquisitorCard) {
-          // Replace the revealed Inquisitor card
-          const cardsAfterReplacement = replaceCard(updatedCards, inquisitorCard.id);
-          result.cards = cardsAfterReplacement;
+        // Inquisitor card was already replaced during the challenge
+        console.log("INVESTIGATE DEBUG - ACTION PLAYER: Inquisitor card was already replaced during challenge");
           
-          // Resume with the original action
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${actionPlayer.name} will now continue with the Investigate action.`
-          }));
+        // Resume with the original action
+        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+          message: `${actionPlayer.name} will now continue with the Investigate action.`
+        }));
           
-          // Reset action state for investigation - we need to clear all responses and any challenge state
-          // BUT we need to preserve the target for the investigation to continue
-          result.actionInProgress = {
-            type: 'investigate',
-            player: game.actionInProgress.player,
-            target: game.actionInProgress.target,
-            responses: { 
-              // Add automatic allow response for the target to proceed immediately to card selection
-              [game.actionInProgress.target!]: { type: 'allow' }
-            },
-            resolved: false
-          };
+        // Reset action state for investigation
+        result.actionInProgress = {
+          type: 'investigate',
+          player: game.actionInProgress.player,
+          target: game.actionInProgress.target,
+          responses: { 
+            [game.actionInProgress.target!]: { type: 'allow' }
+          },
+          resolved: false
+        };
           
-          return result;
-        }
+        return result;
       }
       
       // If this is the challenger who lost influence (failed challenge)
-      // We need to trigger the action player to finish the investigate action
       if (game.actionInProgress.losingPlayer === playerId &&
           playerId !== game.actionInProgress.player) {
-        // Already revealed the card above - now the Inquisitor player should proceed with investigation
-        const actionPlayer = game.players[game.actionInProgress.player];
+        // The Inquisitor card was already replaced during the challenge
         const targetPlayer = game.players[game.actionInProgress.target ?? 0];
         
-        // Find the Inquisitor card to replace
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        console.log("INVESTIGATE DEBUG: Finding Inquisitor card to replace");
-        console.log("INVESTIGATE DEBUG: Revealed Inquisitor ID:", game.actionInProgress.revealedInquisitorCardId);
-        
-        let inquisitorCard;
-        
-        // First try using the stored ID if available
-        if (game.actionInProgress.revealedInquisitorCardId) {
-          console.log("INVESTIGATE DEBUG: Using stored Inquisitor card ID");
-          inquisitorCard = updatedCards.find(c => c.id === game.actionInProgress.revealedInquisitorCardId);
-        }
-        
-        // Fallback to searching for the card
-        if (!inquisitorCard) {
-          console.log("INVESTIGATE DEBUG: Falling back to search for Inquisitor card");
-          inquisitorCard = updatedCards.find(
-            c => c.playerId === actionPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Inquisitor'
-          );
-        }
-        
-        console.log("INVESTIGATE DEBUG: Found inquisitor card:", inquisitorCard);
+        console.log("INVESTIGATE DEBUG: Inquisitor card was already replaced during challenge");
         
         // Check if the target player has at least one card to investigate
         const targetPlayerCards = getPlayerCards(updatedCards, targetPlayer.id);
@@ -332,7 +265,6 @@ export const investigateAction: ActionHandler = {
         
         // Only proceed with investigation if target player still has cards
         if (!targetHasCards) {
-          // Target player has no cards to investigate, end the action
           result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
             message: `${targetPlayer.name} has no cards to investigate.`
           }));
@@ -347,37 +279,21 @@ export const investigateAction: ActionHandler = {
           return result;
         }
         
-        if (inquisitorCard) {
-          // Replace the revealed Inquisitor card
-          const cardsAfterReplacement = replaceCard(updatedCards, inquisitorCard.id);
-          result.cards = cardsAfterReplacement;
+        // The investigation can now continue - target player will select a card
+        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+          message: `${actionPlayer.name} will now continue with the investigation.`
+        }));
           
-          // The investigation can now continue - target player will select a card
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${actionPlayer.name} will now continue with the investigation.`
-          }));
-          
-          // Reset action state for investigation phase - without losingPlayer field
-          result.actionInProgress = {
-            type: game.actionInProgress.type,
-            player: game.actionInProgress.player,
-            target: game.actionInProgress.target,
-            responses: {
-              // Add automatic allow response for the target to proceed immediately to card selection
-              [game.actionInProgress.target!]: { type: 'allow' }
-            },
-            resolved: false
-          };
-        } else {
-          // No Inquisitor card found (shouldn't happen)
-          // End the action
-          result.actionInProgress = null;
-          
-          // Get next turn and reset actionUsedThisTurn flag
-          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
-          result.currentTurn = nextTurn.currentTurn;
-          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-        }
+        // Reset action state for investigation phase
+        result.actionInProgress = {
+          type: game.actionInProgress.type,
+          player: game.actionInProgress.player,
+          target: game.actionInProgress.target,
+          responses: {
+            [game.actionInProgress.target!]: { type: 'allow' }
+          },
+          resolved: false
+        };
         
         return result;
       }
@@ -400,10 +316,8 @@ export const investigateAction: ActionHandler = {
       const hasInquisitor = hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
 
       if (hasInquisitor) {
-        // For debugging
         console.log("CHALLENGE DEBUG: Player has Inquisitor, revealing card");
         
-        // Find the Inquisitor card to reveal - it must be revealed when successfully defending
         const inquisitorCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
@@ -414,12 +328,11 @@ export const investigateAction: ActionHandler = {
         console.log("CHALLENGE DEBUG: Found Inquisitor card:", inquisitorCard);
         
         if (inquisitorCard) {
-          // Reveal the Inquisitor card
           const updatedCardsWithReveal = revealCard(game.cards, inquisitorCard.id);
-          result.cards = updatedCardsWithReveal;
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, inquisitorCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
-        // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
@@ -431,11 +344,10 @@ export const investigateAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
-          revealedInquisitorCardId: inquisitorCard?.id, // Store the ID of the revealed Inquisitor card
+          revealedInquisitorCardId: inquisitorCard?.id,
           responses: updatedResponses
         };
       } else {
-        // Challenge succeeds, Inquisitor player loses influence
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
@@ -460,20 +372,11 @@ export const investigateAction: ActionHandler = {
         responses: updatedResponses
       };
 
-      // Check if all other non-eliminated players (except the target and action player) have allowed
-      const otherPlayers = game.players.filter((p, index) => 
-        index !== game.actionInProgress!.player && 
-        index !== game.actionInProgress!.target && 
-        !p.eliminated
-      );
-      
-      // If this is the target player allowing
       if (playerId === game.actionInProgress.target) {
         result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
           message: `${player.name} selecting a card to show.`
         })];
         
-        // Clear all responses and move to card selection phase
         result.actionInProgress = {
           ...game.actionInProgress,
           responses: {
@@ -526,18 +429,14 @@ export const swapAction: ActionHandler = {
     
     // Handle swap selection
     if (response.type === 'exchange_selection' && response.selectedIndices) {
-      // Make sure this is the player who initiated the swap
       if (playerId !== game.actionInProgress.player) {
         throw new Error('Only the player who initiated the swap can select cards');
       }
       
-      // Make sure we have swap cards available
       if (!game.actionInProgress.exchangeCards) {
         throw new Error('No swap cards available');
       }
       
-      // Get all available cards (player's non-revealed cards + drawn cards)
-      const actionPlayer = game.players[game.actionInProgress.player];
       const playerCards = getPlayerCards(game.cards, actionPlayer.id);
       const exchangeCards = game.cards.filter(c => 
         game.actionInProgress!.exchangeCards!.includes(c.id)
@@ -545,20 +444,15 @@ export const swapAction: ActionHandler = {
       
       const availableCards = [...playerCards, ...exchangeCards];
       
-      // Validate selection count matches active cards
       if (response.selectedIndices.length !== playerCards.length) {
         throw new Error(`Must select ${playerCards.length} cards to keep`);
       }
       
-      // Get the cards the player wants to keep
       const keptCardIds = response.selectedIndices.map(idx => availableCards[idx].id);
-      
-      // Get the cards to return to the deck
       const returnCardIds = availableCards
         .filter(card => !keptCardIds.includes(card.id))
         .map(card => card.id);
       
-      // Update kept cards to be player's cards
       let updatedCards = [...game.cards];
       keptCardIds.forEach(cardId => {
         const cardIndex = updatedCards.findIndex(c => c.id === cardId);
@@ -571,19 +465,15 @@ export const swapAction: ActionHandler = {
         }
       });
       
-      // Return unchosen cards to deck
       updatedCards = returnCardsToDeck(updatedCards, returnCardIds);
       
-      // Log the swap completion
       result.logs = [createLog('swap-complete', player, {
         message: GameMessages.results.swapComplete
       })];
       
-      // Update the game state
       result.cards = updatedCards;
       result.actionInProgress = null;
       
-      // Get next turn and reset actionUsedThisTurn flag
       const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -602,11 +492,9 @@ export const swapAction: ActionHandler = {
 
     // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      // Find the card to reveal
       const playerCards = getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
-        // Player has no cards left to lose
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
@@ -617,7 +505,6 @@ export const swapAction: ActionHandler = {
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
-        // Get next turn and reset actionUsedThisTurn flag
         const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
         result.currentTurn = nextTurn.currentTurn;
         result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -625,7 +512,6 @@ export const swapAction: ActionHandler = {
         return result;
       }
 
-      // If a specific card was chosen, find it
       let cardToReveal = response.card ? 
         playerCards.find(c => c.name === response.card) : 
         playerCards[0];
@@ -634,148 +520,69 @@ export const swapAction: ActionHandler = {
         cardToReveal = playerCards[0];
       }
 
-      // Reveal the card
       const updatedCards = revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
       result.logs = [createLog('lose-influence', player)];
       
-      // Check if player has any unrevealed cards left after this card is revealed
       const remainingCards = getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
-        // Player has no more cards - mark them as eliminated
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
         result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
       }
 
-      // Only the action player should replace their revealed card and draw for swap
-      // This happens when:
-      // 1. They were challenged about having Inquisitor
-      // 2. They revealed Inquisitor (proved they had it)
-      // 3. The challenger lost influence
-      if (game.actionInProgress.losingPlayer !== undefined &&  // Someone lost influence
-          game.actionInProgress.losingPlayer !== game.actionInProgress.player && // Not the action player
-          playerId === game.actionInProgress.player && // This player is the action player
-          game.actionInProgress.challengeDefense) { // The action player successfully defended
+      if (game.actionInProgress.losingPlayer !== undefined &&  
+          game.actionInProgress.losingPlayer !== game.actionInProgress.player && 
+          playerId === game.actionInProgress.player && 
+          game.actionInProgress.challengeDefense) {
         
-        // Find the card that matches the claim (Inquisitor)
-        // Note: We need to find the card that is still marked as "player" but is revealed
-        let inquisitorCard;
+        const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');
+        const drawnCardIds = cardsWithExchange
+          .filter(c => c.location === 'exchange')
+          .map(c => c.id);
         
-        // First try using the stored ID if available
-        if (game.actionInProgress.revealedInquisitorCardId) {
-          inquisitorCard = updatedCards.find(c => c.id === game.actionInProgress.revealedInquisitorCardId);
-        }
+        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+          message: `${actionPlayer.name} will now swap cards.`
+        }));
         
-        // Fallback to searching for the card
-        if (!inquisitorCard) {
-          inquisitorCard = updatedCards.find(
-            c => c.playerId === player.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Inquisitor'
-          );
-        }
+        const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
         
-        if (inquisitorCard) {
-          // Replace the Inquisitor card
-          const cardsAfterReplacement = replaceCard(updatedCards, inquisitorCard.id);
-          result.cards = cardsAfterReplacement;
-          
-          // Draw 1 card for swap
-          const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');
-          const drawnCardIds = cardsWithExchange
-            .filter(c => c.location === 'exchange')
-            .map(c => c.id);
-          
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${actionPlayer.name} will now swap cards.`
-          }));
-          
-          // Reset action state for swap phase
-          const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
-          
-          result.actionInProgress = {
-            ...restActionProps,
-            exchangeCards: drawnCardIds,
-            responses: {} // Clear responses for swap phase
-          };
-          
-          result.cards = cardsWithExchange;
-          return result;
-        }
-      }
-      
-      // If this is the challenger who lost influence (failed challenge)
-      // We need to trigger the action player to finish the swap action
-      if (game.actionInProgress.losingPlayer === playerId &&
-          playerId !== game.actionInProgress.player) {
-        // Already revealed the card above - now the Inquisitor player should proceed with swap
-        const actionPlayer = game.players[game.actionInProgress.player];
+        result.actionInProgress = {
+          ...restActionProps,
+          exchangeCards: drawnCardIds,
+          responses: {}
+        };
         
-        // Find the Inquisitor card to replace
-        let inquisitorCard;
-        
-        // First try using the stored ID if available
-        if (game.actionInProgress.revealedInquisitorCardId) {
-          inquisitorCard = updatedCards.find(c => c.id === game.actionInProgress.revealedInquisitorCardId);
-        }
-        
-        // Fallback to searching for the card
-        if (!inquisitorCard) {
-          inquisitorCard = updatedCards.find(
-            c => c.playerId === actionPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Inquisitor'
-          );
-        }
-        
-        if (inquisitorCard) {
-          // Replace the revealed Inquisitor card
-          const cardsAfterReplacement = replaceCard(updatedCards, inquisitorCard.id);
-          result.cards = cardsAfterReplacement;
-          
-          // Draw 1 card for swap
-          const cardsWithExchange = drawCards(cardsAfterReplacement, 1, 'exchange');
-          const drawnCardIds = cardsWithExchange
-            .filter(c => c.location === 'exchange')
-            .map(c => c.id);
-          
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${actionPlayer.name} will now swap cards.`
-          }));
-          
-          // Reset action state for swap phase - without losingPlayer field
-          result.actionInProgress = {
-            type: game.actionInProgress.type,
-            player: game.actionInProgress.player,
-            exchangeCards: drawnCardIds,
-            responses: {},
-            resolved: false
-          };
-          
-          result.cards = cardsWithExchange;
-        } else {
-          // No Inquisitor card found (shouldn't happen)
-          // End the action
-          result.actionInProgress = null;
-          
-          // Get next turn and reset actionUsedThisTurn flag
-          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
-          result.currentTurn = nextTurn.currentTurn;
-          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-        }
-        
+        result.cards = cardsWithExchange;
         return result;
       }
       
-      // Action player lost influence (successful challenge)
-      // No swap happens
+      if (game.actionInProgress.losingPlayer === playerId &&
+          playerId !== game.actionInProgress.player) {
+        const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');
+        const drawnCardIds = cardsWithExchange
+          .filter(c => c.location === 'exchange')
+          .map(c => c.id);
+        
+        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
+          message: `${actionPlayer.name} will now swap cards.`
+        }));
+        
+        result.actionInProgress = {
+          type: game.actionInProgress.type,
+          player: game.actionInProgress.player,
+          exchangeCards: drawnCardIds,
+          responses: {},
+          resolved: false
+        };
+        
+        result.cards = cardsWithExchange;
+        return result;
+      }
+      
       result.actionInProgress = null;
       
-      // Get next turn and reset actionUsedThisTurn flag
       const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -789,10 +596,8 @@ export const swapAction: ActionHandler = {
       const hasInquisitor = hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
 
       if (hasInquisitor) {
-        // For debugging
         console.log("SWAP CHALLENGE DEBUG: Player has Inquisitor, revealing card");
         
-        // Find the Inquisitor card to reveal - it must be revealed when successfully defending
         const inquisitorCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
@@ -803,12 +608,11 @@ export const swapAction: ActionHandler = {
         console.log("SWAP CHALLENGE DEBUG: Found Inquisitor card:", inquisitorCard);
         
         if (inquisitorCard) {
-          // Reveal the Inquisitor card
           const updatedCardsWithReveal = revealCard(game.cards, inquisitorCard.id);
-          result.cards = updatedCardsWithReveal;
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, inquisitorCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
-        // Challenge fails, challenger loses influence
         result.logs = [createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
@@ -820,11 +624,10 @@ export const swapAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
-          revealedInquisitorCardId: inquisitorCard?.id, // Store the ID of the revealed Inquisitor card
+          revealedInquisitorCardId: inquisitorCard?.id,
           responses: updatedResponses
         };
       } else {
-        // Challenge succeeds, Inquisitor player loses influence
         result.logs = [createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
@@ -849,7 +652,6 @@ export const swapAction: ActionHandler = {
         responses: updatedResponses
       };
 
-      // Check if all other non-eliminated players have allowed
       const otherPlayers = game.players.filter((p, index) => 
         index !== game.actionInProgress!.player && !p.eliminated
       );
@@ -860,7 +662,6 @@ export const swapAction: ActionHandler = {
         return hasResponded;
       });
 
-      // Check that each response from other players is 'allow'
       const allPlayersAllowed = allResponded && otherPlayers.every(p => {
         const playerIdx = game.players.indexOf(p);
         const response = updatedResponses[playerIdx];
@@ -868,7 +669,6 @@ export const swapAction: ActionHandler = {
       });
       
       if (allPlayersAllowed) {
-        // Draw 1 card for the swap
         const updatedCards = drawCards(game.cards, 1, 'exchange');
         const drawnCardIds = updatedCards
           .filter(c => c.location === 'exchange')
@@ -878,11 +678,10 @@ export const swapAction: ActionHandler = {
           message: `Swap allowed. ${actionPlayer.name} selecting cards.`
         })];
         
-        // Set up for swap phase
         result.actionInProgress = {
           ...game.actionInProgress,
           exchangeCards: drawnCardIds,
-          responses: {} // Clear responses for swap phase
+          responses: {}
         };
         
         result.cards = updatedCards;

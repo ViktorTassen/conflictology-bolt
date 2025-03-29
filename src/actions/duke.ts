@@ -107,35 +107,13 @@ export const dukeAction: ActionHandler = {
       else if (playerId !== game.actionInProgress.player && 
                game.actionInProgress.losingPlayer === playerId) {
         // When challenger has lost influence, we need to:
-        // 1. Find and replace the Duke card that was revealed
+        // 1. Duke card was already replaced during the challenge
         // 2. Give the Duke player their tax money
         // 3. End the action
         const dukePlayer = game.players[game.actionInProgress.player];
         
-        // Replace the Duke card that was revealed during the challenge
-        // First try to use the stored ID if available
-        const revealedDukeCardId = game.actionInProgress.revealedDukeCardId;
-        
-        if (revealedDukeCardId) {
-          // We have the ID of the revealed Duke card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedDukeCardId);
-          result.cards = cardsAfterReplacement;
-        } else {
-          // Fallback: try to find the Duke card by searching for it
-          const dukeCard = updatedCards.find(
-            c => c.playerId === dukePlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Duke'
-          );
-          
-          if (dukeCard) {
-            // Replace the revealed Duke card
-            const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
-            result.cards = cardsAfterReplacement;
-          }
-        }
-        
+        // The Duke card was already replaced during the challenge response
+
         // Give Duke player 3 coins
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
@@ -157,27 +135,10 @@ export const dukeAction: ActionHandler = {
         
         return result;
       }
-      // Action player handling replacement of Duke card
+      // Action player handling Duke action completion (card was already replaced during challenge)
       else if (playerId === game.actionInProgress.player && 
               game.actionInProgress.challengeInProgress && 
               game.actionInProgress.challengeDefense) {
-          
-          // Find the Duke card to replace - it's the revealed one
-          // Note: We need to find the card that is still marked as "player" but is revealed
-          const dukeCard = updatedCards.find(
-            c => c.playerId === player.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Duke'
-          );
-            
-          if (!dukeCard) {
-            return result; // No Duke found, shouldn't happen
-          }
-            
-          // Replace the revealed Duke card
-          const cardsAfterReplacement = replaceCard(updatedCards, dukeCard.id);
-          result.cards = cardsAfterReplacement;
           
           // Duke action succeeds - action player gains 3 coins
           const updatedPlayers = [...game.players];
@@ -217,7 +178,10 @@ export const dukeAction: ActionHandler = {
         if (dukeCard) {
           // Reveal the Duke card
           const updatedCardsWithReveal = revealCard(game.cards, dukeCard.id);
-          result.cards = updatedCardsWithReveal;
+          
+          // Immediately replace the revealed card with a new one from the deck
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, dukeCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
         // Challenge fails - challenger loses influence and action player will replace their card

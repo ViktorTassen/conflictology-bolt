@@ -142,35 +142,17 @@ export const assassinateAction: ActionHandler = {
       // so we don't need to replace it again here.
       
       // If a blocking player is responding after winning a challenge
+      // The Contessa card was already replaced during the challenge
       if (game.actionInProgress.blockingPlayer !== undefined && 
           game.actionInProgress.losingPlayer !== undefined &&
           playerId === game.actionInProgress.losingPlayer &&
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        // Replace the Contessa card that was revealed during a successful defense
+        // The Contessa card was already replaced during the challenge
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const revealedContessaCardId = game.actionInProgress.revealedContessaCardId;
         
-        if (revealedContessaCardId) {
-          // We have the ID of the revealed Contessa card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedContessaCardId);
-          result.cards = cardsAfterReplacement;
-        } else {
-          // Fallback: try to find the Contessa card by searching for it
-          const contessaCard = updatedCards.find(
-            c => c.playerId === blockingPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Contessa'
-          );
-          
-          if (contessaCard) {
-            // Replace the revealed Contessa card
-            const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
-            result.cards = cardsAfterReplacement;
-          }
-        }
+        // No need to replace the card again - it was replaced when it was revealed during the challenge
       }
 
       // If this was the blocking player losing influence (failed block)
@@ -196,42 +178,21 @@ export const assassinateAction: ActionHandler = {
       // If this was the challenger losing influence after challenging a block
       else if (game.actionInProgress.losingPlayer === playerId && 
                game.actionInProgress.blockingPlayer !== undefined) {
-        // Replace the blocker's Contessa card that was revealed during a successful defense
+        // The Contessa card was already replaced during the challenge
         const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        const revealedContessaCardId = game.actionInProgress.revealedContessaCardId;
         
-        if (revealedContessaCardId) {
-          // We have the ID of the revealed Contessa card stored
-          const cardsAfterReplacement = replaceCard(updatedCards, revealedContessaCardId);
-          result.cards = cardsAfterReplacement;
-        } else {
-          // Fallback: try to find the Contessa card by searching for it
-          const contessaCard = updatedCards.find(
-            c => c.playerId === blockingPlayer.id && 
-            c.location === 'player' && 
-            c.revealed === true && 
-            c.name === 'Contessa'
-          );
-          
-          if (contessaCard) {
-            // Replace the revealed Contessa card
-            const cardsAfterReplacement = replaceCard(updatedCards, contessaCard.id);
-            result.cards = cardsAfterReplacement;
-          }
-          
-          // Block succeeds, assassination is blocked
-          result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
-          
-          // End the action
-          result.actionInProgress = null;
-          
-          // Get next turn and reset actionUsedThisTurn flag
-          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
-          result.currentTurn = nextTurn.currentTurn;
-          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-          
-          return result;
-        }
+        // Block succeeds, assassination is blocked
+        result.logs.push(createSystemLog(GameMessages.system.assassinationBlocked));
+        
+        // End the action
+        result.actionInProgress = null;
+        
+        // Get next turn and reset actionUsedThisTurn flag
+        const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+        result.currentTurn = nextTurn.currentTurn;
+        result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+        
+        return result;
       }
       // If this was the challenger losing influence (failed challenge to Assassin claim)
       else if (game.actionInProgress.losingPlayer === playerId && 
@@ -377,7 +338,10 @@ export const assassinateAction: ActionHandler = {
         if (contessaCard) {
           // Reveal the Contessa card
           const updatedCardsWithReveal = revealCard(game.cards, contessaCard.id);
-          result.cards = updatedCardsWithReveal;
+          
+          // Immediately replace the revealed card with a new one from the deck
+          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, contessaCard.id);
+          result.cards = cardsAfterReplacement;
         }
         
         // Challenge fails, challenger loses influence
