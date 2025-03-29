@@ -1,7 +1,8 @@
-import { ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, createSystemLog } from './types';
+import { ActionHandler, ActionResponse, ActionResult, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
-import { hasCardType, revealCard, replaceCard, drawCards, returnCardsToDeck, getPlayerCards } from '../utils/cardUtils';
-import { Card } from '../types';
+import { CardType } from '../types';
+import { cardService } from '../services/CardService';
+import { loggingService } from '../services/LoggingService';
 
 export const investigateAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -11,7 +12,7 @@ export const investigateAction: ActionHandler = {
 
     const targetId = game.actionInProgress?.target;
     if (targetId === undefined) {
-      throw new Error('Investigate action requires a target player');
+      throw new Error('Investigate requires a target');
     }
 
     if (game.players[targetId].eliminated) {
@@ -19,13 +20,13 @@ export const investigateAction: ActionHandler = {
     }
 
     const targetPlayer = game.players[targetId];
-    const targetCards = getPlayerCards(game.cards, targetPlayer.id);
+    const targetCards = cardService.getPlayerCards(game.cards, targetPlayer.id);
     if (targetCards.length === 0) {
       throw new Error('Target player has no cards to investigate');
     }
 
     const result: ActionResult = {
-      logs: [createLog('investigate', player, {
+      logs: [loggingService.createLog('investigate', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
         message: GameMessages.claims.investigate
@@ -50,6 +51,7 @@ export const investigateAction: ActionHandler = {
     }
 
     const actionPlayer = game.players[game.actionInProgress.player];
+    const targetPlayer = game.players[game.actionInProgress.target ?? 0];
     const result: ActionResult = {};
     
     if (response.type === 'select_card_for_investigation' && response.card) {
@@ -57,16 +59,14 @@ export const investigateAction: ActionHandler = {
         throw new Error('Only the targeted player can select a card for investigation');
       }
       
-      const playerCards = getPlayerCards(game.cards, player.id);
+      const playerCards = cardService.getPlayerCards(game.cards, player.id);
       const selectedCard = playerCards.find(c => c.name === response.card);
       
       if (!selectedCard) {
         throw new Error('Selected card not found or already revealed');
       }
       
-      result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-        message: `${player.name} shows a card to ${actionPlayer.name}.`
-      })];
+      result.logs = [loggingService.createSystemLog(`${player.name} shows a card to ${actionPlayer.name}.`)];
       
       result.actionInProgress = {
         ...game.actionInProgress,
@@ -90,42 +90,40 @@ export const investigateAction: ActionHandler = {
       const keepCard = response.keepCard === true;
       
       if (keepCard) {
-        result.logs = [createLog('investigate-result', player, {
+        result.logs = [loggingService.createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           message: GameMessages.results.investigateKeep(targetPlayer.name)
         })];
       } else {
-        const updatedCards = drawCards(game.cards, 1, 'investigate');
+        const updatedCards = cardService.drawCards(game.cards, 1, 'investigate');
         const drawnCard = updatedCards.find(c => c.location === 'investigate');
         
         if (!drawnCard) {
-          result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `No cards left in the deck for swap. Card remains unchanged.`
-          })];
-          
+          result.logs = [loggingService.createSystemLog(`No cards left in the deck for swap. Card remains unchanged.`)];
           result.actionInProgress = null;
-          
           const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
           result.currentTurn = nextTurn.currentTurn;
           result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-          
           return result;
         }
         
-        const cardsWithReturnedCard = returnCardsToDeck(updatedCards, [investigateCard.cardId]);
+        const cardsWithReturnedCard = cardService.returnCardsToDeck(updatedCards, [investigateCard.cardId]);
         
-        const finalCards: Card[] = cardsWithReturnedCard.map(card => 
-          card.id === drawnCard.id ? {
-            ...card,
-            playerId: targetPlayer.id,
-            location: 'player',
-            revealed: false
-          } : card
-        );
+        const finalCards = cardsWithReturnedCard.map(card => {
+          if (card.id === drawnCard.id) {
+            return {
+              ...card,
+              playerId: targetPlayer.id,
+              location: 'player' as any,
+              revealed: false
+            };
+          }
+          return card;
+        });
         
         result.cards = finalCards;
-        result.logs = [createLog('investigate-result', player, {
+        result.logs = [loggingService.createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           message: GameMessages.results.investigateSwap(targetPlayer.name)
@@ -133,7 +131,6 @@ export const investigateAction: ActionHandler = {
       }
       
       result.actionInProgress = null;
-      
       const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -151,16 +148,13 @@ export const investigateAction: ActionHandler = {
     };
 
     if (response.type === 'lose_influence') {
-      const playerCards = getPlayerCards(game.cards, player.id);
+      const playerCards = cardService.getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${player.name} has no more cards to lose.`
-        })];
-        
+        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -179,16 +173,16 @@ export const investigateAction: ActionHandler = {
         cardToReveal = playerCards[0];
       }
 
-      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player)];
       
-      const remainingCards = getPlayerCards(updatedCards, player.id);
+      const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
       }
 
       if (game.actionInProgress.losingPlayer !== undefined &&  
@@ -196,9 +190,7 @@ export const investigateAction: ActionHandler = {
           playerId === game.actionInProgress.player && 
           game.actionInProgress.challengeDefense) {
           
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${actionPlayer.name} will now continue with the Investigate action.`
-        }));
+        result.logs.push(loggingService.createSystemLog(`${actionPlayer.name} will now continue with the Investigate action.`));
           
         result.actionInProgress = {
           type: 'investigate',
@@ -217,26 +209,19 @@ export const investigateAction: ActionHandler = {
           playerId !== game.actionInProgress.player) {
         const targetPlayer = game.players[game.actionInProgress.target ?? 0];
         
-        const targetPlayerCards = getPlayerCards(updatedCards, targetPlayer.id);
+        const targetPlayerCards = cardService.getPlayerCards(updatedCards, targetPlayer.id);
         const targetHasCards = targetPlayerCards.length > 0;
         
         if (!targetHasCards) {
-          result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-            message: `${targetPlayer.name} has no cards to investigate.`
-          }));
-          
+          result.logs.push(loggingService.createSystemLog(`${targetPlayer.name} has no cards to investigate.`));
           result.actionInProgress = null;
-          
           const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
           result.currentTurn = nextTurn.currentTurn;
           result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-          
           return result;
         }
         
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${actionPlayer.name} will now continue with the investigation.`
-        }));
+        result.logs.push(loggingService.createSystemLog(`${actionPlayer.name} will now continue with the investigation.`));
           
         result.actionInProgress = {
           type: game.actionInProgress.type,
@@ -252,7 +237,6 @@ export const investigateAction: ActionHandler = {
       }
       
       result.actionInProgress = null;
-      
       const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -262,7 +246,7 @@ export const investigateAction: ActionHandler = {
 
     if (response.type === 'challenge') {
       const actionPlayer = game.players[game.actionInProgress.player];
-      const hasInquisitor = hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
+      const hasInquisitor = cardService.hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
 
       if (hasInquisitor) {
         const inquisitorCard = game.cards.find(
@@ -273,12 +257,12 @@ export const investigateAction: ActionHandler = {
         );
         
         if (inquisitorCard) {
-          const updatedCardsWithReveal = revealCard(game.cards, inquisitorCard.id);
-          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, inquisitorCard.id);
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, inquisitorCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, inquisitorCard.id);
           result.cards = cardsAfterReplacement;
         }
         
-        result.logs = [createLog('challenge-fail', player, {
+        result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           message: GameMessages.challenges.failInquisitor
@@ -293,7 +277,7 @@ export const investigateAction: ActionHandler = {
           responses: updatedResponses
         };
       } else {
-        result.logs = [createLog('challenge-success', player, {
+        result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           message: GameMessages.challenges.succeedInquisitor
@@ -317,9 +301,7 @@ export const investigateAction: ActionHandler = {
       };
 
       if (playerId === game.actionInProgress.target) {
-        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${player.name} selecting a card to show.`
-        })];
+        result.logs = [loggingService.createSystemLog(`${player.name} selecting a card to show.`)];
         
         result.actionInProgress = {
           ...game.actionInProgress,
@@ -345,7 +327,7 @@ export const swapAction: ActionHandler = {
     }
 
     const result: ActionResult = {
-      logs: [createLog('swap', player, {
+      logs: [loggingService.createLog('swap', player, {
         message: GameMessages.claims.swap
       })],
       actionInProgress: {
@@ -378,7 +360,7 @@ export const swapAction: ActionHandler = {
         throw new Error('No swap cards available');
       }
       
-      const playerCards = getPlayerCards(game.cards, actionPlayer.id);
+      const playerCards = cardService.getPlayerCards(game.cards, actionPlayer.id);
       const exchangeCards = game.cards.filter(c => 
         game.actionInProgress!.exchangeCards!.includes(c.id)
       );
@@ -406,9 +388,9 @@ export const swapAction: ActionHandler = {
         }
       });
       
-      updatedCards = returnCardsToDeck(updatedCards, returnCardIds);
+      updatedCards = cardService.returnCardsToDeck(updatedCards, returnCardIds);
       
-      result.logs = [createLog('swap-complete', player, {
+      result.logs = [loggingService.createLog('swap-complete', player, {
         message: GameMessages.results.swapComplete
       })];
       
@@ -432,16 +414,13 @@ export const swapAction: ActionHandler = {
     };
 
     if (response.type === 'lose_influence') {
-      const playerCards = getPlayerCards(game.cards, player.id);
+      const playerCards = cardService.getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${player.name} has no more cards to lose.`
-        })];
-        
+        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -460,16 +439,16 @@ export const swapAction: ActionHandler = {
         cardToReveal = playerCards[0];
       }
 
-      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player)];
       
-      const remainingCards = getPlayerCards(updatedCards, player.id);
+      const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
       }
 
       if (game.actionInProgress.losingPlayer !== undefined &&  
@@ -477,14 +456,12 @@ export const swapAction: ActionHandler = {
           playerId === game.actionInProgress.player && 
           game.actionInProgress.challengeDefense) {
         
-        const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');
+        const cardsWithExchange = cardService.drawCards(updatedCards, 1, 'exchange');
         const drawnCardIds = cardsWithExchange
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${actionPlayer.name} will now swap cards.`
-        }));
+        result.logs.push(loggingService.createSystemLog(`${actionPlayer.name} will now swap cards.`));
         
         const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
         
@@ -500,14 +477,12 @@ export const swapAction: ActionHandler = {
       
       if (game.actionInProgress.losingPlayer === playerId &&
           playerId !== game.actionInProgress.player) {
-        const cardsWithExchange = drawCards(updatedCards, 1, 'exchange');
+        const cardsWithExchange = cardService.drawCards(updatedCards, 1, 'exchange');
         const drawnCardIds = cardsWithExchange
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs.push(createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `${actionPlayer.name} will now swap cards.`
-        }));
+        result.logs.push(loggingService.createSystemLog(`${actionPlayer.name} will now swap cards.`));
         
         result.actionInProgress = {
           type: game.actionInProgress.type,
@@ -532,7 +507,7 @@ export const swapAction: ActionHandler = {
 
     if (response.type === 'challenge') {
       const actionPlayer = game.players[game.actionInProgress.player];
-      const hasInquisitor = hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
+      const hasInquisitor = cardService.hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
 
       if (hasInquisitor) {
         const inquisitorCard = game.cards.find(
@@ -543,12 +518,12 @@ export const swapAction: ActionHandler = {
         );
         
         if (inquisitorCard) {
-          const updatedCardsWithReveal = revealCard(game.cards, inquisitorCard.id);
-          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, inquisitorCard.id);
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, inquisitorCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, inquisitorCard.id);
           result.cards = cardsAfterReplacement;
         }
         
-        result.logs = [createLog('challenge-fail', player, {
+        result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           message: GameMessages.challenges.failInquisitor
@@ -563,7 +538,7 @@ export const swapAction: ActionHandler = {
           responses: updatedResponses
         };
       } else {
-        result.logs = [createLog('challenge-success', player, {
+        result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           message: GameMessages.challenges.succeedInquisitor
@@ -603,14 +578,12 @@ export const swapAction: ActionHandler = {
       });
       
       if (allPlayersAllowed) {
-        const updatedCards = drawCards(game.cards, 1, 'exchange');
+        const updatedCards = cardService.drawCards(game.cards, 1, 'exchange');
         const drawnCardIds = updatedCards
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs = [createLog('system', { name: 'System', color: '#9CA3AF' } as any, {
-          message: `Swap allowed. ${actionPlayer.name} selecting cards.`
-        })];
+        result.logs = [loggingService.createSystemLog(`Swap allowed. ${actionPlayer.name} selecting cards.`)];
         
         result.actionInProgress = {
           ...game.actionInProgress,

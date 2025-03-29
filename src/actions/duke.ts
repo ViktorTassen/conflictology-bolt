@@ -1,21 +1,20 @@
-import { ActionContext, ActionHandler, ActionResponse, ActionResult, createLog, advanceToNextTurn, createSystemLog } from './types';
+import { ActionHandler, ActionResponse, ActionResult, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
-import { hasCardType, revealCard, replaceCard, getPlayerCards } from '../utils/cardUtils';
+import { cardService } from '../services/CardService';
+import { loggingService } from '../services/LoggingService';
 
 export const dukeAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
-    // Check if player is eliminated
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');
     }
 
-    // Player must have at least 0 coins
     if (player.coins < 0) {
       throw new Error('Player does not have enough coins');
     }
 
     const result: ActionResult = {
-      logs: [createLog('duke', player)],
+      logs: [loggingService.createLog('duke', player)],
       actionInProgress: {
         type: 'duke',
         player: playerId,
@@ -30,7 +29,6 @@ export const dukeAction: ActionHandler = {
   respond: async ({ game, player, playerId }, response: ActionResponse) => {
     if (!game.actionInProgress) return {};
 
-    // Check if player is eliminated
     if (player.eliminated) {
       throw new Error('Eliminated players cannot respond to actions');
     }
@@ -47,21 +45,17 @@ export const dukeAction: ActionHandler = {
       [playerId]: responseData
     };
 
-    // Handle losing influence after a challenge
     if (response.type === 'lose_influence') {
-      // Find the card to reveal
-      const playerCards = getPlayerCards(game.cards, player.id);
+      const playerCards = cardService.getPlayerCards(game.cards, player.id);
       
       if (playerCards.length === 0) {
-        // Player has no cards left to lose
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
-        // Get next turn and reset actionUsedThisTurn flag
         const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
         result.currentTurn = nextTurn.currentTurn;
         result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -69,7 +63,6 @@ export const dukeAction: ActionHandler = {
         return result;
       }
 
-      // If a specific card was chosen, find it
       let cardToReveal = response.card ? 
         playerCards.find(c => c.name === response.card) : 
         playerCards[0];
@@ -78,73 +71,50 @@ export const dukeAction: ActionHandler = {
         cardToReveal = playerCards[0];
       }
 
-      // Reveal the card
-      const updatedCards = revealCard(game.cards, cardToReveal.id);
+      const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player)];
       
-      // Check if player has any unrevealed cards left after this card is revealed
-      const remainingCards = getPlayerCards(updatedCards, player.id);
+      const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
-        // Player has no more cards - mark them as eliminated
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
       }
 
-      // If action player was challenged successfully and lost influence
       if (playerId === game.actionInProgress.player) {
-        // Action fails, turn passes
         result.actionInProgress = null;
         
-        // Get next turn and reset actionUsedThisTurn flag
         const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
         result.currentTurn = nextTurn.currentTurn;
         result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       } 
-      // Challenger lost influence due to failed challenge
       else if (playerId !== game.actionInProgress.player && 
                game.actionInProgress.losingPlayer === playerId) {
-        // When challenger has lost influence, we need to:
-        // 1. Duke card was already replaced during the challenge
-        // 2. Give the Duke player their tax money
-        // 3. End the action
-        const dukePlayer = game.players[game.actionInProgress.player];
-        
-        // The Duke card was already replaced during the challenge response
-
-        // Give Duke player 3 coins
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
         
-        result.logs.push(createLog('duke', dukePlayer, {
+        result.logs.push(loggingService.createLog('duke', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
         }));
         
         result.players = updatedPlayers;
-        
-        // End the action and advance to next turn
         result.actionInProgress = null;
         
-        // Get next turn and reset actionUsedThisTurn flag
-        const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
         result.currentTurn = nextTurn.currentTurn;
         result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-        
-        return result;
       }
-      // Action player handling Duke action completion (card was already replaced during challenge)
       else if (playerId === game.actionInProgress.player && 
               game.actionInProgress.challengeInProgress && 
               game.actionInProgress.challengeDefense) {
           
-          // Duke action succeeds - action player gains 3 coins
           const updatedPlayers = [...game.players];
           updatedPlayers[game.actionInProgress.player].coins += 3;
           
-          result.logs.push(createLog('duke', actionPlayer, {
+          result.logs.push(loggingService.createLog('duke', actionPlayer, {
             coins: 3,
             message: GameMessages.results.tax
           }));
@@ -152,7 +122,6 @@ export const dukeAction: ActionHandler = {
           result.players = updatedPlayers;
           result.actionInProgress = null;
           
-          // Get next turn and reset actionUsedThisTurn flag
           const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
           result.currentTurn = nextTurn.currentTurn;
           result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
@@ -161,13 +130,11 @@ export const dukeAction: ActionHandler = {
       return result;
     }
 
-    // Handle challenge
     if (response.type === 'challenge') {
       const actionPlayer = game.players[game.actionInProgress.player];
-      const hasDuke = hasCardType(game.cards, actionPlayer.id, 'Duke');
+      const hasDuke = cardService.hasCardType(game.cards, actionPlayer.id, 'Duke');
       
       if (hasDuke) {
-        // Find the Duke card to reveal - it must be marked as revealed when successfully defending
         const dukeCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
@@ -176,16 +143,12 @@ export const dukeAction: ActionHandler = {
         );
         
         if (dukeCard) {
-          // Reveal the Duke card
-          const updatedCardsWithReveal = revealCard(game.cards, dukeCard.id);
-          
-          // Immediately replace the revealed card with a new one from the deck
-          const cardsAfterReplacement = replaceCard(updatedCardsWithReveal, dukeCard.id);
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, dukeCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, dukeCard.id);
           result.cards = cardsAfterReplacement;
         }
         
-        // Challenge fails - challenger loses influence and action player will replace their card
-        result.logs = [createLog('challenge-fail', player, {
+        result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Duke',
@@ -196,13 +159,12 @@ export const dukeAction: ActionHandler = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
-          challengeDefense: true, // Flag to indicate the action player successfully defended and needs to replace their card
+          challengeDefense: true,
           responses: updatedResponses,
-          revealedDukeCardId: dukeCard?.id // Store the ID of the revealed Duke card
+          revealedDukeCardId: dukeCard?.id
         };
       } else {
-        // Challenge succeeds - action player loses influence
-        result.logs = [createLog('challenge-success', player, {
+        result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Duke',
@@ -220,16 +182,14 @@ export const dukeAction: ActionHandler = {
       return result;
     }
 
-    // Handle allow response
     if (response.type === 'allow') {
       result.actionInProgress = {
         ...game.actionInProgress,
         responses: updatedResponses
       };
       
-      // Check if all other non-eliminated players have allowed
       const otherPlayers = game.players.filter((p, index) => 
-        index !== game.actionInProgress.player && !p.eliminated
+        index !== game.actionInProgress!.player && !p.eliminated
       );
       
       const allResponded = otherPlayers.every(p => {
@@ -238,7 +198,6 @@ export const dukeAction: ActionHandler = {
         return hasResponded;
       });
 
-      // Check that each response from other players is 'allow'
       const allPlayersAllowed = allResponded && otherPlayers.every(p => {
         const playerIdx = game.players.indexOf(p);
         const response = updatedResponses[playerIdx];
@@ -246,11 +205,10 @@ export const dukeAction: ActionHandler = {
       });
       
       if (allPlayersAllowed) {
-        // Duke action succeeds - action player gains 3 coins
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
 
-        result.logs = [createLog('duke', actionPlayer, {
+        result.logs = [loggingService.createLog('duke', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
         })];
@@ -258,8 +216,7 @@ export const dukeAction: ActionHandler = {
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
-        // Get next turn and reset actionUsedThisTurn flag
-        const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
+        const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
         result.currentTurn = nextTurn.currentTurn;
         result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
       }
