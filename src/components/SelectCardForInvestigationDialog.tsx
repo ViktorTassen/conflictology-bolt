@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardType } from '../types';
 import { Eye } from 'lucide-react';
 

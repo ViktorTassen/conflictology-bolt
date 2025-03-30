@@ -1,4 +1,3 @@
-import React from 'react';
 import { ShieldAlert, Swords, Check } from 'lucide-react';
 import { CardType } from '../types';
 

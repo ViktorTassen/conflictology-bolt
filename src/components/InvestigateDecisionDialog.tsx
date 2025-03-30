@@ -1,4 +1,3 @@
-import React from 'react';
 import { CardType } from '../types';
 import { Eye, RefreshCw } from 'lucide-react';
 

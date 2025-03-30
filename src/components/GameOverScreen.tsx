@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Trophy, ThumbsUp, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Trophy, ThumbsUp } from 'lucide-react';
 import { Game } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -17,7 +17,6 @@ export function GameOverScreen({
   onLeaveGame 
 }: GameOverScreenProps) {
   const [hasVoted, setHasVoted] = useState(false);
-  const [showStats, setShowStats] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
   
   // Find the winner (either by the winner field or by finding the last player standing)
@@ -28,9 +27,7 @@ export function GameOverScreen({
   // Get the vote count
   const voteCount = Object.keys(game.voteNextMatch || {}).length;
   const totalPlayers = game.players.length;
-  
-  // Timer for new game
-  const [countdown, setCountdown] = useState<number | null>(null);
+
   
   // Run confetti once on mount
   useEffect(() => {
@@ -91,8 +88,7 @@ export function GameOverScreen({
       setStartingNewMatch(true);
     }
     
-    // No need for a countdown since we start immediately
-    setCountdown(null);
+
   }, [game.redirectToLobby, game.newMatchCountdownStarted]);
   
   const handleVote = () => {

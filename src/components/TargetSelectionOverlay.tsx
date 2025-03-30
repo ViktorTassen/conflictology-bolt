@@ -1,4 +1,3 @@
-import React from 'react';
 import { Target, User, X } from 'lucide-react';
 import { GameAction } from '../types';
 
