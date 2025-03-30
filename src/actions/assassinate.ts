@@ -72,7 +72,7 @@ export const assassinateAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -121,7 +121,7 @@ export const assassinateAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
 
       if (game.actionInProgress.blockingPlayer === playerId) {

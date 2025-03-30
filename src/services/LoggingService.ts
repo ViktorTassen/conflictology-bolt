@@ -1,26 +1,30 @@
-import { GameLogEntry, Player } from '../types';
+import { GameLogEntry, Player, LogType } from '../types';
+import { GameMessages } from '../messages';
 
 export interface ILoggingService {
-  createLog(type: GameLogEntry['type'], player: Player, data?: Partial<GameLogEntry>): GameLogEntry;
+  createLog(type: LogType, player: Player, data?: Partial<GameLogEntry>): GameLogEntry;
   createSystemLog(message: string): GameLogEntry;
-  formatMessage(type: GameLogEntry['type'], data: Record<string, any>): string;
 }
 
 export class LoggingService implements ILoggingService {
   createLog(
-    type: GameLogEntry['type'], 
+    type: LogType, 
     player: Player, 
     data?: Partial<Omit<GameLogEntry, 'type' | 'player' | 'playerColor' | 'timestamp'>>
   ): GameLogEntry {
-    const formattedMessage = data?.message || this.formatMessage(type, data || {});
-    
+    // Generate message if not provided
+    let message = data?.message;
+    if (!message) {
+      message = this.generateMessage(type, data || {});
+    }
+
     return {
       type,
       player: player.name,
       playerColor: player.color,
       timestamp: Date.now(),
       ...data,
-      message: formattedMessage
+      message
     };
   }
 
@@ -34,56 +38,67 @@ export class LoggingService implements ILoggingService {
     };
   }
 
-  formatMessage(type: GameLogEntry['type'], data: Record<string, any>): string {
+  private generateMessage(type: LogType, data: Record<string, any>): string {
     switch (type) {
-      case 'duke':
-        if (data.isChallenge && data.result === 'success') {
-          return 'Duke bluff exposed! Tax fails';
-        }
-        return data.coins ? 'collects Tax (+3M)' : 'claims Duke to collect Tax';
-
+      case 'income':
+        return GameMessages.actions.income;
+      
       case 'foreign-aid':
-        return data.coins ? 'receives Foreign Aid (+2M)' : 'claims Foreign Aid';
-
+        return data.coins ? GameMessages.results.foreignAid : GameMessages.actions.foreignAid;
+      
+      case 'duke':
+        return data.coins ? GameMessages.results.tax : GameMessages.actions.tax;
+      
       case 'steal':
-        if (data.coins) {
-          return `steals ${data.coins}M from ${data.target}`;
-        }
-        return 'claims Captain to steal';
-
+        return data.coins && data.target ? 
+          GameMessages.results.steal(data.coins, data.target) : 
+          GameMessages.actions.steal;
+      
       case 'assassinate':
-        if (data.result === 'blocked') {
-          return 'Assassination blocked!';
-        }
-        return data.coins ? `assassinates ${data.target}` : 'pays 3M → assassinate';
-
+        return data.target ? 
+          GameMessages.results.assassinate(data.target) : 
+          GameMessages.actions.assassinate;
+      
       case 'exchange':
-        return data.result === 'success' ? 'completes exchange' : 'claims Ambassador to exchange';
-
+        return GameMessages.results.exchange;
+      
       case 'investigate':
-        return `investigates ${data.target}`;
-
+        if (data.target) {
+          return data.keepCard ? 
+            GameMessages.results.investigate.keep(data.target) : 
+            GameMessages.results.investigate.swap(data.target);
+        }
+        return GameMessages.actions.investigate;
+      
       case 'coup':
-        return data.coins >= 10 ? 'has >10M! Must coup' : 'pays 7M to Coup';
-
+        return GameMessages.actions.coup(data.coins || 0);
+      
       case 'block':
-        return `blocks with ${data.card}`;
-
+        return data.card ? 
+          GameMessages.blocks.generic(data.card) : 
+          GameMessages.responses.allow;
+      
       case 'challenge':
-        return `challenges ${data.target}`;
-
+        return data.card ? 
+          GameMessages.challenges.success(data.card) : 
+          'challenges';
+      
       case 'challenge-success':
-        return `challenge succeeds against ${data.target}`;
-
+        return data.card ? 
+          GameMessages.challenges.blockSuccess(data.card) : 
+          'challenge succeeds';
+      
       case 'challenge-fail':
-        return `challenge fails against ${data.target}`;
-
+        return data.card ? 
+          GameMessages.challenges.blockFail(data.card) : 
+          'challenge fails';
+      
       case 'lose-influence':
-        return 'loses influence';
-
+        return GameMessages.responses.loseInfluence;
+      
       case 'allow':
-        return 'allows action';
-
+        return GameMessages.responses.allow;
+      
       default:
         return '';
     }
