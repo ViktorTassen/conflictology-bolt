@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function EmptyPlayerCard() {
   return (
     <div className="relative">

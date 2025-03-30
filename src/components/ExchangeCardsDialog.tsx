@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CardType, Card } from '../types';
 import { Shuffle } from 'lucide-react';
 import { cardService } from '../services/CardService';

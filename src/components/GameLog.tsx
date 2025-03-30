@@ -1,7 +1,7 @@
 import React from 'react';
-import { GameLogEntry, LogType, GameState } from '../types';
+import { GameLogEntry, GameState } from '../types';
 import { GameMessages } from '../messages';
-import { DollarSign, Swords, ShieldAlert, Check, RefreshCcw, Skull, Clock, Crown, User } from 'lucide-react';
+import {  Clock } from 'lucide-react';
 
 interface GameLogProps {
   logs: GameLogEntry[];
@@ -18,59 +18,6 @@ interface GameLogProps {
   };
 }
 
-const LogIcon = ({ type }: { type: LogType }) => {
-  const className = "w-3 h-3";
-  
-  switch (type) {
-    case 'income':
-    case 'foreign-aid':
-    case 'tax':
-    case 'steal':
-      return <DollarSign className={className} />;
-    case 'assassinate':
-    case 'coup':
-      return <Skull className={className} />;
-    case 'exchange':
-    case 'exchange-complete':
-      return <RefreshCcw className={className} />;
-    case 'block':
-      return <ShieldAlert className={className} />;
-    case 'challenge':
-    case 'challenge-success':
-    case 'challenge-fail':
-      return <Swords className={className} />;
-    case 'allow':
-      return <Check className={className} />;
-    default:
-      return null;
-  }
-};
-
-const CardIcon = ({ card }: { card: string }) => {
-  const baseClass = "inline-block mx-0.5";
-  let className = "w-3 h-3";
-  let color = "";
-  
-  switch (card) {
-    case 'Duke':
-      color = "text-blue-400";
-      return <Crown className={`${baseClass} ${className} ${color}`} />;
-    case 'Assassin':
-      color = "text-black";
-      return <Skull className={`${baseClass} ${className} ${color}`} />;
-    case 'Captain':
-      color = "text-green-400";
-      return <User className={`${baseClass} ${className} ${color}`} />;
-    case 'Ambassador':
-      color = "text-emerald-400";
-      return <RefreshCcw className={`${baseClass} ${className} ${color}`} />;
-    case 'Contessa':
-      color = "text-red-400";
-      return <ShieldAlert className={`${baseClass} ${className} ${color}`} />;
-    default:
-      return null;
-  }
-};
 
 const formatMessage = (message: string, isSystem: boolean = false) => {
   if (isSystem) return message;
@@ -213,7 +160,6 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
               className="flex flex-wrap items-center justify-between px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
               style={{
                 animationDelay: `${index * 50}ms`,
-                animationFill: 'forwards'
               }}
             >
               <div className="flex flex-wrap items-center gap-1 text-[11px] min-w-0 flex-1">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Users } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 

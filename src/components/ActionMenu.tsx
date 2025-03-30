@@ -75,7 +75,6 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
               `}
               style={{
                 animationDelay: `${index * 50}ms`,
-                animationFill: 'forwards'
               }}
             >
               <action.icon className={`
