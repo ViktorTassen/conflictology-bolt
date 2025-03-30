@@ -13,17 +13,8 @@ import { GameMessages } from '../messages';
 import { nanoid } from 'nanoid';
 import { Game, Player, GameAction } from '../types';
 import { actions, ActionResponse } from '../actions';
-import {
-  createDeck,
-  dealCards,
-  drawCards,
-  returnCardsToDeck,
-  revealCard,
-  replaceCard,
-  validateCardCounts,
-  hasCardType,
-  getPlayerCards
-} from '../utils/cardUtils';
+import { cardService } from '../services/CardService';
+import { loggingService } from '../services/LoggingService';
 
 // Exactly 6 predefined colors for the game with distinct contrast
 const PLAYER_COLORS = [
@@ -76,20 +67,14 @@ export function useGame(gameId?: string) {
   const createGame = async () => {
     try {
       const newGameId = nanoid(6);
-      const cards = createDeck(); // Create a fresh 18-card deck
+      const cards = cardService.createDeck();
       
       const initialGame: Game = {
         id: newGameId,
         players: [],
         currentTurn: 0,
         cards,
-        logs: [{
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: GameMessages.system.gameCreated
-        }],
+        logs: [loggingService.createSystemLog(GameMessages.system.gameCreated)],
         status: 'waiting',
         actionInProgress: null,
         responses: {},
@@ -132,12 +117,12 @@ export function useGame(gameId?: string) {
       }
 
       // Validate and fix card counts if needed
-      if (!validateCardCounts(game.cards)) {
-        game.cards = createDeck();
+      if (!cardService.validateCardCounts(game.cards)) {
+        game.cards = cardService.createDeck();
       }
 
       // Deal cards to the new player
-      const updatedCards = dealCards(game.cards, [player.id]);
+      const updatedCards = cardService.dealCards(game.cards, [player.id]);
 
       // Assign a unique color to the player
       const uniqueColor = assignUniqueColor(game.players);
@@ -149,13 +134,7 @@ export function useGame(gameId?: string) {
       await updateDoc(gameRef, {
         players: [...game.players, completePlayer],
         cards: updatedCards,
-        logs: arrayUnion({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: GameMessages.system.playerJoined(player.name)
-        })
+        logs: arrayUnion(loggingService.createSystemLog(GameMessages.system.playerJoined(player.name)))
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join game');
@@ -171,13 +150,7 @@ export function useGame(gameId?: string) {
       await updateDoc(gameRef, {
         status: 'playing',
         actionUsedThisTurn: false,
-        logs: arrayUnion({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: GameMessages.system.gameStarted
-        })
+        logs: arrayUnion(loggingService.createSystemLog(GameMessages.system.gameStarted))
       });
     } catch (err) {
       setError('Failed to start game');
@@ -398,8 +371,8 @@ export function useGame(gameId?: string) {
     
     try {
       const gameRef = doc(db, 'games', game.id);
-      const cards = createDeck();
-      const updatedCards = dealCards(cards, game.players.map(p => p.id));
+      const cards = cardService.createDeck();
+      const updatedCards = cardService.dealCards(cards, game.players.map(p => p.id));
       
       const updatedPlayers = game.players.map(player => ({
         ...player,
@@ -420,13 +393,7 @@ export function useGame(gameId?: string) {
         newMatchStartTime: null,
         redirectToLobby: false,
         actionUsedThisTurn: false,
-        logs: [{
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: 'New match started!'
-        }]
+        logs: [loggingService.createSystemLog('New match started!')]
       });
     } catch (err) {
       console.error('Failed to start new match', err);
@@ -444,8 +411,8 @@ export function useGame(gameId?: string) {
       const gameRef = doc(db, 'games', game.id);
       
       // Return player's cards to the deck
-      const playerCards = getPlayerCards(game.cards, playerId);
-      const updatedCards = returnCardsToDeck(game.cards, playerCards.map(c => c.id));
+      const playerCards = cardService.getPlayerCards(game.cards, playerId);
+      const updatedCards = cardService.returnCardsToDeck(game.cards, playerCards.map(c => c.id));
       
       // Mark player as eliminated
       const updatedPlayers = game.players.map((p, i) => 
@@ -455,13 +422,7 @@ export function useGame(gameId?: string) {
       await updateDoc(gameRef, {
         players: updatedPlayers,
         cards: updatedCards,
-        logs: arrayUnion({
-          type: 'system',
-          player: 'System',
-          playerColor: '#9CA3AF',
-          timestamp: Date.now(),
-          message: `${game.players[playerId].name} has left the game.`
-        })
+        logs: arrayUnion(loggingService.createSystemLog(`${game.players[playerId].name} has left the game.`))
       });
     } catch (err) {
       console.error('Failed to leave game:', err);

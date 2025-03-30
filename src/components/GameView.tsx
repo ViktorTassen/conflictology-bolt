@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Menu, ArrowLeft, Info, Skull } from 'lucide-react';
-import { Game, Player, GameLogEntry, GameAction, GameState, CardType } from '../types';
+import { GameAction, GameState, CardType } from '../types';
 import { GameLog } from './GameLog';
 import { PlayerCard } from './PlayerCard';
 import { EmptyPlayerCard } from './EmptyPlayerCard';
@@ -18,7 +18,7 @@ import { ConfirmationDialog } from './ConfirmationDialog';
 import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
-import { getPlayerCards } from '../utils/cardUtils';
+import { cardService } from '../services/CardService';
 
 interface GameViewProps {
   gameId: string;
@@ -40,7 +40,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     startGame, 
     isGameOver,
     voteForNextMatch,
-    startNewMatch,
     leaveGame
   } = useGame(gameId);
   const gameStateHelpers = useGameState(game, selectedAction?.type);
@@ -189,10 +188,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
     
-    // Get active card count from the player who initiated the exchange (not necessarily the current player)
-    // Use player's actual ID, not their array index
     const initiatingPlayer = game.players[game.actionInProgress.player];
-    const activeCardCount = getPlayerCards(game.cards, initiatingPlayer.id).length;
+    const activeCardCount = cardService.getPlayerCards(game.cards, initiatingPlayer.id).length;
     
     if (keptCardIndices.length !== activeCardCount) {
       console.error(`Wrong number of cards selected: got ${keptCardIndices.length}, expected ${activeCardCount}`);
@@ -256,12 +253,12 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     }
   };
 
-  const isPlayerTargetable = (id: number) => {
+  const isPlayerTargetable = (id: number): boolean | undefined => {
     const targetPlayer = game.players[id];
-    return selectedAction && 
+    return !!(selectedAction && 
            ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type) && 
            id !== playerIndex &&
-           !targetPlayer.eliminated;
+           !targetPlayer.eliminated);
   };
 
   const getGameState = (): GameState => {
@@ -506,7 +503,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         actionInProgress?.exchangeCards && (
         <ExchangeCardsDialog
           cards={game.cards}
-          playerId={game.players[actionInProgress.player].id} // Convert player index to player ID
+          playerId={game.players[actionInProgress.player].id}
           exchangeCardIds={actionInProgress.exchangeCards}
           onExchangeComplete={handleExchangeCards}
         />

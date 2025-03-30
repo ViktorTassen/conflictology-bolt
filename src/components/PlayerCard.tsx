@@ -1,8 +1,7 @@
-import React from 'react';
 import { DollarSign, Skull } from 'lucide-react';
 import { Player, Card } from '../types';
 import backImage from '../assets/images/back.png';
-import { getPlayerCards } from '../utils/cardUtils';
+import { cardService } from '../services/CardService';
 
 interface PlayerCardProps {
   player: Player;
@@ -27,8 +26,8 @@ export function PlayerCard({
     return name.length > 13 ? `${name.slice(0, 12)}...` : name;
   };
 
-  // Get player's active (non-revealed) cards
-  const activeCards = getPlayerCards(cards, player.id);
+  // Get player's active (non-revealed) cards using cardService
+  const activeCards = cardService.getPlayerCards(cards, player.id);
 
   return (
     <div 

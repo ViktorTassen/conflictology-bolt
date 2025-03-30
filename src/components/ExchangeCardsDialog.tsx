@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CardType, Card } from '../types';
 import { Shuffle } from 'lucide-react';
+import { cardService } from '../services/CardService';
 
 // Import card images
 import ambassadorImg from '../assets/images/ambassador.png';
@@ -35,11 +36,7 @@ export function ExchangeCardsDialog({
 }: ExchangeCardsDialogProps) {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   
-  const playerCards = cards.filter(c => 
-    c.playerId === playerId && 
-    c.location === 'player' && 
-    !c.revealed
-  );
+  const playerCards = cardService.getPlayerCards(cards, playerId);
   
   const exchangeCards = cards.filter(c => 
     exchangeCardIds.includes(c.id)
