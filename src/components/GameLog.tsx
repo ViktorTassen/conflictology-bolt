@@ -116,7 +116,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                     {truncateName(log.player)}
                   </span>
                 )}
-                {/* Special case for investigate-result: put target name in middle of message */}
+                {/* Special cases for messages that need target name in the middle */}
                 {log.type === 'investigate-result' ? (
                   <>
                     <span className="text-gray-300 break-words">
@@ -130,6 +130,21 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                     </span>
                     <span className="text-gray-300 break-words">
                       {log.message === GameMessages.results.investigateKeep() ? ' keep their card' : ' swap their card'}
+                    </span>
+                  </>
+                ) : log.type === 'allow' && log.message === GameMessages.responses.allowBlock ? (
+                  <>
+                    <span className="text-gray-300 break-words">
+                      allows 
+                    </span>
+                    <span 
+                      className="font-semibold whitespace-nowrap mx-1" 
+                      style={{ color: log.targetColor ?? '#FFFFFF' }}
+                    >
+                      {truncateName(log.target || '')}
+                    </span>
+                    <span className="text-gray-300 break-words">
+                      to block
                     </span>
                   </>
                 ) : (

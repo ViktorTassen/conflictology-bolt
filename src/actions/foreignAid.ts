@@ -192,10 +192,12 @@ export const foreignAidAction: ActionHandler = {
 
       if (game.actionInProgress.blockingPlayer !== undefined) {
         if (playerId === game.actionInProgress.player) {
+          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+          
           result.logs = [loggingService.createLog('allow', player, {
-            target: actionPlayer.name,
-            targetColor: actionPlayer.color,
-            message: GameMessages.responses.allow
+            target: blockingPlayer.name,
+            targetColor: blockingPlayer.color,
+            message: GameMessages.responses.allowBlock
           })];
 
           result.actionInProgress = null;

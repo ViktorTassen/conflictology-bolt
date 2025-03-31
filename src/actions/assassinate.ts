@@ -314,13 +314,15 @@ export const assassinateAction: ActionHandler = {
 
       if (game.actionInProgress.blockingPlayer !== undefined) {
         if (playerId === game.actionInProgress.player) {
+          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+          
           result.logs = [loggingService.createLog('allow', player, {
-            target: targetPlayer.name,
-            targetColor: targetPlayer.color,
-            message: GameMessages.responses.allow
+            target: blockingPlayer.name,
+            targetColor: blockingPlayer.color,
+            message: GameMessages.responses.allowBlock
           })];
           
-          result.logs.push(loggingService.createSystemLog(GameMessages.system.assassinationBlocked));
+          // Remove the system message about the assassination being blocked
 
           result.actionInProgress = null;
           

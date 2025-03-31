@@ -65,6 +65,7 @@ export const GameMessages = {
   // Player responses
   responses: {
     allow: 'allows action',
+    allowBlock: 'allows to block',
     eliminated: 'eliminated from game',
     loseInfluence: 'loses 1 card of influence',
     showCard: 'shows a card to',
