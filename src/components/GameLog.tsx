@@ -1,5 +1,6 @@
 import { GameLogEntry, GameState } from '../types';
 import { Clock } from 'lucide-react';
+import { GameMessages } from '../messages';
 
 interface GameLogProps {
   logs: GameLogEntry[];
@@ -115,17 +116,37 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                     {truncateName(log.player)}
                   </span>
                 )}
-                <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
-                  {formatMessage(log.message || '', log.type === 'system')}
-                </span>
-                {/* Show target name for all action types that have targets */}
-                {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup'].includes(log.type) && (
-                  <span 
-                    className="font-semibold whitespace-nowrap" 
-                    style={{ color: log.targetColor ?? '#FFFFFF' }}
-                  >
-                    {truncateName(log.target)}
-                  </span>
+                {/* Special case for investigate-result: put target name in middle of message */}
+                {log.type === 'investigate-result' ? (
+                  <>
+                    <span className="text-gray-300 break-words">
+                      {log.message === GameMessages.results.investigateKeep() ? 'lets ' : 'forces '}
+                    </span>
+                    <span 
+                      className="font-semibold whitespace-nowrap" 
+                      style={{ color: log.targetColor ?? '#FFFFFF' }}
+                    >
+                      {truncateName(log.target || '')}
+                    </span>
+                    <span className="text-gray-300 break-words">
+                      {log.message === GameMessages.results.investigateKeep() ? ' keep their card' : ' swap their card'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
+                      {formatMessage(log.message || '', log.type === 'system')}
+                    </span>
+                    {/* Show target name for all action types that have targets */}
+                    {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup', 'investigate'].includes(log.type) && (
+                      <span 
+                        className="font-semibold whitespace-nowrap" 
+                        style={{ color: log.targetColor ?? '#FFFFFF' }}
+                      >
+                        {truncateName(log.target)}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
               <span className="text-[9px] text-gray-500 ml-2 whitespace-nowrap shrink-0">

@@ -66,7 +66,8 @@ export const investigateAction: ActionHandler = {
         throw new Error('Selected card not found or already revealed');
       }
       
-      result.logs = [loggingService.createSystemLog(GameMessages.system.cardReveal(player.name, selectedCard.name))];
+      const investigator = game.players[game.actionInProgress.player];
+      result.logs = [loggingService.createSystemLog(GameMessages.system.cardInvestigated(player.name, investigator.name))];
       
       result.actionInProgress = {
         ...game.actionInProgress,
@@ -93,7 +94,7 @@ export const investigateAction: ActionHandler = {
         result.logs = [loggingService.createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
-          message: GameMessages.results.investigateKeep(targetPlayer.name)
+          message: GameMessages.results.investigateKeep()
         })];
       } else {
         const updatedCards = cardService.drawCards(game.cards, 1, 'investigate');
@@ -126,7 +127,7 @@ export const investigateAction: ActionHandler = {
         result.logs = [loggingService.createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
-          message: GameMessages.results.investigateSwap(targetPlayer.name)
+          message: GameMessages.results.investigateSwap()
         })];
       }
       

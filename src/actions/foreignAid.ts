@@ -130,6 +130,60 @@ export const foreignAidAction: ActionHandler = {
       return result;
     } 
     
+    if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
+      const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
+      const hasDuke = cardService.hasCardType(game.cards, blockingPlayer.id, 'Duke');
+
+      if (hasDuke) {
+        // Blocking player has Duke, challenge fails
+        const dukeCard = game.cards.find(
+          c => c.playerId === blockingPlayer.id && 
+          c.location === 'player' && 
+          !c.revealed && 
+          c.name === 'Duke'
+        );
+        
+        if (dukeCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, dukeCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, dukeCard.id);
+          result.cards = cardsAfterReplacement;
+        }
+        
+        result.logs = [loggingService.createLog('challenge-fail', player, {
+          target: blockingPlayer.name,
+          targetColor: blockingPlayer.color,
+          card: 'Duke',
+          message: GameMessages.challenges.blockFail('Duke')
+        })];
+
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          losingPlayer: playerId,
+          challengeInProgress: true,
+          challengeDefense: true,
+          responses: updatedResponses,
+          revealedDukeCardId: dukeCard?.id
+        };
+      } else {
+        // Blocking player doesn't have Duke, challenge succeeds
+        result.logs = [loggingService.createLog('challenge-success', player, {
+          target: blockingPlayer.name,
+          targetColor: blockingPlayer.color,
+          card: 'Duke',
+          message: GameMessages.challenges.blockSuccess('Duke')
+        })];
+
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          losingPlayer: game.actionInProgress.blockingPlayer,
+          challengeInProgress: true,
+          responses: updatedResponses
+        };
+      }
+
+      return result;
+    }
+    
     if (response.type === 'allow') {
       result.actionInProgress = {
         ...game.actionInProgress,

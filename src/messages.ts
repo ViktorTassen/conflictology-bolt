@@ -17,6 +17,7 @@ export const GameMessages = {
     blockingOptions: (name: string) => `${name} may now block with Captain or Ambassador.`,
     secondInfluenceLoss: (name: string) => `${name} loses a second card for failing to challenge the Assassin.`,
     cardReveal: (name: string, card: string) => `${name} reveals ${card}.`,
+    cardInvestigated: (targetName: string, investigatorName: string) => `${targetName} shows a card to ${investigatorName}.`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`
   },
 
@@ -40,12 +41,8 @@ export const GameMessages = {
     steal: (coins: number, target: string) => `steals $${coins}M from ${target}`,
     exchange: 'completes the 2 cards exchange',
     swap: 'completes the card swap',
-    investigateKeep: (targetName?: string) => targetName ?
-      `lets ${targetName} keep their card` :
-      'lets target keep their card',
-    investigateSwap: (targetName?: string) => targetName ?
-      `forces ${targetName} to swap their card` :
-      'forces target to swap their card',
+    investigateKeep: () => 'lets them keep their card',
+    investigateSwap: () => 'forces them to swap their card',
     assassinate: (targetName: string) => `assassinates ${targetName}`
   },
 
