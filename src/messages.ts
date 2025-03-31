@@ -15,7 +15,8 @@ export const GameMessages = {
     stealBlocked: 'The steal was blocked.',
     assassinationBlocked: 'The assassination was blocked.',
     blockingOptions: (name: string) => `${name} may now block with Captain or Ambassador.`,
-    secondInfluenceLoss: (name: string) => `${name} loses a second card for failing to challenge the Assassin.`,
+    secondInfluenceLoss: (name: string) => `${name} must lose a second card after failed Assassin challenge.`,
+    failedBlockDefense: (name: string, card: string) => `${name} must lose two cards (assassination and failed ${card} defense).`,
     cardReveal: (name: string, card: string) => `${name} reveals ${card}.`,
     swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`
@@ -30,7 +31,7 @@ export const GameMessages = {
     exchange: 'claims Ambassador to exchange',
     investigate: 'claims Inquisitor to investigate',
     swap: 'claims Inquisitor to swap cards',
-    coup: (coins: number) => coins >= 10 ? 'has >$10M! Must coup' : 'pays $7M to Coup'
+    coup: (coins: number) => coins >= 10 ? 'has >$10M! Pays $7M to Coup' : 'pays $7M to Coup'
   },
 
   // Action results
@@ -38,7 +39,7 @@ export const GameMessages = {
     income: 'takes Income (+$1M)',
     tax: 'collects Tax with Duke (+$3M)',
     foreignAid: 'receives Foreign Aid (+$2M)',
-    steal: (coins: number, target: string) => `steals $${coins}M from ${target}`,
+    steal: (coins: number) => `steals $${coins}M from`,
     exchange: 'completes the 2 cards exchange',
     swap: 'completes the card swap',
     investigateKeep: () => 'lets them keep their card',

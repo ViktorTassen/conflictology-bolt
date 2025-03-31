@@ -107,9 +107,16 @@ export const assassinateAction: ActionHandler = {
           responses: {},
         };
         
-        result.logs.push(loggingService.createSystemLog(
-          GameMessages.system.secondInfluenceLoss(player.name)
-        ));
+        // Different messages depending on which card was challenged
+        if (game.actionInProgress.revealedContessaCardId) {
+          result.logs.push(loggingService.createSystemLog(
+            GameMessages.system.failedBlockDefense(player.name, 'Contessa')
+          ));
+        } else {
+          result.logs.push(loggingService.createSystemLog(
+            GameMessages.system.secondInfluenceLoss(player.name)
+          ));
+        }
         
         return result;
       }
@@ -279,13 +286,15 @@ export const assassinateAction: ActionHandler = {
           message: GameMessages.challenges.blockFail('Contessa')
         })];
 
+        // Player who challenged Contessa and lost will need to lose the 2nd card because of the failed challenge
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
           responses: updatedResponses,
-          revealedContessaCardId: contessaCard?.id
+          revealedContessaCardId: contessaCard?.id,
+          loseTwo: true
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {

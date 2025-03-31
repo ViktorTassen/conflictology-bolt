@@ -147,13 +147,31 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                       to block
                     </span>
                   </>
+                ) : log.type === 'steal' ? (
+                  <>
+                    {log.coins !== undefined ? (
+                      <span className="text-gray-300 break-words">
+                        steals ${log.coins}M from 
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 break-words">
+                        claims <span className="font-bold">Captain</span> to steal from 
+                      </span>
+                    )}
+                    <span 
+                      className="font-semibold whitespace-nowrap" 
+                      style={{ color: log.targetColor ?? '#FFFFFF' }}
+                    >
+                      {truncateName(log.target || '')}
+                    </span>
+                  </>
                 ) : (
                   <>
                     <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
                       {formatMessage(log.message || '', log.type === 'system')}
                     </span>
                     {/* Show target name for all action types that have targets */}
-                    {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup', 'investigate', 'show-card'].includes(log.type) && (
+                    {log.target && log.type !== 'system' && ['assassinate', 'coup', 'investigate', 'show-card'].includes(log.type) && (
                       <span 
                         className="font-semibold whitespace-nowrap" 
                         style={{ color: log.targetColor ?? '#FFFFFF' }}
