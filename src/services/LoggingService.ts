@@ -41,7 +41,7 @@ export class LoggingService implements ILoggingService {
   private generateMessage(type: LogType, data: Record<string, any>): string {
     switch (type) {
       case 'income':
-        return GameMessages.actions.income;
+        return GameMessages.results.income;
       
       case 'foreign-aid':
         return data.coins ? GameMessages.results.foreignAid : GameMessages.actions.foreignAid;
@@ -65,8 +65,8 @@ export class LoggingService implements ILoggingService {
       case 'investigate':
         if (data.target) {
           return data.keepCard ? 
-            GameMessages.results.investigate.keep(data.target) : 
-            GameMessages.results.investigate.swap(data.target);
+            GameMessages.results.investigateKeep(data.target) : 
+            GameMessages.results.investigateSwap(data.target);
         }
         return GameMessages.actions.investigate;
       

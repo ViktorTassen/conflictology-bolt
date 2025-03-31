@@ -10,7 +10,9 @@ export const foreignAidAction: ActionHandler = {
     }
 
     const result: ActionResult = {
-      logs: [loggingService.createLog('foreign-aid', player)],
+      logs: [loggingService.createLog('foreign-aid', player, {
+        message: GameMessages.actions.foreignAid
+      })],
       actionInProgress: {
         type: 'foreign-aid',
         player: playerId,
@@ -48,7 +50,7 @@ export const foreignAidAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -76,7 +78,7 @@ export const foreignAidAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
       
       if (game.actionInProgress.blockingPlayer !== undefined && 
@@ -93,7 +95,7 @@ export const foreignAidAction: ActionHandler = {
         
         result.logs.push(loggingService.createLog('foreign-aid', actionPlayer, {
           coins: 2, 
-          message: GameMessages.results.foreignAidSuccess
+          message: GameMessages.results.foreignAid
         }));
         
         result.players = updatedPlayers;
@@ -113,7 +115,7 @@ export const foreignAidAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Duke',
-        message: GameMessages.blocks.dukeBlockForeignAid
+        message: GameMessages.blocks.generic('Duke')
       })];
 
       result.actionInProgress = {
@@ -135,13 +137,11 @@ export const foreignAidAction: ActionHandler = {
       };
 
       if (game.actionInProgress.blockingPlayer !== undefined) {
-        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        
         if (playerId === game.actionInProgress.player) {
           result.logs = [loggingService.createLog('allow', player, {
-            target: blockingPlayer.name,
-            targetColor: blockingPlayer.color,
-            message: GameMessages.responses.allowBlock
+            target: actionPlayer.name,
+            targetColor: actionPlayer.color,
+            message: GameMessages.responses.allow
           })];
 
           result.actionInProgress = null;
@@ -195,7 +195,7 @@ export const foreignAidAction: ActionHandler = {
   
           result.logs = [loggingService.createLog('foreign-aid', actionPlayer, {
             coins: 2,
-            message: GameMessages.results.foreignAidSuccess
+            message: GameMessages.results.foreignAid
           })];
   
           result.players = updatedPlayers;

@@ -1,6 +1,4 @@
-import React from 'react';
 import { GameLogEntry, GameState } from '../types';
-import { GameMessages } from '../messages';
 import { Clock } from 'lucide-react';
 
 interface GameLogProps {
@@ -18,61 +16,27 @@ interface GameLogProps {
   };
 }
 
-const formatMessage = (log: GameLogEntry): React.ReactNode => {
-  // Use message directly if provided
-  if (log.message) {
-    if (log.type === 'system') return log.message;
+const formatMessage = (message: string, isSystem: boolean = false) => {
+  if (isSystem) return message;
 
-    // Highlight card names in non-system messages
-    const parts = log.message.split(/(Duke|Assassin|Captain|Ambassador|Contessa|Inquisitor)/g);
-    return parts.map((part, index) => {
-      if (['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'].includes(part)) {
-        return <span key={index} className="font-bold">{part}</span>;
-      }
-      return part;
-    });
-  }
-
-  // Fallback to standard messages
-  switch (log.type) {
-    case 'income':
-      return GameMessages.actions.income;
-    case 'foreign-aid':
-      return log.coins ? GameMessages.results.foreignAid : GameMessages.actions.foreignAid;
-    case 'duke':
-      return log.coins ? GameMessages.results.tax : GameMessages.actions.tax;
-    case 'steal':
-      return log.coins && log.target ? 
-        GameMessages.results.steal(log.coins, log.target) : 
-        GameMessages.actions.steal;
-    case 'assassinate':
-      return log.target ? 
-        GameMessages.results.assassinate(log.target) : 
-        GameMessages.actions.assassinate;
-    case 'exchange':
-      return GameMessages.results.exchange;
-    case 'block':
-      return log.card ? 
-        GameMessages.blocks.generic(log.card) : 
-        GameMessages.responses.allow;
-    case 'challenge':
-      return log.card ? 
-        GameMessages.challenges.success(log.card) : 
-        'challenges';
-    case 'lose-influence':
-      return GameMessages.responses.loseInfluence;
-    default:
-      return '';
-  }
+  const parts = message.split(/(Duke|Assassin|Captain|Ambassador|Contessa|Inquisitor)/g);
+  return parts.map((part, index) => {
+    if (['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'].includes(part)) {
+      return (
+        <span key={index} className="font-bold">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
 };
 
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', { 
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
 };
 
 const getStateMessage = (state: GameState, selectedAction?: string): string => {
@@ -91,17 +55,22 @@ const getStateMessage = (state: GameState, selectedAction?: string): string => {
       return 'Waiting for other players';
     case 'waiting_for_turn':
       return 'Other player\'s turn';
+    case 'waiting_for_card_selection':
+      return 'Select a card to show';
+    case 'waiting_for_investigate_decision':
+      return 'Decide on investigation';
     default:
       return '';
   }
 };
 
-export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, selectedAction, game }: GameLogProps) {
+export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps) {
   const currentTurnPlayer = game.players[game.currentTurn];
   const lastThreeLogs = [...logs].reverse().slice(0, 3);
 
-  const truncateName = (name: string) => 
-    name.length > 14 ? `${name.slice(0, 13)}...` : name;
+  const truncateName = (name: string) => {
+    return name.length > 14 ? `${name.slice(0, 13)}...` : name;
+  };
 
   return (
     <div className="backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden">
@@ -120,9 +89,7 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
           {gameState && (
             <div className="flex items-center gap-1.5">
               <Clock className="w-3 h-3 text-slate-400" />
-              <span className="text-[10px] text-slate-400">
-                {getStateMessage(gameState, selectedAction)}
-              </span>
+              <span className="text-[10px] text-slate-400">{getStateMessage(gameState, selectedAction)}</span>
             </div>
           )}
         </div>
@@ -135,7 +102,9 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
             <div 
               key={index} 
               className="flex flex-wrap items-center justify-between px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
-              style={{ animationDelay: `${index * 50}ms` }}
+              style={{
+                animationDelay: `${index * 50}ms`,
+              }}
             >
               <div className="flex flex-wrap items-center gap-1 text-[11px] min-w-0 flex-1">
                 {log.type !== 'system' && (
@@ -147,8 +116,9 @@ export function GameLog({ logs, currentPlayer, currentPlayerColor, gameState, se
                   </span>
                 )}
                 <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
-                  {formatMessage(log)}
+                  {formatMessage(log.message || '', log.type === 'system')}
                 </span>
+                {/* Show target name for all action types that have targets */}
                 {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup'].includes(log.type) && (
                   <span 
                     className="font-semibold whitespace-nowrap" 

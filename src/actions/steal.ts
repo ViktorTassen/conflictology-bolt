@@ -23,7 +23,7 @@ export const stealAction: ActionHandler = {
       logs: [loggingService.createLog('steal', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.claims.steal
+        message: GameMessages.actions.steal
       })],
       actionInProgress: {
         type: 'steal',
@@ -64,7 +64,7 @@ export const stealAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -92,7 +92,7 @@ export const stealAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
 
       if (game.actionInProgress.blockingPlayer === playerId) {
@@ -106,7 +106,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $${stolenCoins}M from`
+          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
         }));
         
         result.players = updatedPlayers;
@@ -115,8 +115,6 @@ export const stealAction: ActionHandler = {
                playerId !== game.actionInProgress.player) {
         
         if (game.actionInProgress.blockingPlayer !== undefined) {
-          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-          
           result.logs.push(loggingService.createSystemLog(GameMessages.system.stealBlocked));
           
           result.actionInProgress = null;
@@ -158,7 +156,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $${stolenCoins}M from`
+          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
         }));
         
         result.players = updatedPlayers;
@@ -186,7 +184,7 @@ export const stealAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: response.card,
-        message: `claims ${response.card} to block steal`
+        message: GameMessages.blocks.generic(response.card)
       })];
 
       result.actionInProgress = {
@@ -202,7 +200,6 @@ export const stealAction: ActionHandler = {
     } 
 
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const actionPlayer = game.players[game.actionInProgress.player];
       const hasCaptain = cardService.hasCardType(game.cards, actionPlayer.id, 'Captain');
 
       if (hasCaptain) {
@@ -223,7 +220,7 @@ export const stealAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Captain',
-          message: GameMessages.challenges.failCaptain
+          message: GameMessages.challenges.fail('Captain')
         })];
 
         result.actionInProgress = {
@@ -239,7 +236,7 @@ export const stealAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Captain',
-          message: GameMessages.challenges.succeedCaptain
+          message: GameMessages.challenges.success('Captain')
         })];
 
         result.actionInProgress = {
@@ -275,7 +272,7 @@ export const stealAction: ActionHandler = {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
           card: blockingCard,
-          message: `challenges ${blockingCard} block! Fails`
+          message: GameMessages.challenges.blockFail(blockingCard!)
         })];
 
         result.actionInProgress = {
@@ -291,7 +288,7 @@ export const stealAction: ActionHandler = {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
           card: blockingCard,
-          message: `challenges ${blockingCard} block! Success`
+          message: GameMessages.challenges.blockSuccess(blockingCard!)
         })];
 
         result.actionInProgress = {
@@ -312,13 +309,11 @@ export const stealAction: ActionHandler = {
       };
 
       if (game.actionInProgress.blockingPlayer !== undefined) {
-        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        
         if (playerId === game.actionInProgress.player) {
           result.logs = [loggingService.createLog('allow', player, {
-            target: blockingPlayer.name,
-            targetColor: blockingPlayer.color,
-            message: GameMessages.responses.allowBlock
+            target: targetPlayer.name,
+            targetColor: targetPlayer.color,
+            message: GameMessages.responses.allow
           })];
           
           result.logs.push(loggingService.createSystemLog(GameMessages.system.stealBlocked));
@@ -347,14 +342,14 @@ export const stealAction: ActionHandler = {
         result.logs = [loggingService.createLog('allow', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.responses.allowSteal
+          message: GameMessages.responses.allow
         })];
 
         result.logs.push(loggingService.createLog('steal', actionPlayer, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: `steals $${stolenCoins}M from`
+          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
         }));
 
         result.players = updatedPlayers;
@@ -398,7 +393,7 @@ export const stealAction: ActionHandler = {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: `steals $${stolenCoins}M from`
+            message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
           })];
 
           result.players = updatedPlayers;

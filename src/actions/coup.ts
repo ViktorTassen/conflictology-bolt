@@ -43,8 +43,8 @@ export const coupAction: ActionHandler = {
       logs: [loggingService.createLog('coup', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        coins: player.coins >= 10 ? player.coins : undefined,
-        message: player.coins >= 10 ? GameMessages.claims.coupWithExcess : GameMessages.claims.coup
+        coins: player.coins,
+        message: GameMessages.actions.coup(player.coins)
       })],
       actionInProgress: {
         type: 'coup',
@@ -81,7 +81,7 @@ export const coupAction: ActionHandler = {
         
         result.players = updatedPlayers;
         result.actionInProgress = null;
-        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
         
         const nextTurn = advanceToNextTurn(updatedPlayers, game.currentTurn);
         result.currentTurn = nextTurn.currentTurn;
@@ -108,7 +108,7 @@ export const coupAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
       
       result.actionInProgress = null;

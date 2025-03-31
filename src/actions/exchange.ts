@@ -11,7 +11,7 @@ export const exchangeAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [loggingService.createLog('exchange', player, {
-        message: GameMessages.claims.exchange
+        message: GameMessages.actions.exchange
       })],
       actionInProgress: {
         type: 'exchange',
@@ -74,7 +74,7 @@ export const exchangeAction: ActionHandler = {
       updatedCards = cardService.returnCardsToDeck(updatedCards, returnCardIds);
       
       result.logs = [loggingService.createLog('exchange-complete', player, {
-        message: GameMessages.results.exchangeComplete
+        message: GameMessages.results.exchange
       })];
       
       result.cards = updatedCards;
@@ -103,7 +103,7 @@ export const exchangeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -131,7 +131,7 @@ export const exchangeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
 
       if (game.actionInProgress.losingPlayer !== undefined &&  
@@ -189,7 +189,6 @@ export const exchangeAction: ActionHandler = {
     }
 
     if (response.type === 'challenge') {
-      const actionPlayer = game.players[game.actionInProgress.player];
       const hasAmbassador = cardService.hasCardType(game.cards, actionPlayer.id, 'Ambassador');
 
       if (hasAmbassador) {
@@ -209,7 +208,7 @@ export const exchangeAction: ActionHandler = {
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.failAmbassador
+          message: GameMessages.challenges.fail('Ambassador')
         })];
 
         result.actionInProgress = {
@@ -224,7 +223,7 @@ export const exchangeAction: ActionHandler = {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.succeedAmbassador
+          message: GameMessages.challenges.success('Ambassador')
         })];
 
         result.actionInProgress = {

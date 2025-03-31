@@ -14,7 +14,9 @@ export const dukeAction: ActionHandler = {
     }
 
     const result: ActionResult = {
-      logs: [loggingService.createLog('duke', player)],
+      logs: [loggingService.createLog('duke', player, {
+        message: GameMessages.actions.tax
+      })],
       actionInProgress: {
         type: 'duke',
         player: playerId,
@@ -52,7 +54,7 @@ export const dukeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -80,7 +82,7 @@ export const dukeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.noMoreCards(player.name)));
+        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
 
       if (playerId === game.actionInProgress.player) {
@@ -152,7 +154,7 @@ export const dukeAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Duke',
-          message: GameMessages.challenges.failDuke
+          message: GameMessages.challenges.fail('Duke')
         })];
         
         result.actionInProgress = {
@@ -168,7 +170,7 @@ export const dukeAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Duke',
-          message: GameMessages.challenges.succeedDuke
+          message: GameMessages.challenges.success('Duke')
         })];
         
         result.actionInProgress = {

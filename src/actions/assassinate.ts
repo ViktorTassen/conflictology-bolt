@@ -31,7 +31,7 @@ export const assassinateAction: ActionHandler = {
       logs: [loggingService.createLog('assassinate', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.claims.assassinate
+        message: GameMessages.actions.assassinate
       })],
       actionInProgress: {
         type: 'assassinate',
@@ -97,17 +97,14 @@ export const assassinateAction: ActionHandler = {
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       
-      // Handle the special case of failed challenge against Assassin
-      // Challenger loses 2 cards instead of 1
       if (game.actionInProgress.loseTwo && remainingCards.length > 0 && 
           playerId === game.actionInProgress.losingPlayer &&
           playerId !== game.actionInProgress.player) {
         
-        // Set up to lose another card
         result.actionInProgress = {
           ...game.actionInProgress,
-          loseTwo: false, // Reset the flag to avoid infinite loop
-          responses: {}, // Clear responses for the second card
+          loseTwo: false,
+          responses: {},
         };
         
         result.logs.push(loggingService.createSystemLog(
@@ -143,8 +140,6 @@ export const assassinateAction: ActionHandler = {
                playerId !== game.actionInProgress.player) {
         
         if (game.actionInProgress.blockingPlayer !== undefined) {
-          const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-          
           result.logs.push(loggingService.createSystemLog(GameMessages.system.assassinationBlocked));
           
           result.actionInProgress = null;
@@ -160,7 +155,7 @@ export const assassinateAction: ActionHandler = {
           const targetHasContessa = cardService.hasCardType(game.cards, game.actionInProgress.target ?? 0, 'Contessa');
           
           if (targetHasContessa) {
-            result.logs.push(loggingService.createSystemLog(GameMessages.system.contessaBlock(targetPlayer.name)));
+            result.logs.push(loggingService.createSystemLog(GameMessages.system.blockingOptions(targetPlayer.name)));
           }
           
           const { losingPlayer, challengeDefense, challengeInProgress, ...restActionProps } = game.actionInProgress;
@@ -193,7 +188,7 @@ export const assassinateAction: ActionHandler = {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: 'Contessa',
-        message: GameMessages.blocks.contessa
+        message: GameMessages.blocks.generic('Contessa')
       })];
 
       result.actionInProgress = {
@@ -209,7 +204,6 @@ export const assassinateAction: ActionHandler = {
     } 
 
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const actionPlayer = game.players[game.actionInProgress.player];
       const hasAssassin = cardService.hasCardType(game.cards, actionPlayer.id, 'Assassin');
 
       if (hasAssassin) {
@@ -230,7 +224,7 @@ export const assassinateAction: ActionHandler = {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Assassin',
-          message: GameMessages.challenges.failAssassin
+          message: GameMessages.challenges.fail('Assassin')
         })];
 
         result.actionInProgress = {
@@ -240,14 +234,14 @@ export const assassinateAction: ActionHandler = {
           challengeDefense: true,
           responses: updatedResponses,
           revealedAssassinCardId: assassinCard?.id,
-          loseTwo: true // Flag to indicate that challenger loses two influence cards
+          loseTwo: true
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
           card: 'Assassin',
-          message: GameMessages.challenges.succeedAssassin
+          message: GameMessages.challenges.success('Assassin')
         })];
 
         result.actionInProgress = {
@@ -282,7 +276,7 @@ export const assassinateAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           card: 'Contessa',
-          message: GameMessages.challenges.failContessa
+          message: GameMessages.challenges.blockFail('Contessa')
         })];
 
         result.actionInProgress = {
@@ -298,7 +292,7 @@ export const assassinateAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           card: 'Contessa',
-          message: GameMessages.challenges.succeedContessa
+          message: GameMessages.challenges.blockSuccess('Contessa')
         })];
 
         result.actionInProgress = {
@@ -319,13 +313,11 @@ export const assassinateAction: ActionHandler = {
       };
 
       if (game.actionInProgress.blockingPlayer !== undefined) {
-        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-        
         if (playerId === game.actionInProgress.player) {
           result.logs = [loggingService.createLog('allow', player, {
-            target: blockingPlayer.name,
-            targetColor: blockingPlayer.color,
-            message: GameMessages.responses.allowBlock
+            target: targetPlayer.name,
+            targetColor: targetPlayer.color,
+            message: GameMessages.responses.allow
           })];
           
           result.logs.push(loggingService.createSystemLog(GameMessages.system.assassinationBlocked));
@@ -353,7 +345,7 @@ export const assassinateAction: ActionHandler = {
         result.logs = [loggingService.createLog('allow', targetPlayer, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.responses.allowAssassination
+          message: GameMessages.responses.allow
         })];
       }
 
