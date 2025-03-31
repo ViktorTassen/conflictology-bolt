@@ -17,7 +17,7 @@ export const GameMessages = {
     blockingOptions: (name: string) => `${name} may now block with Captain or Ambassador.`,
     secondInfluenceLoss: (name: string) => `${name} loses a second card for failing to challenge the Assassin.`,
     cardReveal: (name: string, card: string) => `${name} reveals ${card}.`,
-    cardInvestigated: (targetName: string, investigatorName: string) => `${targetName} shows a card to ${investigatorName}.`,
+    swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`
   },
 
@@ -67,5 +67,6 @@ export const GameMessages = {
     allow: 'allows action',
     eliminated: 'eliminated from game',
     loseInfluence: 'loses 1 card of influence',
+    showCard: 'shows a card to',
   }
 };

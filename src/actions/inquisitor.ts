@@ -67,7 +67,11 @@ export const investigateAction: ActionHandler = {
       }
       
       const investigator = game.players[game.actionInProgress.player];
-      result.logs = [loggingService.createSystemLog(GameMessages.system.cardInvestigated(player.name, investigator.name))];
+      result.logs = [loggingService.createLog('show-card', player, {
+        target: investigator.name,
+        targetColor: investigator.color,
+        message: GameMessages.responses.showCard
+      })];
       
       result.actionInProgress = {
         ...game.actionInProgress,
@@ -586,7 +590,7 @@ export const swapAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.cardReveal(actionPlayer.name, 'Inquisitor'))];
+        result.logs = [loggingService.createSystemLog(GameMessages.system.swapAllowed(actionPlayer.name))];
         
         result.actionInProgress = {
           ...game.actionInProgress,

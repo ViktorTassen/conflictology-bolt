@@ -138,7 +138,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                       {formatMessage(log.message || '', log.type === 'system')}
                     </span>
                     {/* Show target name for all action types that have targets */}
-                    {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup', 'investigate'].includes(log.type) && (
+                    {log.target && log.type !== 'system' && ['steal', 'assassinate', 'coup', 'investigate', 'show-card'].includes(log.type) && (
                       <span 
                         className="font-semibold whitespace-nowrap" 
                         style={{ color: log.targetColor ?? '#FFFFFF' }}

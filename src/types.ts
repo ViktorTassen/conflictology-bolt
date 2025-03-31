@@ -81,6 +81,7 @@ export type LogType =
   | 'exchange-complete'
   | 'swap-complete'
   | 'investigate-result'
+  | 'show-card'
   | 'system'
   | 'eliminated';
 
