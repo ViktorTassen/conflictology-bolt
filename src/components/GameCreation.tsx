@@ -8,14 +8,24 @@ interface GameCreationProps {
 }
 
 // Six distinct colors for the game
+// const PLAYER_COLORS = [
+//   '#E74C3C', // Red
+//   '#2ECC71', // Green
+//   '#3498DB', // Blue
+//   '#F1C40F', // Yellow
+//   '#9B59B6', // Purple
+//   '#E67E22', // Orange
+
+// ];
+
 const PLAYER_COLORS = [
-  '#E74C3C', // Red
-  '#2ECC71', // Green
-  '#3498DB', // Blue
-  '#F1C40F', // Yellow
-  '#9B59B6', // Purple
-  '#E67E22', // Orange
-];
+  "#C0392B", // Vibrant Red
+  "#27AE60", // Bright Green
+  "#2980B9", // Bold Blue
+  "#F1C40F", // Strong Yellow
+  "#8E44AD", // Vivid Purple
+  "#E67E22"  // Bright Orange
+]
 
 // For players who don't connect a profile picture
 // Note: We're not using these URLs anymore, but our avatar component

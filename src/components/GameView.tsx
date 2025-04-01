@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, ArrowLeft, Info, Skull } from 'lucide-react';
+import { Menu, ArrowLeft, Info, Skull, X } from 'lucide-react';
 import { GameAction, GameState, CardType } from '../types';
 import { GameLog } from './GameLog';
 import { PlayerCard } from './PlayerCard';
@@ -15,6 +15,7 @@ import { InvestigateDecisionDialog } from './InvestigateDecisionDialog';
 import { GameLobby } from './GameLobby';
 import { GameOverScreen } from './GameOverScreen';
 import { ConfirmationDialog } from './ConfirmationDialog';
+import { CheatSheet } from './CheatSheet';
 import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
@@ -34,6 +35,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [showCheatSheet, setShowCheatSheet] = useState(false);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { 
@@ -357,9 +359,24 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       
       <button 
         className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute right-4 top-4 z-30 border border-zinc-800/30"
+        onClick={() => setShowCheatSheet(true)}
       >
         <Info className="w-5 h-5 text-white/80" />
       </button>
+      
+      {showCheatSheet && (
+        <div className="absolute inset-0 bg-[#1a1a1a] z-50 animate-in fade-in">
+          <button 
+            onClick={() => setShowCheatSheet(false)}
+            className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute right-4 top-4 z-60 border border-zinc-800/30"
+          >
+            <X className="w-5 h-5 text-white/80" />
+          </button>
+          <div className="h-full overflow-auto p-4">
+            <CheatSheet />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col min-h-0 mt-6 relative z-20">
         <div className="h-72 relative">
