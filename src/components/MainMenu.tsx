@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Plus, Users, ArrowLeft } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 import capitolBg from '../assets/images/capitol-bg.png';
-import { GameRules } from './GameRules';
 
 interface MainMenuProps {
   onGameStart: (gameId: string) => void;
@@ -23,7 +22,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   const { createGame, joinGame } = useGame();
   const [joiningId, setJoiningId] = useState('');
   const [playerName, setPlayerName] = useState(`Player ${playerId % 1000}`);
-  const [view, setView] = useState<'main' | 'join' | 'rules'>('main');
+  const [view, setView] = useState<'main' | 'join'>('main');
   const [error, setError] = useState<string | null>(null);
 
   // Avatar color based on player ID
@@ -70,12 +69,6 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
     }
   };
 
-  if (view === 'rules') {
-    return <GameRules onBack={() => {
-      setView('main');
-      setError(null);
-    }} />;
-  }
 
   if (view === 'main') {
     return (
@@ -122,15 +115,15 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           )}
           
           {/* Customize section */}
-          <div className="bg-[#111111]/90 backdrop-blur-sm rounded-md p-5 mb-6 border border-zinc-800/40 shadow-lg relative overflow-hidden">
+          <div className="bg-[#111111]/80 rounded-md p-4 border border-zinc-800/40 shadow-lg relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10"></div>
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#850c09]/10 to-transparent rounded-full blur-2xl transform translate-x-16 -translate-y-16 opacity-30"></div>
             
             
             <div className="flex items-center gap-3 relative">
               <div 
-                className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-md relative overflow-hidden border border-zinc-800/60" 
-                style={{ backgroundColor: playerColor }}
+                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md relative overflow-hidden border border-zinc-800/60" 
+                style={{ backgroundColor: "#232720", color:"white" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                 {playerName.substring(0, 1).toUpperCase()}
@@ -145,25 +138,12 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
               />
             </div>
             
-            {/* Sign in with Google button */}
-            {/* <button 
-              className="w-full mt-4 flex items-center justify-center gap-2 bg-[#151515] hover:bg-[#1d1d1d] text-white font-medium py-2.5 px-4 rounded-md border border-zinc-800/60 shadow-sm transition-colors relative group overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-800/20 to-transparent opacity-0 group-hover:opacity-100 transform -translate-x-full group-hover:translate-x-full transition-all duration-500"></div>
-              <svg className="w-5 h-5 text-red-500" aria-hidden="true" viewBox="0 0 24 24">
-                <path
-                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  fill="currentColor"
-                />
-              </svg>
-              <span className="relative">Sign in with Google</span>
-            </button> */}
           </div>
           
-          <div className="space-y-3.5">
+          <div className="space-y-1">
             <button
               onClick={handleCreateGame}
-              className="w-full bg-[#111111]/90 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
+              className="w-full bg-[#111111]/80  hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#850c09] to-[#850c09]/20 group-hover:opacity-100 opacity-70"></div>
               <div className="absolute inset-y-0 left-0 w-1 bg-[#850c09]"></div>
@@ -183,7 +163,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
 
             <button
               onClick={() => setView('join')}
-              className="w-full bg-[#111111]/90 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
+              className="w-full bg-[#111111]/80 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-700 to-blue-700/20 group-hover:opacity-100 opacity-70"></div>
               <div className="absolute inset-y-0 left-0 w-1 bg-blue-700"></div>
@@ -192,7 +172,8 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
                   <Users className="w-5 h-5 text-blue-500" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-base text-zinc-100">Join Game</div>
+                  <div className="font-semibold text-base text-zinc-100"
+                  >Join Game</div>
                   <div className="text-xs text-zinc-400 group-hover:text-zinc-300">Enter an existing room</div>
                 </div>
               </div>
@@ -202,8 +183,8 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
             </button>
 
             <button
-              onClick={() => setView('rules')}
-              className="w-full bg-[#111111]/90 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
+              onClick={() => window.open('https://conflictologygames.com/capitol/rules', '_blank')}
+              className="w-full bg-[#111111]/80 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-700 to-amber-700/20 group-hover:opacity-100 opacity-70"></div>
               <div className="absolute inset-y-0 left-0 w-1 bg-amber-700"></div>
@@ -277,7 +258,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
             <div className="flex items-center gap-3 mb-4">
               <div 
                 className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-lg" 
-                style={{ backgroundColor: playerColor }}
+                style={{ backgroundColor: "#232720", color:"white" }} 
               >
                 {playerName.substring(0, 1).toUpperCase()}
               </div>

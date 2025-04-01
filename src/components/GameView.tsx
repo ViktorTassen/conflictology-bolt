@@ -20,7 +20,7 @@ import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
 import { cardService } from '../services/CardService';
-import deskBg from '../assets/images/desk-bg.png';
+import deskBg from '../assets/images/desk-bg-2.png';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
