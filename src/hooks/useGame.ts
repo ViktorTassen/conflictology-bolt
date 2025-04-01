@@ -390,9 +390,39 @@ export function useGame(gameId?: string) {
       // Adjust current turn index if needed
       let currentTurn = game.currentTurn;
       if (game.status === 'playing') {
-        // If removed player's turn was current or before current, adjust the turn index
-        if (playerId <= game.currentTurn) {
-          currentTurn = Math.max(0, game.currentTurn - 1);
+        // If the leaving player is the current player, advance to the next player
+        if (playerId === game.currentTurn) {
+          // Find the next player's index (accounting for the player removal)
+          const nextPlayerOriginalIndex = (game.currentTurn + 1) % game.players.length;
+          
+          // If the next player's index is the same as the leaving player, it means we've wrapped around
+          // In this case, we need to stay at index 0
+          if (nextPlayerOriginalIndex === playerId) {
+            currentTurn = 0;
+          } 
+          // If the next player's index is greater than the leaving player, it needs to be adjusted down by 1
+          else if (nextPlayerOriginalIndex > playerId) {
+            currentTurn = nextPlayerOriginalIndex - 1;
+          } 
+          // If the next player's index is less than the leaving player, it stays the same
+          else {
+            currentTurn = nextPlayerOriginalIndex;
+          }
+        }
+        // If the leaving player's turn was before the current player,
+        // we need to decrement the current turn index
+        else if (playerId < game.currentTurn) {
+          currentTurn = game.currentTurn - 1;
+        }
+        // If the leaving player's turn was after the current player,
+        // the current turn index stays the same
+        
+        // Make sure the turn index is still valid after player removal
+        const playerCount = updatedPlayers.length;
+        if (playerCount > 0) {
+          currentTurn = currentTurn % playerCount;
+        } else {
+          currentTurn = 0;
         }
       }
       
@@ -403,13 +433,22 @@ export function useGame(gameId?: string) {
         logs: arrayUnion(loggingService.createSystemLog(`${playerName} has left the game.`))
       });
       
-      // If removing a player causes the game to have only one player left,
-      // handle it as a win for the remaining player
-      if (game.status === 'playing' && updatedPlayers.length === 1) {
-        await updateDoc(gameRef, {
-          winner: 0, // The only player left is at index 0
-          status: 'waiting' // Change to waiting to return to lobby
-        });
+      // Special case handling for player removal
+      if (game.status === 'playing') {
+        if (updatedPlayers.length === 1) {
+          // If only one player remains, they win by default
+          await updateDoc(gameRef, {
+            winner: 0, // The only player left is at index 0
+            status: 'waiting', // Change to waiting to return to lobby
+            logs: arrayUnion(loggingService.createSystemLog(`${updatedPlayers[0].name} wins the game!`))
+          });
+        } else if (updatedPlayers.length === 0) {
+          // If no players remain, the game is over with no winner
+          await updateDoc(gameRef, {
+            status: 'waiting', // Change to waiting
+            logs: arrayUnion(loggingService.createSystemLog(`Game ended - all players have left.`))
+          });
+        }
       }
     } catch (err) {
       console.error('Failed to leave game:', err);
