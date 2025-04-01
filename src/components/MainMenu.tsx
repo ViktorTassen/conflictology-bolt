@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Users, ArrowLeft, Info } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 import capitolBg from '../assets/images/capitol-bg.png';
+import { GameRules } from './GameRules';
 
 interface MainMenuProps {
   onGameStart: (gameId: string) => void;
@@ -22,9 +23,8 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   const { createGame, joinGame } = useGame();
   const [joiningId, setJoiningId] = useState('');
   const [playerName, setPlayerName] = useState(`Player ${playerId % 1000}`);
-  const [view, setView] = useState<'main' | 'join'>('main');
+  const [view, setView] = useState<'main' | 'join' | 'rules'>('main');
   const [error, setError] = useState<string | null>(null);
-  const [showInstructions, setShowInstructions] = useState(false);
 
   // Avatar color based on player ID
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
@@ -70,6 +70,13 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
     }
   };
 
+  if (view === 'rules') {
+    return <GameRules onBack={() => {
+      setView('main');
+      setError(null);
+    }} />;
+  }
+
   if (view === 'main') {
     return (
       <div className="flex flex-col h-full">
@@ -90,85 +97,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
             Conflictology
           </h1>
           <h2 className="text-lg font-semibold text-zinc-500 mt-1 tracking-wider">CAPITOL</h2>
-          
-          <div className="flex justify-end absolute top-4 right-4">
-            <button 
-              className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors border border-zinc-800/30"
-              onClick={() => setShowInstructions(!showInstructions)}
-            >
-              <Info className="w-5 h-5 text-white/80" />
-            </button>
-          </div>
         </div>
-
-        {/* Show instructions */}
-        {showInstructions && (
-          <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md p-6 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-200">How to Play</h2>
-              <button 
-                onClick={() => setShowInstructions(false)}
-                className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800"
-              >
-                <ArrowLeft className="w-4 h-4 text-zinc-400" />
-              </button>
-            </div>
-            <div className="overflow-y-auto text-zinc-400 space-y-5 text-sm flex-1">
-              <p className="border-l-2 border-zinc-800 pl-3 py-1">Conflictology: Capitol is a game of deception and strategy. Your goal is to be the last player with influence remaining.</p>
-              
-              <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/50">
-                <h3 className="text-zinc-300 font-medium mb-3 uppercase text-xs tracking-wider">Character Actions</h3>
-                <ul className="space-y-2.5">
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Income:</span> 
-                    <span className="text-zinc-300">Take 1 coin</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Foreign Aid:</span> 
-                    <span className="text-zinc-300">Take 2 coins (can be blocked by Duke)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Duke:</span> 
-                    <span className="text-zinc-300">Take 3 coins</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Ambassador:</span> 
-                    <span className="text-zinc-300">Exchange cards with Court deck</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Captain:</span> 
-                    <span className="text-zinc-300">Steal 2 coins from another player</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Assassin:</span> 
-                    <span className="text-zinc-300">Pay 3 coins to attempt assassination</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                    <span className="text-zinc-500">Coup:</span> 
-                    <span className="text-zinc-300">Pay 7 coins to eliminate one influence</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/50">
-                <h3 className="text-zinc-300 font-medium mb-2 uppercase text-xs tracking-wider">Blocking and Challenging</h3>
-                <p>You can block or challenge other players' actions. If you correctly challenge, they lose influence. If you're wrong, you lose influence.</p>
-              </div>
-              
-              <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/50">
-                <h3 className="text-zinc-300 font-medium mb-2 uppercase text-xs tracking-wider">Game End</h3>
-                <p>The last player with influence remaining wins the game!</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Main content */}
         <div className="flex-1 p-4 pt-0 space-y-5 flex flex-col justify-center relative z-20">
@@ -229,6 +158,28 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
                 </div>
               </div>
             </button>
+
+            <button
+              onClick={() => setView('rules')}
+              className="w-full bg-gradient-to-br from-amber-900/50 to-amber-950/50 hover:from-amber-800/50 hover:to-amber-900/50 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/50 border border-amber-800/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                  <svg 
+                    className="w-6 h-6 text-amber-500/90 group-hover:text-amber-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-lg text-amber-100 group-hover:text-white">Game Rules</div>
+                  <div className="text-sm text-amber-300/70 group-hover:text-amber-200">Learn how to play</div>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
         
@@ -274,8 +225,6 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           </div>
         )}
 
-
-        
         <div className="flex-1 flex flex-col justify-center relative z-20">
           <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl p-5 mb-6 border border-zinc-800/30 shadow-xl">
             <div className="flex items-center gap-3 mb-4">
@@ -319,8 +268,6 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
       </div>
     );
   }
-  
-  // Create view has been removed since we're creating games directly from the main menu
   
   return null;
 }

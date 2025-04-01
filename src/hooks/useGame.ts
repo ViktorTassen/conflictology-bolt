@@ -340,12 +340,8 @@ export function useGame(gameId?: string) {
         eliminated: false
       }));
       
-      // Get the winner's name for the log message if there was a winner
-      let newMatchLogMessage = 'New match started!';
-      if (game.winner !== undefined && game.winner >= 0 && game.winner < game.players.length) {
-        const previousWinner = game.players[game.winner]?.name;
-        newMatchLogMessage = `New match started! Previous winner: ${previousWinner}`;
-      }
+      let newMatchLogMessage = 'New game started!';
+
       
       // Complete game state reset
       await updateDoc(gameRef, {
