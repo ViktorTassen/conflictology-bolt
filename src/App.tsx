@@ -37,7 +37,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
-      <div className="w-[345px] h-[750px] bg-zinc-900 relative overflow-hidden border border-zinc-800 rounded-xl">
+      <div className="w-[360px] h-[750px] bg-zinc-900 relative overflow-hidden border border-zinc-800 rounded-xl">
         <div className="relative h-full">
           {view === 'lobby' ? (
             <MainMenu onGameStart={handleGameStart} playerId={playerId} />

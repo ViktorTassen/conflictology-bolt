@@ -122,13 +122,17 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           )}
           
           {/* Customize section */}
-          <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl p-5 mb-4 border border-zinc-800/30 shadow-xl">
-            <h3 className="text-zinc-500 font-medium text-xs uppercase tracking-wider mb-3">Your Identity</h3>
-            <div className="flex items-center gap-3">
+          <div className="bg-[#111111]/90 backdrop-blur-sm rounded-md p-5 mb-6 border border-zinc-800/40 shadow-lg relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#850c09]/10 to-transparent rounded-full blur-2xl transform translate-x-16 -translate-y-16 opacity-30"></div>
+            
+            
+            <div className="flex items-center gap-3 relative">
               <div 
-                className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-lg" 
+                className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-md relative overflow-hidden border border-zinc-800/60" 
                 style={{ backgroundColor: playerColor }}
               >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                 {playerName.substring(0, 1).toUpperCase()}
               </div>
               <input
@@ -137,50 +141,76 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
                 onChange={(e) => setPlayerName(e.target.value)}
                 placeholder="Your name"
                 maxLength={15}
-                className="bg-black/50 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 flex-1 focus:outline-none focus:ring-1 focus:ring-zinc-700 placeholder-zinc-600"
+                className="bg-black/60 border border-zinc-800/80 rounded-md px-3 py-2.5 text-zinc-200 flex-1 focus:outline-none focus:ring-1 focus:ring-zinc-700/50 placeholder-zinc-600 text-sm font-medium"
               />
             </div>
+            
+            {/* Sign in with Google button */}
+            {/* <button 
+              className="w-full mt-4 flex items-center justify-center gap-2 bg-[#151515] hover:bg-[#1d1d1d] text-white font-medium py-2.5 px-4 rounded-md border border-zinc-800/60 shadow-sm transition-colors relative group overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-800/20 to-transparent opacity-0 group-hover:opacity-100 transform -translate-x-full group-hover:translate-x-full transition-all duration-500"></div>
+              <svg className="w-5 h-5 text-red-500" aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span className="relative">Sign in with Google</span>
+            </button> */}
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             <button
               onClick={handleCreateGame}
-              className="w-full bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/50 border border-zinc-700/30"
+              className="w-full bg-[#111111]/90 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#850c09] to-[#850c09]/20 group-hover:opacity-100 opacity-70"></div>
+              <div className="absolute inset-y-0 left-0 w-1 bg-[#850c09]"></div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                  <Plus className="w-6 h-6 text-white group-hover:text-zinc-200" />
+                <div className="w-10 h-10 rounded-md bg-[#850c09]/10 flex items-center justify-center group-hover:bg-[#850c09]/20 transition-colors">
+                  <Plus className="w-5 h-5 text-[#850c09]" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-lg text-zinc-100 group-hover:text-white">Create Game</div>
-                  <div className="text-sm text-zinc-400 group-hover:text-zinc-300">Start a new game room</div>
+                  <div className="font-semibold text-base text-zinc-100">Create Game</div>
+                  <div className="text-xs text-zinc-400 group-hover:text-zinc-300">Start a new game room</div>
                 </div>
+              </div>
+              <div className="w-6 h-6 text-zinc-600 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                ›
               </div>
             </button>
 
             <button
               onClick={() => setView('join')}
-              className="w-full bg-gradient-to-br from-zinc-900 to-black hover:from-zinc-800 hover:to-zinc-900 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/50 border border-zinc-800/30"
+              className="w-full bg-[#111111]/90 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-700 to-blue-700/20 group-hover:opacity-100 opacity-70"></div>
+              <div className="absolute inset-y-0 left-0 w-1 bg-blue-700"></div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                  <Users className="w-6 h-6 text-white group-hover:text-zinc-200" />
+                <div className="w-10 h-10 rounded-md bg-blue-900/10 flex items-center justify-center group-hover:bg-blue-900/20 transition-colors">
+                  <Users className="w-5 h-5 text-blue-500" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-lg text-zinc-100 group-hover:text-white">Join Game</div>
-                  <div className="text-sm text-zinc-400 group-hover:text-zinc-300">Enter an existing room</div>
+                  <div className="font-semibold text-base text-zinc-100">Join Game</div>
+                  <div className="text-xs text-zinc-400 group-hover:text-zinc-300">Enter an existing room</div>
                 </div>
+              </div>
+              <div className="w-6 h-6 text-zinc-600 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                ›
               </div>
             </button>
 
             <button
               onClick={() => setView('rules')}
-              className="w-full bg-gradient-to-br from-amber-900/50 to-amber-950/50 hover:from-amber-800/50 hover:to-amber-900/50 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/50 border border-amber-800/30"
+              className="w-full bg-[#111111]/90 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-700 to-amber-700/20 group-hover:opacity-100 opacity-70"></div>
+              <div className="absolute inset-y-0 left-0 w-1 bg-amber-700"></div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                <div className="w-10 h-10 rounded-md bg-amber-900/10 flex items-center justify-center group-hover:bg-amber-900/20 transition-colors">
                   <svg 
-                    className="w-6 h-6 text-amber-500/90 group-hover:text-amber-400" 
+                    className="w-5 h-5 text-amber-500" 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -189,9 +219,12 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-lg text-amber-100 group-hover:text-white">Game Rules</div>
-                  <div className="text-sm text-amber-300/70 group-hover:text-amber-200">Learn how to play</div>
+                  <div className="font-semibold text-base text-zinc-100">Game Rules</div>
+                  <div className="text-xs text-zinc-400 group-hover:text-zinc-300">Learn how to play</div>
                 </div>
+              </div>
+              <div className="w-6 h-6 text-zinc-600 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                ›
               </div>
             </button>
           </div>
