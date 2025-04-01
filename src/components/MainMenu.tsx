@@ -93,10 +93,24 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
 
         {/* Header */}
         <div className="flex-none pt-8 pb-6 text-center relative z-20">
-          <h1 className="text-3xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-b from-zinc-200 to-zinc-400">
-            Conflictology
+          <h1 className="text-5xl font-normal text-[#f7e7c2] bg-clip-text text-transparent bg-gradient-to-b from-zinc-200 to-zinc-400" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '3px' }}>
+            CONFLICTOLOGY
           </h1>
-          <h2 className="text-lg font-semibold text-zinc-500 mt-1 tracking-wider">CAPITOL</h2>
+          <div className="flex items-center justify-center">
+            <div className="h-[3px] w-16 bg-[#850c09] rounded-full shadow-sm shadow-[#850c09]/50"></div>
+            <h2 
+              className="text-md font-bold mx-4 tracking-widest" 
+              style={{ 
+                fontFamily: "'League Spartan', sans-serif", 
+                color: "#f7e7c2",
+                textShadow: "0 1px 2px rgba(0,0,0,0.3)",
+                letterSpacing: '5px'
+              }}
+            >
+              CAPITOL
+            </h2>
+            <div className="h-[3px] w-16 bg-[#850c09] rounded-full shadow-sm shadow-[#850c09]/50"></div>
+          </div>
         </div>
 
         {/* Main content */}
@@ -185,7 +199,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
         
         {/* Footer */}
         <div className="flex-none pb-6 text-center text-zinc-700 text-xs relative z-20">
-          <p className="tracking-widest">CONFLICTOLOGY·CAPITOL·V1.0</p>
+          <p className="tracking-widest" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '2px' }}>CONFLICTOLOGY·CAPITOL·V1.0</p>
         </div>
       </div>
     );
