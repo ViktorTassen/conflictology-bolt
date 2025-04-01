@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, ArrowLeft } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 import capitolBg from '../assets/images/capitol-bg.png';
 import { GameRules } from './GameRules';
