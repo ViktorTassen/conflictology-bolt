@@ -19,6 +19,7 @@ import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
 import { cardService } from '../services/CardService';
+import deskBg from '../assets/images/desk-bg.png';
 
 interface GameViewProps {
   gameId: string;
@@ -304,9 +305,19 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const gameState = getGameState();
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <img 
+          src={deskBg} 
+          alt="Game Table Background" 
+          className="object-cover w-full h-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10" />
+      </div>
+      
       <button 
-        className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute left-4 top-4 z-20 border border-zinc-800/30"
+        className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute left-4 top-4 z-30 border border-zinc-800/30"
         onClick={() => {
           if (game.status === 'playing' && !currentPlayer.eliminated) {
             setShowLeaveConfirmation(true);
@@ -319,12 +330,12 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       </button>
       
       <button 
-        className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute right-4 top-4 z-20 border border-zinc-800/30"
+        className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute right-4 top-4 z-30 border border-zinc-800/30"
       >
         <Info className="w-5 h-5 text-white/80" />
       </button>
 
-      <div className="flex-1 flex flex-col min-h-0 mt-6">
+      <div className="flex-1 flex flex-col min-h-0 mt-6 relative z-20">
         <div className="h-72 relative">
           {allPlayerSpots.map(({ player, index }, displayIndex) => (
             <div
@@ -348,7 +359,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
           ))}
         </div>
 
-        <div className="flex-1 px-4 overflow-y-auto min-h-0">
+        <div className="flex-1 px-4 overflow-y-auto min-h-0 backdrop-blur-sm rounded-t-xl">
           <GameLog 
             logs={game.logs}
             currentPlayer={currentPlayer.name}
@@ -375,7 +386,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         </div>
 
         <div className="h-32 relative mt-auto mb-2">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 px-6 pb-6">
             <div className="flex justify-between items-end">
               <div className="z-20">
