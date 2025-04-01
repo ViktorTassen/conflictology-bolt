@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { 
   doc, 
@@ -46,23 +46,39 @@ function cleanFirebaseObject<T>(obj: T | null): T | null {
   ) as unknown as T;
 }
 
-export function useGame(gameId?: string) {
+export function useGame(gameId?: string, playerId?: number) {
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [wasKicked, setWasKicked] = useState<boolean>(false);
+  const prevPlayersRef = useRef<Player[] | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
 
     const unsubscribe = onSnapshot(doc(db, 'games', gameId), (doc) => {
       if (doc.exists()) {
-        setGame(doc.data() as Game);
+        const gameData = doc.data() as Game;
+        setGame(gameData);
+        
+        // Check if player has been removed from the game (kicked)
+        if (playerId !== undefined && prevPlayersRef.current && 
+            prevPlayersRef.current.some(p => p.id === playerId) && 
+            !gameData.players.some(p => p.id === playerId)) {
+          console.log(`Player ${playerId} was removed from the game!`);
+          setWasKicked(true);
+          
+          // No need to set redirectToLobby flag, the wasKicked state will handle the redirect
+        }
+        
+        // Store current players list for comparison next time
+        prevPlayersRef.current = gameData.players;
       } else {
         setError('Game not found');
       }
     });
 
     return () => unsubscribe();
-  }, [gameId]);
+  }, [gameId, playerId]);
 
   const createGame = async () => {
     try {
@@ -460,6 +476,7 @@ export function useGame(gameId?: string) {
   return {
     game,
     error,
+    wasKicked,
     createGame,
     joinGame,
     performAction,

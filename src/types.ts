@@ -14,6 +14,7 @@ export interface Player {
   color: string;
   avatar: string;
   eliminated?: boolean;
+  tempViewState?: 'game' | 'lobby'; // Player-specific UI state
 }
 
 // Game state types

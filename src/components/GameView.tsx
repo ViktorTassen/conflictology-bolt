@@ -20,6 +20,8 @@ import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
 import { cardService } from '../services/CardService';
 import deskBg from '../assets/images/desk-bg.png';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface GameViewProps {
   gameId: string;
@@ -41,9 +43,18 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     startGame, 
     isGameOver,
     leaveGame,
-    startNewMatch
-  } = useGame(gameId);
+    startNewMatch,
+    wasKicked
+  } = useGame(gameId, playerId);
   const gameStateHelpers = useGameState(game, selectedAction?.type);
+  
+  // Handle kick detection
+  useEffect(() => {
+    if (wasKicked && onReturnToLobby) {
+      console.log("Player was kicked! Returning to lobby from GameView");
+      onReturnToLobby();
+    }
+  }, [wasKicked, onReturnToLobby]);
   
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,7 +84,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     );
   }
 
-  if (game.status === 'waiting') {
+  // Check game status or this player's individual view state
+  if (game.status === 'waiting' || currentPlayer.tempViewState === 'lobby') {
     return (
       <GameLobby 
         game={game}
@@ -318,9 +330,23 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       
       <button 
         className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute left-4 top-4 z-30 border border-zinc-800/30"
-        onClick={() => {
+        onClick={async () => {
           if (game.status === 'playing' && !currentPlayer.eliminated) {
-            setShowLeaveConfirmation(true);
+            // Set only this player's view state to lobby
+            const gameRef = doc(db, 'games', game.id);
+            const playerIndex = game.players.findIndex(p => p.id === playerId);
+            
+            if (playerIndex !== -1) {
+              // Create updated players array with player-specific view state
+              const updatedPlayers = [...game.players];
+              updatedPlayers[playerIndex] = {
+                ...updatedPlayers[playerIndex],
+                tempViewState: 'lobby'
+              };
+              
+              // Update Firestore with player-specific view state
+              await updateDoc(gameRef, { players: updatedPlayers });
+            }
           } else {
             onReturnToLobby?.();
           }

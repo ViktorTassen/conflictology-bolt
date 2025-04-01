@@ -1,7 +1,10 @@
-import { Copy, Users, PlayCircle, ArrowLeft, Trophy } from 'lucide-react';
+import { Copy, Users, PlayCircle, ArrowLeft, Trophy, X } from 'lucide-react';
 import { Game } from '../types';
 import lobbyBg from '../assets/images/lobby-bg.png';
 import { useGame } from '../hooks/useGame';
+import { db } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useEffect } from 'react';
 
 interface GameLobbyProps {
   game: Game;
@@ -12,11 +15,19 @@ interface GameLobbyProps {
 }
 
 export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturnToMainMenu }: GameLobbyProps) {
-  const { leaveGame } = useGame(game.id);
+  const { leaveGame, wasKicked } = useGame(game.id, currentPlayerId);
   
   const copyGameId = () => {
     navigator.clipboard.writeText(game.id);
   };
+
+  // Handle kick detection
+  useEffect(() => {
+    if (wasKicked) {
+      console.log("Player was kicked! Returning to main menu from GameLobby");
+      onReturnToMainMenu();
+    }
+  }, [wasKicked, onReturnToMainMenu]);
   
   const handleLeaveGame = async () => {
     try {
@@ -163,14 +174,72 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
                       Host
                     </span>
                   )}
+                  {/* Add remove button for host only */}
+                  {isHost && player.id !== currentPlayerId && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await leaveGame(index);
+                        } catch (error) {
+                          console.error("Error removing player:", error);
+                        }
+                      }}
+                      className="w-5 h-5 bg-red-900/30 rounded-full flex items-center justify-center hover:bg-red-800/50 transition-colors ml-1"
+                      title="Remove player"
+                    >
+                      <X className="w-3 h-3 text-red-400" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
+        {/* Return to Game button - only show if this player's view state is lobby and game is in progress */}
+        {game.status === 'playing' && game.players.some(p => p.id === currentPlayerId && p.tempViewState === 'lobby') && (
+          <button
+            onClick={async () => {
+              // Update only this player's view state
+              const gameRef = doc(db, 'games', game.id);
+              const playerIndex = game.players.findIndex(p => p.id === currentPlayerId);
+              
+              if (playerIndex !== -1) {
+                // Create updated players array without the tempViewState for this player
+                const updatedPlayers = [...game.players];
+                updatedPlayers[playerIndex] = {
+                  ...updatedPlayers[playerIndex],
+                  tempViewState: 'game' // Reset to game view
+                };
+                
+                // Update Firestore with this player's view state cleared
+                await updateDoc(gameRef, { players: updatedPlayers });
+              }
+            }}
+            className="w-full bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/40 border border-zinc-700/30 relative z-20 mt-2"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-zinc-300 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 17l5-5-5-5"></path>
+                  <path d="M4 12h16"></path>
+                </svg>
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-lg text-zinc-200 group-hover:text-white">
+                  Return to Game
+                </div>
+                <div className="text-sm text-zinc-400 group-hover:text-zinc-300">
+                  Go back to the current match
+                </div>
+              </div>
+            </div>
+          </button>
+        )}
+
         {/* Start game button (host only) */}
-        {isHost && game.players.length >= 2 && (
+        {isHost && game.players.length >= 2 && 
+          !(game.status === 'playing' && game.players.some(p => p.id === currentPlayerId && p.tempViewState === 'lobby')) && (
           <button
             onClick={onStartGame}
             className="w-full bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/40 border border-zinc-700/30 relative z-20 mt-2"
@@ -191,8 +260,9 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
           </button>
         )}
 
-        {/* Waiting message */}
-        {(!isHost || game.players.length < 2) && (
+        {/* Waiting message - don't show if this player can return to game */}
+        {(!isHost || game.players.length < 2) && 
+          !(game.status === 'playing' && game.players.some(p => p.id === currentPlayerId && p.tempViewState === 'lobby')) && (
           <div className="mt-4 text-center text-zinc-500 text-sm animate-pulse relative z-20 bg-black/20 py-3 rounded-lg border border-zinc-800/20">
             Waiting...
           </div>
