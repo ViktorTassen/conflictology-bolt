@@ -1,7 +1,6 @@
 import { Copy, Users, PlayCircle, ArrowLeft, Trophy } from 'lucide-react';
 import { Game } from '../types';
-import capitolBg from '../assets/images/capitol-bg.png';
-import { useState, useEffect } from 'react';
+import lobbyBg from '../assets/images/lobby-bg.png';
 
 interface GameLobbyProps {
   game: Game;
@@ -27,11 +26,11 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-black/40 z-10" />
         <img 
-          src={capitolBg} 
-          alt="Capitol Background" 
-          className="object-cover w-full h-full opacity-60"
+          src={lobbyBg} 
+          alt="Lobby Background" 
+          className="object-cover w-full h-full opacity-70"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 z-10" />
       </div>
       
       {/* Back button - same position and style as in game */}

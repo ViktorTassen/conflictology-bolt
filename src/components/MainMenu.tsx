@@ -75,13 +75,13 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
       <div className="flex flex-col h-full">
         {/* Background Image */}
         <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 z-10" />
+          <div className="absolute inset-0 z-10" />
           <img 
             src={capitolBg} 
             alt="Capitol Background" 
             className="object-cover w-full h-full opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90 z-10" />
+          <div className="absolute inset-0 z-10" />
         </div>
 
         {/* Header */}
