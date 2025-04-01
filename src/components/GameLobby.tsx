@@ -1,6 +1,7 @@
-import { Copy, Users, PlayCircle, ArrowLeft } from 'lucide-react';
+import { Copy, Users, PlayCircle, ArrowLeft, Trophy } from 'lucide-react';
 import { Game } from '../types';
 import capitolBg from '../assets/images/capitol-bg.png';
+import { useState, useEffect } from 'react';
 
 interface GameLobbyProps {
   game: Game;
@@ -14,6 +15,11 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
   const copyGameId = () => {
     navigator.clipboard.writeText(game.id);
   };
+  
+  // Get winner info
+  const winnerIndex = game.winner !== undefined ? game.winner : -1;
+  const winner = winnerIndex !== -1 ? game.players[winnerIndex] : undefined;
+  const isCurrentPlayerWinner = winner?.id === currentPlayerId;
 
   return (
     <div className="relative h-full">
@@ -35,6 +41,8 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
       >
         <ArrowLeft className="w-5 h-5 text-white/80" />
       </button>
+      
+      {/* No popup needed anymore */}
       
       <div className="p-4 space-y-4 h-full">
         {/* Page title - centered at top */}
@@ -59,6 +67,41 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
             </div>
           </div>
         </div>
+        
+        {/* Last game winner section - only show if there's a winner */}
+        {winner && (
+          <div className="bg-gradient-to-br from-zinc-900/80 to-zinc-800/80 backdrop-blur-sm rounded-lg p-4 border border-yellow-600/30 relative z-20 shadow-xl overflow-hidden">
+            {/* Glow effects */}
+            <div className="absolute -inset-1 bg-yellow-500/10 blur-xl rounded-lg"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-600/5 via-yellow-500/10 to-yellow-600/5 animate-pulse-slow"></div>
+            
+            {/* Content */}
+            <div className="relative flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="w-6 h-6 text-yellow-400 animate-pulse-slow" />
+                  <h3 className="text-yellow-100 font-semibold text-md uppercase tracking-wide">Last Match Winner</h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-md shadow-md ring-2 ring-yellow-500/30" 
+                    style={{ backgroundColor: winner.color }}
+                  >
+                    {winner.name.substring(0, 1).toUpperCase()}
+                  </div>
+                  <span className="text-lg text-white font-medium">
+                    {isCurrentPlayerWinner ? 'You' : winner.name}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Trophy on the right */}
+              <div className="opacity-20 absolute right-4 bottom-0 transform translate-y-1/4">
+                <Trophy className="w-24 h-24 text-yellow-400/60" />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Players counter */}
         <div className="bg-zinc-900/80 backdrop-blur-sm rounded-lg p-4 border border-zinc-800/30 relative z-20 shadow-xl">
@@ -120,8 +163,12 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
                 <PlayCircle className="w-6 h-6 text-zinc-300 group-hover:text-white" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-lg text-zinc-200 group-hover:text-white">Start Game</div>
-                <div className="text-sm text-zinc-400 group-hover:text-zinc-300">Begin the match</div>
+                <div className="font-semibold text-lg text-zinc-200 group-hover:text-white">
+                  {game.winner !== undefined ? 'Start New Match' : 'Start Game'}
+                </div>
+                <div className="text-sm text-zinc-400 group-hover:text-zinc-300">
+                  {game.winner !== undefined ? 'Begin a new match' : 'Begin the match'}
+                </div>
               </div>
             </div>
           </button>

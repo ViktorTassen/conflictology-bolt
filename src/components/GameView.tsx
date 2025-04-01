@@ -39,8 +39,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     respondToAction, 
     startGame, 
     isGameOver,
-    voteForNextMatch,
-    leaveGame
+    leaveGame,
+    startNewMatch
   } = useGame(gameId);
   const gameStateHelpers = useGameState(game, selectedAction?.type);
   
@@ -78,7 +78,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         game={game}
         isHost={currentPlayer.id === game.players[0]?.id}
         currentPlayerId={playerId}
-        onStartGame={startGame}
+        onStartGame={game.winner !== undefined ? startNewMatch : startGame}
         onReturnToMainMenu={onReturnToLobby || (() => {})}
       />
     );
@@ -542,11 +542,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
           <GameOverScreen
             game={game}
             currentPlayerId={playerId}
-            onVoteNextMatch={() => voteForNextMatch(playerIndex)}
-            onLeaveGame={() => {
-              leaveGame(playerIndex);
-              if (onReturnToLobby) onReturnToLobby();
-            }}
+            onVoteNextMatch={() => {}} // No longer used but still in the interface
+            onLeaveGame={() => {}} // Just close the modal, game state will automatically change to waiting
           />
         </div>
       )}

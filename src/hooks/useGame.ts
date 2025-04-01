@@ -311,7 +311,7 @@ export function useGame(gameId?: string) {
             const gameRef = doc(db, 'games', game.id);
             await updateDoc(gameRef, {
               winner: winner,
-              voteNextMatch: game.voteNextMatch || {}
+              status: 'waiting' // Change status to waiting (lobby) to keep players in room
             });
           } catch (err) {
             console.error('Failed to set winner:', err);
@@ -323,48 +323,7 @@ export function useGame(gameId?: string) {
     setWinner();
   }, [isGameOver, game]);
   
-  useEffect(() => {
-    if (!game || !game.voteNextMatch) return;
-    
-    const voteCount = Object.keys(game.voteNextMatch).length;
-    const totalPlayers = game.players.length;
-    
-    if (voteCount === totalPlayers && voteCount >= 3) {
-      startNewMatch();
-    } else if (voteCount < 3 && voteCount === totalPlayers) {
-      if (!game.redirectToLobby) {
-        const gameRef = doc(db, 'games', game.id);
-        updateDoc(gameRef, {
-          redirectToLobby: true
-        });
-      }
-    }
-  }, [game?.voteNextMatch]);
-  
-  const voteForNextMatch = async (playerId: number) => {
-    if (!game || playerId < 0 || playerId >= game.players.length) {
-      throw new Error('Invalid player ID');
-    }
-    
-    try {
-      const gameRef = doc(db, 'games', game.id);
-      const voteNextMatch = game.voteNextMatch || {};
-      voteNextMatch[playerId] = true;
-      
-      await updateDoc(gameRef, {
-        voteNextMatch
-      });
-      
-      const voteCount = Object.keys(voteNextMatch).length;
-      if (voteCount === game.players.length && voteCount >= 3) {
-        startNewMatch();
-      }
-    } catch (err) {
-      console.error('Failed to vote for next match', err);
-      setError('Failed to vote for next match');
-      throw err;
-    }
-  };
+  // No vote-related effects needed anymore
   
   const startNewMatch = async () => {
     if (!game) return;
@@ -374,12 +333,21 @@ export function useGame(gameId?: string) {
       const cards = cardService.createDeck();
       const updatedCards = cardService.dealCards(cards, game.players.map(p => p.id));
       
+      // Create updated player list with reset stats
       const updatedPlayers = game.players.map(player => ({
         ...player,
         coins: 2,
         eliminated: false
       }));
       
+      // Get the winner's name for the log message if there was a winner
+      let newMatchLogMessage = 'New match started!';
+      if (game.winner !== undefined && game.winner >= 0 && game.winner < game.players.length) {
+        const previousWinner = game.players[game.winner]?.name;
+        newMatchLogMessage = `New match started! Previous winner: ${previousWinner}`;
+      }
+      
+      // Complete game state reset
       await updateDoc(gameRef, {
         status: 'playing',
         players: updatedPlayers,
@@ -388,13 +356,15 @@ export function useGame(gameId?: string) {
         actionInProgress: null,
         responses: {},
         voteNextMatch: {},
-        winner: null,
+        winner: null, // Clear winner so the announcement won't show again
         newMatchCountdownStarted: false,
         newMatchStartTime: null,
         redirectToLobby: false,
         actionUsedThisTurn: false,
-        logs: [loggingService.createSystemLog('New match started!')]
+        logs: [loggingService.createSystemLog(newMatchLogMessage)]
       });
+      
+      console.log("Game reset completed - new match started");
     } catch (err) {
       console.error('Failed to start new match', err);
       setError('Failed to start new match');
@@ -440,7 +410,6 @@ export function useGame(gameId?: string) {
     respondToAction,
     startGame,
     isGameOver,
-    voteForNextMatch,
     startNewMatch,
     leaveGame
   };
