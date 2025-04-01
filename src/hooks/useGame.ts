@@ -380,16 +380,37 @@ export function useGame(gameId?: string) {
       const playerCards = cardService.getPlayerCards(game.cards, playerId);
       const updatedCards = cardService.returnCardsToDeck(game.cards, playerCards.map(c => c.id));
       
-      // Mark player as eliminated
-      const updatedPlayers = game.players.map((p, i) => 
-        i === playerId ? { ...p, eliminated: true } : p
-      );
+      // Get player name before removing
+      const playerName = game.players[playerId].name;
+      
+      // For consistent behavior, always completely remove the player 
+      // instead of just marking them as eliminated
+      const updatedPlayers = game.players.filter((_, i) => i !== playerId);
+      
+      // Adjust current turn index if needed
+      let currentTurn = game.currentTurn;
+      if (game.status === 'playing') {
+        // If removed player's turn was current or before current, adjust the turn index
+        if (playerId <= game.currentTurn) {
+          currentTurn = Math.max(0, game.currentTurn - 1);
+        }
+      }
       
       await updateDoc(gameRef, {
         players: updatedPlayers,
         cards: updatedCards,
-        logs: arrayUnion(loggingService.createSystemLog(`${game.players[playerId].name} has left the game.`))
+        currentTurn: currentTurn,
+        logs: arrayUnion(loggingService.createSystemLog(`${playerName} has left the game.`))
       });
+      
+      // If removing a player causes the game to have only one player left,
+      // handle it as a win for the remaining player
+      if (game.status === 'playing' && updatedPlayers.length === 1) {
+        await updateDoc(gameRef, {
+          winner: 0, // The only player left is at index 0
+          status: 'waiting' // Change to waiting to return to lobby
+        });
+      }
     } catch (err) {
       console.error('Failed to leave game:', err);
       setError('Failed to leave game');

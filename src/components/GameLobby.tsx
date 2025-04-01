@@ -1,6 +1,7 @@
 import { Copy, Users, PlayCircle, ArrowLeft, Trophy } from 'lucide-react';
 import { Game } from '../types';
 import lobbyBg from '../assets/images/lobby-bg.png';
+import { useGame } from '../hooks/useGame';
 
 interface GameLobbyProps {
   game: Game;
@@ -11,8 +12,25 @@ interface GameLobbyProps {
 }
 
 export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturnToMainMenu }: GameLobbyProps) {
+  const { leaveGame } = useGame(game.id);
+  
   const copyGameId = () => {
     navigator.clipboard.writeText(game.id);
+  };
+  
+  const handleLeaveGame = async () => {
+    try {
+      // Find player index
+      const playerIndex = game.players.findIndex(p => p.id === currentPlayerId);
+      if (playerIndex !== -1) {
+        await leaveGame(playerIndex);
+      }
+      onReturnToMainMenu();
+    } catch (error) {
+      console.error("Error leaving game:", error);
+      // Still return to main menu even if there's an error
+      onReturnToMainMenu();
+    }
   };
   
   // Get winner info
@@ -36,7 +54,7 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
       {/* Back button - same position and style as in game */}
       <button 
         className="w-10 h-10 bg-zinc-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors absolute left-4 top-4 z-30 border border-zinc-800/30"
-        onClick={onReturnToMainMenu}
+        onClick={handleLeaveGame}
       >
         <ArrowLeft className="w-5 h-5 text-white/80" />
       </button>

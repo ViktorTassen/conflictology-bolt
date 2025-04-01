@@ -551,13 +551,20 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       {showLeaveConfirmation && (
         <ConfirmationDialog
           title="Leave Game"
-          message="Are you sure you want to leave the game? You will forfeit the match."
+          message="Are you sure you want to leave the game? You will forfeit the match and be removed from the game."
           confirmText="Leave Game"
           cancelText="Stay"
-          onConfirm={() => {
-            leaveGame(playerIndex);
-            setShowLeaveConfirmation(false);
-            onReturnToLobby?.();
+          onConfirm={async () => {
+            try {
+              await leaveGame(playerIndex);
+              setShowLeaveConfirmation(false);
+              onReturnToLobby?.();
+            } catch (error) {
+              console.error("Error leaving game:", error);
+              // Still return to lobby even if there's an error
+              setShowLeaveConfirmation(false);
+              onReturnToLobby?.();
+            }
           }}
           onCancel={() => setShowLeaveConfirmation(false)}
         />
