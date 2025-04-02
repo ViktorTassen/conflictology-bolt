@@ -51,7 +51,7 @@ export abstract class BaseActionHandler implements IActionHandler {
 
   protected validateCoins(player: Player, required: number): void {
     if (player.coins < required) {
-      throw new Error(`Action requires ${required} coins`);
+      throw new Error(`Action requires ${required}M`);
     }
   }
 

@@ -2,21 +2,21 @@ import { Card, CardType } from '../types';
 import { Skull } from 'lucide-react';
 
 // Import card images
-import ambassadorImg from '../assets/images/ambassador.png';
-import assassinImg from '../assets/images/assassin.png';
-import captainImg from '../assets/images/captain.png';
-import contessaImg from '../assets/images/contessa.png';
-import dukeImg from '../assets/images/duke.png';
-import inquisitorImg from '../assets/images/inquisitor.png';
+import reporterImg from '../assets/images/reporter.png';
+import hackerImg from '../assets/images/hacker.png';
+import mafiaImg from '../assets/images/mafia.png';
+import judgeImg from '../assets/images/judge.png';
+import bankerImg from '../assets/images/banker.png';
+import policeImg from '../assets/images/police.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {
-  'Ambassador': ambassadorImg,
-  'Assassin': assassinImg,
-  'Captain': captainImg,
-  'Contessa': contessaImg,
-  'Duke': dukeImg,
-  'Inquisitor': inquisitorImg
+  'Reporter': reporterImg,
+  'Hacker': hackerImg,
+  'Mafia': mafiaImg,
+  'Judge': judgeImg,
+  'Banker': bankerImg,
+  'Police': policeImg
 };
 
 interface LoseInfluenceDialogProps {

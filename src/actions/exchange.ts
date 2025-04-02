@@ -189,26 +189,26 @@ export const exchangeAction: ActionHandler = {
     }
 
     if (response.type === 'challenge') {
-      const hasAmbassador = cardService.hasCardType(game.cards, actionPlayer.id, 'Ambassador');
+      const hasReporter = cardService.hasCardType(game.cards, actionPlayer.id, 'Reporter');
 
-      if (hasAmbassador) {
-        const ambassadorCard = game.cards.find(
+      if (hasReporter) {
+        const reporterCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
           !c.revealed && 
-          c.name === 'Ambassador'
+          c.name === 'Reporter'
         );
         
-        if (ambassadorCard) {
-          const updatedCardsWithReveal = cardService.revealCard(game.cards, ambassadorCard.id);
-          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, ambassadorCard.id);
+        if (reporterCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, reporterCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, reporterCard.id);
           result.cards = cardsAfterReplacement;
         }
         
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.fail('Ambassador')
+          message: GameMessages.challenges.fail('Reporter')
         })];
 
         result.actionInProgress = {
@@ -217,13 +217,13 @@ export const exchangeAction: ActionHandler = {
           challengeInProgress: true,
           challengeDefense: true,
           responses: updatedResponses,
-          revealedAmbassadorCardId: ambassadorCard?.id
+          revealedReporterCardId: reporterCard?.id
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.success('Ambassador')
+          message: GameMessages.challenges.success('Reporter')
         })];
 
         result.actionInProgress = {

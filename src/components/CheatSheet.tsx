@@ -2,12 +2,12 @@ import { CardType } from '../types';
 import { DollarSign, Skull, Euro } from 'lucide-react';
 
 // Import card images directly
-import dukeImage from '../assets/images/duke.png';
-import assassinImage from '../assets/images/assassin.png';
-import captainImage from '../assets/images/captain.png';
-import ambassadorImage from '../assets/images/ambassador.png';
-import contessaImage from '../assets/images/contessa.png';
-import inquisitorImage from '../assets/images/inquisitor.png';
+import bankerImage from '../assets/images/banker.png';
+import hackerImage from '../assets/images/hacker.png';
+import mafiaImage from '../assets/images/mafia.png';
+import reporterImage from '../assets/images/reporter.png';
+import judgeImage from '../assets/images/judge.png';
+import policeImage from '../assets/images/police.png';
 
 interface ActionInfo {
   name: string;
@@ -39,14 +39,14 @@ export function CheatSheet() {
       type: 'foreign-aid',
       description: 'Take $2M from treasury',
       canBeBlocked: true,
-      blockedBy: ['Duke'],
+      blockedBy: ['Banker'],
       icon: Euro,
     },
     {
-      name: 'Coup',
-      type: 'coup',
+      name: 'Scandal',
+      type: 'scandal',
       cost: 7,
-      description: 'Pay $7M to force card loss. Required with 10+ coins.',
+      description: 'Pay $7M to force 1 card loss. Required with $10M+.',
       canBeBlocked: false,
       icon: Skull,
     },
@@ -55,150 +55,143 @@ export function CheatSheet() {
   // Character actions
   const characterActions: ActionInfo[] = [
     {
-      name: 'Duke (Tax)',
-      type: 'duke',
-      card: 'Duke',
+      name: 'Banker (Tax)',
+      type: 'banker',
+      card: 'Banker',
       description: 'Take $3M from treasury',
       canBeBlocked: false,
-      cardImage: dukeImage,
+      cardImage: bankerImage,
     },
     {
-      name: 'Captain (Steal)',
+      name: 'Mafia (Steal)',
       type: 'steal',
-      card: 'Captain',
+      card: 'Mafia',
       description: 'Take up to $2M from another player',
       canBeBlocked: true,
-      blockedBy: ['Captain', 'Ambassador', 'Inquisitor'],
-      cardImage: captainImage,
+      blockedBy: ['Mafia', 'Reporter', 'Police'],
+      cardImage: mafiaImage,
     },
     {
-      name: 'Assassin',
-      type: 'assassinate',
-      card: 'Assassin',
+      name: 'Hacker',
+      type: 'hack',
+      card: 'Hacker',
       cost: 3,
       description: 'Pay $3M to force card loss',
       canBeBlocked: true,
-      blockedBy: ['Contessa'],
-      cardImage: assassinImage,
+      blockedBy: ['Judge'],
+      cardImage: hackerImage,
     },
     {
-      name: 'Ambassador (Exchange)',
+      name: 'Reporter (Exchange)',
       type: 'exchange',
-      card: 'Ambassador',
+      card: 'Reporter',
       description: 'Exchange cards with Court deck',
       canBeBlocked: false,
-      cardImage: ambassadorImage,
+      cardImage: reporterImage,
     },
     {
-      name: 'Inquisitor',
-      type: 'inquisitor',
-      card: 'Inquisitor',
+      name: 'Police',
+      type: 'police',
+      card: 'Police',
       description: 'Investigate: Look at card & decide swap OR Swap: Exchange one card with Court',
       canBeBlocked: false,
-      cardImage: inquisitorImage,
+      cardImage: policeImage,
     },
     {
-      name: 'Contessa',
-      type: 'contessa',
-      card: 'Contessa',
-      description: 'Blocks assassination attempts against you',
+      name: 'Judge',
+      type: 'judge',
+      card: 'Judge',
+      description: 'Blocks hack attempts against you',
       isDefensive: true,
-      cardImage: contessaImage,
+      cardImage: judgeImage,
     }
   ];
 
   return (
-    <div className="max-w-4xl mx-auto py-4">
+        <div className="max-w-5xl mx-auto py-6 px-4">
+          {/* Basic Actions */}
+          <h2 className="text-slate-100 font-semibold text-sm mb-2">Basic Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+            {basicActions.map((action, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-2 p-3 rounded-xl bg-[#2a2a2a] shadow-sm"
+              >
+                {/* Icon */}
+                <div className="flex-shrink-0 w-10 h-10 rounded-md bg-black/20 flex items-center justify-center">
+                  {action.icon && <action.icon className="w-5 h-5 text-amber-400" />}
+                </div>
     
-
-      
-      {/* Basic actions grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 mb-4">
-        {basicActions.map((action, index) => (
-          <div key={index} className="flex items-center gap-1.5 p-1.5 rounded-md bg-[#2a2a2a]">
-            {/* Icon */}
-            <div className="flex-shrink-0 w-9 h-9 bg-[#2a2a2a] rounded overflow-hidden flex items-center justify-center">
-              {action.icon && <action.icon className="w-6 h-6 text-amber-400" />}
-            </div>
-            
-            {/* Action details */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-slate-200 text-xs">
-                {action.name}
-                {action.cost && <span className="ml-1 text-amber-400">(${action.cost}M)</span>}
-              </h3>
-              <p className="text-slate-300 text-[10px]">{action.description}</p>
-              
-              {/* Challenge and block info */}
-              <div className="flex flex-col mt-0.5">
-                {action.blockedBy && action.blockedBy.length > 0 && (
-                  <div className="flex gap-1 items-baseline">
-                    <span className="text-[9px] text-red-400 font-medium whitespace-nowrap">Can be blocked by:</span>
-                    <span className="text-[9px] text-red-400/90">{action.blockedBy.join(', ')}</span>
+                {/* Details */}
+                <div className="flex-1">
+                  <h3 className="text-xs font-bold text-slate-200">
+                    {action.name}
+                    {action.cost && <span className="ml-1 text-amber-400">(${action.cost}M)</span>}
+                  </h3>
+                  <p className="text-[11px] text-slate-300">{action.description}</p>
+                  <div className="flex flex-col mt-1 space-y-0.5">
+                    {action.blockedBy && (
+                      <span className="text-[10px] text-red-400">
+                        Blocked by: {action.blockedBy.join(', ')}
+                      </span>
+                    )}
+                    {action.canBeChallenged !== false && (
+                      <span className="text-[10px] text-yellow-400">Can be challenged</span>
+                    )}
                   </div>
-                )}
-                {(action.canBeChallenged !== false) && (
-                  <span className="text-[9px] text-yellow-500 font-medium">Can be challenged</span>
-                )}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-
-      {/* <div className="h-px bg-slate-800/80 mb-2"></div>
-       */}
-      {/* Character actions grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
-        {characterActions.map((action, index) => (
-          <div key={index} className="flex items-center gap-1.5 p-1.5 rounded-md bg-[#3a3a3a]/50">
-            {/* Card image */}
-            <div 
-              className="flex-shrink-0 w-9 h-13 rounded overflow-hidden shadow-md"
-              style={{ transform: `rotate(${5}deg)` }}
-            >
-              {action.cardImage && (
-                <img 
-                  src={action.cardImage}
-                  alt={action.card || action.name}
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-            
-            {/* Action details */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-slate-200 text-xs flex items-center">
-                {action.name}
-                {action.cost && <span className="ml-1 text-amber-400">(${action.cost}M)</span>}
-                {action.isDefensive && (
-                  <span className="ml-1 text-[9px] text-purple-400 font-medium">
-                    Defensive
-                  </span>
-                )}
-              </h3>
-              <p className="text-slate-300 text-[10px]">{action.description}</p>
-              
-              {/* Challenge and block info */}
-              <div className="flex flex-col mt-0.5">
-                {action.blockedBy && action.blockedBy.length > 0 && (
-                  <div className="flex gap-1 items-baseline">
-                    <span className="text-[9px] text-red-400 font-medium whitespace-nowrap">Can be blocked by:</span>
-                    <span className="text-[9px] text-red-400/90">{action.blockedBy.join(', ')}</span>
+    
+          {/* Character Actions */}
+          <h2 className="text-slate-100 font-semibold text-sm mb-2">Character Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+            {characterActions.map((action, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-2 p-3 rounded-xl bg-[#3a3a3a]/60 shadow-sm"
+              >
+                {/* Image */}
+                <div className="flex-shrink-0 w-10 h-14 rounded-md overflow-hidden shadow-md rotate-[3deg]">
+                  {action.cardImage && (
+                    <img
+                      src={action.cardImage}
+                      alt={action.card || action.name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+    
+                {/* Details */}
+                <div className="flex-1">
+                  <h3 className="text-xs font-bold text-slate-200">
+                    {action.name}
+                    {action.cost && <span className="ml-1 text-amber-400">(${action.cost}M)</span>}
+                    {action.isDefensive && (
+                      <span className="ml-1 text-purple-400 text-[10px] font-medium">
+                        Defensive
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-[11px] text-slate-300">{action.description}</p>
+                  <div className="flex flex-col mt-1 space-y-0.5">
+                    {action.blockedBy && (
+                      <span className="text-[10px] text-red-400">
+                        Blocked by: {action.blockedBy.join(', ')}
+                      </span>
+                    )}
+                    {!action.isDefensive && action.canBeChallenged !== false && (
+                      <span className="text-[10px] text-yellow-400">Can be challenged</span>
+                    )}
+                    {action.isDefensive && (
+                      <span className="text-[10px] text-yellow-400">Block can be challenged</span>
+                    )}
                   </div>
-                )}
-                {!action.isDefensive && (action.canBeChallenged !== false) && (
-                  <span className="text-[9px] text-yellow-500 font-medium">Can be challenged</span>
-                )}
-                {action.isDefensive && (
-                  <span className="text-[9px] text-yellow-500 font-medium">Block can be challenged</span>
-                )}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
   );
 }

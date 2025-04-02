@@ -43,7 +43,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
           return 'waiting_for_card_selection';
         }
         
-        // Special handling for investigate action - Inquisitor player deciding on the card
+        // Special handling for investigate action - Police player deciding on the card
         if (actionInProgress.type === 'investigate' && 
             actionInProgress.player === playerId && 
             actionInProgress.investigateCard) {
@@ -129,23 +129,23 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         
         switch (actionType) {
           case 'foreign-aid':
-            blockCards = ['Duke'];
+            blockCards = ['Banker'];
             showBlock = true;
             showChallenge = false; // Foreign Aid can't be challenged
             break;
             
           case 'steal':
-            // For steal, you can block with Captain, Ambassador, or Inquisitor
-            blockCards = ['Captain', 'Ambassador', 'Inquisitor'];
+            // For steal, you can block with Mafia, Reporter, or Police
+            blockCards = ['Mafia', 'Reporter', 'Police'];
             showBlock = isTarget; // Only target can block steal
             break;
             
-          case 'assassinate':
-            blockCards = ['Contessa'];
-            showBlock = isTarget; // Only target can block assassination
+          case 'hack':
+            blockCards = ['Judge'];
+            showBlock = isTarget; // Only target can block hack
             break;
             
-          case 'duke':
+          case 'banker':
           case 'exchange':
           case 'investigate':
           case 'swap':
@@ -153,7 +153,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             break;
 
           case 'income':
-          case 'coup':
+          case 'scandal':
             showBlock = false;
             showChallenge = false;
             break;
@@ -163,9 +163,9 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         }
 
         // Make sure blockCards is always included for block options
-        const validBlockCards = blockCards.length > 0 ? blockCards : ['Duke'] as CardType[];
+        const validBlockCards = blockCards.length > 0 ? blockCards : ['Banker'] as CardType[];
         
-        // For single-card blocks (like Contessa or Duke), use the card name as the block text
+        // For single-card blocks (like Judge or Banker), use the card name as the block text
         const blockText = validBlockCards.length === 1 ? validBlockCards[0] : '';
         
         return {
@@ -261,7 +261,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         return targetHasCards && targetId !== playerId;
       }
       
-      const targetableActions = ['steal', 'assassinate', 'coup', 'investigate'];
+      const targetableActions = ['steal', 'hack', 'scandal', 'investigate'];
       return targetableActions.includes(selectedAction) && targetId !== playerId;
     }
   }), [game, selectedAction]);

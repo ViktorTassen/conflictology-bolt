@@ -3,18 +3,18 @@ import { GameMessages } from '../messages';
 import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
 
-export const coupAction: ActionHandler = {
+export const scandalAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');
     }
 
     if (game.actionInProgress?.target === undefined) {
-      throw new Error('Coup requires a target');
+      throw new Error('Scandal requires a target');
     }
 
     if (player.coins < 7) {
-      throw new Error('Coup requires 7 coins');
+      throw new Error('Scandal requires $7M');
     }
     
     const targetPlayerId = game.actionInProgress.target;
@@ -40,14 +40,14 @@ export const coupAction: ActionHandler = {
 
     const result: ActionResult = {
       players: updatedPlayers,
-      logs: [loggingService.createLog('coup', player, {
+      logs: [loggingService.createLog('scandal', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
         coins: player.coins,
-        message: GameMessages.actions.coup(player.coins)
+        message: GameMessages.actions.scandal(player.coins)
       })],
       actionInProgress: {
-        type: 'coup',
+        type: 'scandal',
         player: playerId,
         target: targetPlayerId,
         losingPlayer: targetPlayerId,
@@ -70,7 +70,7 @@ export const coupAction: ActionHandler = {
 
     if (response.type === 'lose_influence') {
       if (playerId !== game.actionInProgress.target) {
-        throw new Error('Only the target can lose influence from a coup');
+        throw new Error('Only the target can lose influence from a scandal');
       }
 
       const playerCards = cardService.getPlayerCards(game.cards, player.id);
@@ -117,7 +117,7 @@ export const coupAction: ActionHandler = {
       result.currentTurn = nextTurn.currentTurn;
       result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
     } else {
-      throw new Error('Invalid response type for coup action');
+      throw new Error('Invalid response type for scandal action');
     }
 
     return result;

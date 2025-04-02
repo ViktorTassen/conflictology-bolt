@@ -3,7 +3,7 @@ import { GameMessages } from '../messages';
 import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
 
-export const hackAction: ActionHandler = {
+export const hackAction: ActionHandler = { // Kept as hackAction for compatibility
   execute: async ({ game, player, playerId }) => {
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');

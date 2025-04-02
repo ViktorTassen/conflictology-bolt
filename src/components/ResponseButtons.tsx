@@ -26,7 +26,7 @@ export function ResponseButtons({
   blockText = "Block",
   challengeText = "Challenge",
   allowText = "Allow",
-  blockCards = ['Duke'] as CardType[]
+  blockCards = ['Banker'] as CardType[]
 }: ResponseButtonsProps) {
   
   if (!visible) return null;

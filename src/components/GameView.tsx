@@ -115,7 +115,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     setSelectedAction(action);
     setTargetedPlayerId(null);
     
-    if (['steal', 'assassinate', 'coup', 'investigate'].includes(action.type)) {
+    if (['steal', 'hack', 'scandal', 'investigate'].includes(action.type)) {
       setShowActions(false);
     } else {
       try {
@@ -128,7 +128,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   };
 
   const handlePlayerTarget = async (targetId: number) => {
-    if (selectedAction && ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type)) {
+    if (selectedAction && ['steal', 'hack', 'scandal', 'investigate'].includes(selectedAction.type)) {
       setTargetedPlayerId(targetId);
       
       try {
@@ -271,7 +271,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const isPlayerTargetable = (id: number): boolean | undefined => {
     const targetPlayer = game.players[id];
     return !!(selectedAction && 
-           ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type) && 
+           ['steal', 'hack', 'scandal', 'investigate'].includes(selectedAction.type) && 
            id !== playerIndex &&
            !targetPlayer.eliminated);
   };
@@ -583,7 +583,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       )}
       
       <div className="pointer-events-none relative">
-        {selectedAction && ['steal', 'assassinate', 'coup', 'investigate'].includes(selectedAction.type) && (
+        {selectedAction && ['steal', 'hack', 'scandal', 'investigate'].includes(selectedAction.type) && (
           <TargetSelectionOverlay 
             actionType={selectedAction.type} 
             onCancel={cancelTargetSelection} 

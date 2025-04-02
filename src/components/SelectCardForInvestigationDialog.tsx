@@ -2,21 +2,21 @@ import { Card, CardType } from '../types';
 import { Eye } from 'lucide-react';
 
 // Import card images
-import dukeImg from '../assets/images/duke.png';
-import assassinImg from '../assets/images/assassin.png';
-import captainImg from '../assets/images/captain.png';
-import contessaImg from '../assets/images/contessa.png';
-import ambassadorImg from '../assets/images/ambassador.png';
-import inquisitorImg from '../assets/images/inquisitor.png';
+import bankerImg from '../assets/images/banker.png';
+import hackerImg from '../assets/images/hacker.png';
+import mafiaImg from '../assets/images/mafia.png';
+import judgeImg from '../assets/images/judge.png';
+import reporterImg from '../assets/images/reporter.png';
+import policeImg from '../assets/images/police.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {
-  'Duke': dukeImg,
-  'Assassin': assassinImg,
-  'Captain': captainImg,
-  'Contessa': contessaImg,
-  'Ambassador': ambassadorImg,
-  'Inquisitor': inquisitorImg
+  'Banker': bankerImg,
+  'Hacker': hackerImg,
+  'Mafia': mafiaImg,
+  'Judge': judgeImg,
+  'Reporter': reporterImg,
+  'Police': policeImg
 };
 
 interface SelectCardForInvestigationDialogProps {
@@ -58,7 +58,7 @@ export function SelectCardForInvestigationDialog({
           <div className="text-center mb-6">
             <h3 className="text-lg font-bold text-white mb-1">Select Card for Investigation</h3>
             <p className="text-purple-400/80 text-sm">
-              Choose one of your cards to show the Inquisitor
+              Choose one of your cards to show the Police
             </p>
           </div>
 

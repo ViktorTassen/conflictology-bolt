@@ -183,7 +183,7 @@ export function useGame(gameId?: string, playerId?: number) {
       throw new Error('You have already used your action this turn');
     }
     
-    if (['steal', 'assassinate', 'coup'].includes(action.type) && action.target === undefined) {
+    if (['steal', 'hack', 'scandal'].includes(action.type) && action.target === undefined) {
       throw new Error(`${action.type} requires a target`);
     }
 
@@ -208,7 +208,7 @@ export function useGame(gameId?: string, playerId?: number) {
           throw new Error('Invalid action type');
         }
         
-        if (['steal', 'assassinate', 'coup', 'investigate'].includes(action.type) && action.target !== undefined) {
+        if (['steal', 'hack', 'scandal', 'investigate'].includes(action.type) && action.target !== undefined) {
           currentGame.actionInProgress = {
             type: action.type,
             player: playerId,

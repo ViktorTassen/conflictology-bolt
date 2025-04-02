@@ -2,21 +2,21 @@ import { CardType } from '../types';
 import { Eye, RefreshCw } from 'lucide-react';
 
 // Import card images
-import dukeImg from '../assets/images/duke.png';
-import assassinImg from '../assets/images/assassin.png';
-import captainImg from '../assets/images/captain.png';
-import contessaImg from '../assets/images/contessa.png';
-import ambassadorImg from '../assets/images/ambassador.png';
-import inquisitorImg from '../assets/images/inquisitor.png';
+import bankerImg from '../assets/images/banker.png';
+import hackerImg from '../assets/images/hacker.png';
+import mafiaImg from '../assets/images/mafia.png';
+import judgeImg from '../assets/images/judge.png';
+import reporterImg from '../assets/images/reporter.png';
+import policeImg from '../assets/images/police.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {
-  'Duke': dukeImg,
-  'Assassin': assassinImg,
-  'Captain': captainImg,
-  'Contessa': contessaImg,
-  'Ambassador': ambassadorImg,
-  'Inquisitor': inquisitorImg
+  'Banker': bankerImg,
+  'Hacker': hackerImg,
+  'Mafia': mafiaImg,
+  'Judge': judgeImg,
+  'Reporter': reporterImg,
+  'Police': policeImg
 };
 
 interface InvestigateDecisionDialogProps {

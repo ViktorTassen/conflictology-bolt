@@ -20,9 +20,9 @@ interface GameLogProps {
 const formatMessage = (message: string, isSystem: boolean = false) => {
   if (isSystem) return message;
 
-  const parts = message.split(/(Duke|Assassin|Captain|Ambassador|Contessa|Inquisitor)/g);
+  const parts = message.split(/(Banker|Hacker|Mafia|Reporter|Judge|Police)/g);
   return parts.map((part, index) => {
-    if (['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'].includes(part)) {
+    if (['Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police'].includes(part)) {
       return (
         <span key={index} className="font-bold">
           {part}
@@ -155,7 +155,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                       </span>
                     ) : (
                       <span className="text-gray-300 break-words">
-                        claims <span className="font-bold">Captain</span> to steal from 
+                        claims <span className="font-bold">Mafia</span> to steal from 
                       </span>
                     )}
                     <span 
@@ -171,7 +171,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                       {formatMessage(log.message || '', log.type === 'system')}
                     </span>
                     {/* Show target name for all action types that have targets */}
-                    {log.target && log.type !== 'system' && ['assassinate', 'coup', 'investigate', 'show-card'].includes(log.type) && (
+                    {log.target && log.type !== 'system' && ['hack', 'scandal', 'investigate', 'show-card'].includes(log.type) && (
                       <span 
                         className="font-semibold whitespace-nowrap" 
                         style={{ color: log.targetColor ?? '#FFFFFF' }}

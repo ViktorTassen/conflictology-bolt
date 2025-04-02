@@ -10,12 +10,12 @@ export function TargetSelectionOverlay({ actionType, onCancel }: TargetSelection
   // Get the nice name for the action
   const getActionName = (type: GameAction['type']) => {
     switch (type) {
-      case 'assassinate':
-        return 'Assassinate';
+      case 'hack':
+        return 'Hack';
       case 'steal':
         return 'Steal';
-      case 'coup':
-        return 'Coup';
+      case 'scandal':
+        return 'Scandal';
       default:
         return type.charAt(0).toUpperCase() + type.slice(1);
     }
@@ -25,7 +25,7 @@ export function TargetSelectionOverlay({ actionType, onCancel }: TargetSelection
   // Get the classes based on action type
   const getActionClasses = (type: GameAction['type']) => {
     switch (type) {
-      case 'assassinate':
+      case 'hack':
         return {
           icon: 'text-red-500',
           border: 'border-red-500/20',
@@ -41,7 +41,7 @@ export function TargetSelectionOverlay({ actionType, onCancel }: TargetSelection
           bgHint: 'bg-blue-900/70',
           iconHint: 'text-blue-300'
         };
-      case 'coup':
+      case 'scandal':
         return {
           icon: 'text-amber-500',
           border: 'border-amber-500/20',

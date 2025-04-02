@@ -13,10 +13,9 @@ export const GameMessages = {
     playerJoined: (name: string) => `${name} joined the game`,
     playerEliminated: (name: string) => `${name} has been eliminated!`,
     stealBlocked: 'The steal was blocked.',
-    assassinationBlocked: 'The assassination was blocked.',
-    blockingOptions: (name: string) => `${name} may now block with Captain or Ambassador.`,
-    secondInfluenceLoss: (name: string) => `${name} must lose a second card after failed Assassin challenge.`,
-    failedBlockDefense: (name: string, card: string) => `${name} must lose two cards (assassination and failed ${card} defense).`,
+    hackBlocked: 'The hack was blocked.',
+    secondInfluenceLoss: (name: string) => `${name} must lose a second card after failed Hacker challenge.`,
+    failedBlockDefense: (name: string, card: string) => `${name} must lose two cards (hack and failed ${card} defense).`,
     cardReveal: (name: string, card: string) => `${name} reveals ${card}.`,
     swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`
@@ -24,27 +23,27 @@ export const GameMessages = {
 
   // Action claims
   actions: {
-    tax: 'claims Duke to collect Tax',
+    tax: 'claims Banker to collect Tax',
     foreignAid: 'claims Foreign Aid',
-    steal: 'claims Captain to steal from',
-    assassinate: 'pays $3M to assassinate',
-    exchange: 'claims Ambassador to exchange',
-    investigate: 'claims Inquisitor to investigate',
-    swap: 'claims Inquisitor to swap cards',
-    coup: (coins: number) => coins >= 10 ? 'has >$10M! Pays $7M to Coup' : 'pays $7M to Coup'
+    steal: 'claims Mafia to Steal from',
+    hack: 'pays $3M to launch a Hack on',
+    exchange: 'claims Reporter to Exchange',
+    investigate: 'claims Police to Investigate',
+    swap: 'claims Police to Swap cards',
+    scandal: (coins: number) => coins >= 10 ? 'has >$10M! Pays $7M to Scandal' : 'pays $7M to Scandal'
   },
 
   // Action results
   results: {
     income: 'takes Income (+$1M)',
-    tax: 'collects Tax with Duke (+$3M)',
+    tax: 'collects Tax with Banker (+$3M)',
     foreignAid: 'receives Foreign Aid (+$2M)',
-    steal: (coins: number) => `steals $${coins}M from`,
-    exchange: 'completes the 2 cards exchange',
-    swap: 'completes the card swap',
+    steal: (coins: number) => `Steals $${coins}M from`,
+    exchange: 'completes the 2 cards Exchange',
+    swap: 'completes the card Swap',
     investigateKeep: () => 'lets them keep their card',
     investigateSwap: () => 'forces them to swap their card',
-    assassinate: (targetName: string) => `assassinates ${targetName}`
+    hack: (targetName: string) => `executed Hacker attack on ${targetName}`
   },
 
   // Blocks

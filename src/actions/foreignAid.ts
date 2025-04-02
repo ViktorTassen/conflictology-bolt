@@ -110,18 +110,18 @@ export const foreignAidAction: ActionHandler = {
       return result;
     }
 
-    if (response.type === 'block' && response.card === 'Duke') {
+    if (response.type === 'block' && response.card === 'Banker') {
       result.logs = [loggingService.createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
-        card: 'Duke',
-        message: GameMessages.blocks.generic('Duke')
+        card: 'Banker',
+        message: GameMessages.blocks.generic('Banker')
       })];
 
       result.actionInProgress = {
         ...game.actionInProgress,
         blockingPlayer: playerId,
-        blockingCard: 'Duke',
+        blockingCard: 'Banker',
         responses: {
           [playerId]: responseData
         }
@@ -132,28 +132,28 @@ export const foreignAidAction: ActionHandler = {
     
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer !== undefined) {
       const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
-      const hasDuke = cardService.hasCardType(game.cards, blockingPlayer.id, 'Duke');
+      const hasBanker = cardService.hasCardType(game.cards, blockingPlayer.id, 'Banker');
 
-      if (hasDuke) {
-        // Blocking player has Duke, challenge fails
-        const dukeCard = game.cards.find(
+      if (hasBanker) {
+        // Blocking player has Banker, challenge fails
+        const bankerCard = game.cards.find(
           c => c.playerId === blockingPlayer.id && 
           c.location === 'player' && 
           !c.revealed && 
-          c.name === 'Duke'
+          c.name === 'Banker'
         );
         
-        if (dukeCard) {
-          const updatedCardsWithReveal = cardService.revealCard(game.cards, dukeCard.id);
-          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, dukeCard.id);
+        if (bankerCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, bankerCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, bankerCard.id);
           result.cards = cardsAfterReplacement;
         }
         
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          card: 'Duke',
-          message: GameMessages.challenges.blockFail('Duke')
+          card: 'Banker',
+          message: GameMessages.challenges.blockFail('Banker')
         })];
 
         result.actionInProgress = {
@@ -162,15 +162,15 @@ export const foreignAidAction: ActionHandler = {
           challengeInProgress: true,
           challengeDefense: true,
           responses: updatedResponses,
-          revealedDukeCardId: dukeCard?.id
+          revealedBankerCardId: bankerCard?.id
         };
       } else {
-        // Blocking player doesn't have Duke, challenge succeeds
+        // Blocking player doesn't have Banker, challenge succeeds
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
-          card: 'Duke',
-          message: GameMessages.challenges.blockSuccess('Duke')
+          card: 'Banker',
+          message: GameMessages.challenges.blockSuccess('Banker')
         })];
 
         result.actionInProgress = {

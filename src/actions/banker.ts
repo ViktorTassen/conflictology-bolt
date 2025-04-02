@@ -3,7 +3,7 @@ import { GameMessages } from '../messages';
 import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
 
-export const dukeAction: ActionHandler = {
+export const bankerAction: ActionHandler = { // Kept the name bankerAction for compatibility with index.ts
   execute: async ({ game, player, playerId }) => {
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');
@@ -14,11 +14,11 @@ export const dukeAction: ActionHandler = {
     }
 
     const result: ActionResult = {
-      logs: [loggingService.createLog('duke', player, {
+      logs: [loggingService.createLog('banker', player, {
         message: GameMessages.actions.tax
       })],
       actionInProgress: {
-        type: 'duke',
+        type: 'banker',
         player: playerId,
         responses: {},
         resolved: false
@@ -97,7 +97,7 @@ export const dukeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
         
-        result.logs.push(loggingService.createLog('duke', actionPlayer, {
+        result.logs.push(loggingService.createLog('banker', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
         }));
@@ -116,7 +116,7 @@ export const dukeAction: ActionHandler = {
           const updatedPlayers = [...game.players];
           updatedPlayers[game.actionInProgress.player].coins += 3;
           
-          result.logs.push(loggingService.createLog('duke', actionPlayer, {
+          result.logs.push(loggingService.createLog('banker', actionPlayer, {
             coins: 3,
             message: GameMessages.results.tax
           }));
@@ -134,27 +134,27 @@ export const dukeAction: ActionHandler = {
 
     if (response.type === 'challenge') {
       const actionPlayer = game.players[game.actionInProgress.player];
-      const hasDuke = cardService.hasCardType(game.cards, actionPlayer.id, 'Duke');
+      const hasBanker = cardService.hasCardType(game.cards, actionPlayer.id, 'Banker');
       
-      if (hasDuke) {
-        const dukeCard = game.cards.find(
+      if (hasBanker) {
+        const bankerCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
           !c.revealed && 
-          c.name === 'Duke'
+          c.name === 'Banker'
         );
         
-        if (dukeCard) {
-          const updatedCardsWithReveal = cardService.revealCard(game.cards, dukeCard.id);
-          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, dukeCard.id);
+        if (bankerCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, bankerCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, bankerCard.id);
           result.cards = cardsAfterReplacement;
         }
         
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          card: 'Duke',
-          message: GameMessages.challenges.fail('Duke')
+          card: 'Banker',
+          message: GameMessages.challenges.fail('Banker')
         })];
         
         result.actionInProgress = {
@@ -163,14 +163,14 @@ export const dukeAction: ActionHandler = {
           challengeInProgress: true,
           challengeDefense: true,
           responses: updatedResponses,
-          revealedDukeCardId: dukeCard?.id
+          revealedBankerCardId: bankerCard?.id
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          card: 'Duke',
-          message: GameMessages.challenges.success('Duke')
+          card: 'Banker',
+          message: GameMessages.challenges.success('Banker')
         })];
         
         result.actionInProgress = {
@@ -210,7 +210,7 @@ export const dukeAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
 
-        result.logs = [loggingService.createLog('duke', actionPlayer, {
+        result.logs = [loggingService.createLog('banker', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
         })];

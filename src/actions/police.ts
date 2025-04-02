@@ -250,26 +250,26 @@ export const investigateAction: ActionHandler = {
     }
 
     if (response.type === 'challenge') {
-      const hasInquisitor = cardService.hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
+      const hasPolice = cardService.hasCardType(game.cards, actionPlayer.id, 'Police');
 
-      if (hasInquisitor) {
-        const inquisitorCard = game.cards.find(
+      if (hasPolice) {
+        const policeCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
           !c.revealed && 
-          c.name === 'Inquisitor'
+          c.name === 'Police'
         );
         
-        if (inquisitorCard) {
-          const updatedCardsWithReveal = cardService.revealCard(game.cards, inquisitorCard.id);
-          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, inquisitorCard.id);
+        if (policeCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, policeCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, policeCard.id);
           result.cards = cardsAfterReplacement;
         }
         
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.fail('Inquisitor')
+          message: GameMessages.challenges.fail('Police')
         })];
 
         result.actionInProgress = {
@@ -277,14 +277,14 @@ export const investigateAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
-          revealedInquisitorCardId: inquisitorCard?.id,
+          revealedPoliceCardId: policeCard?.id,
           responses: updatedResponses
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.success('Inquisitor')
+          message: GameMessages.challenges.success('Police')
         })];
 
         result.actionInProgress = {
@@ -514,26 +514,26 @@ export const swapAction: ActionHandler = {
     }
 
     if (response.type === 'challenge') {
-      const hasInquisitor = cardService.hasCardType(game.cards, actionPlayer.id, 'Inquisitor');
+      const hasPolice = cardService.hasCardType(game.cards, actionPlayer.id, 'Police');
 
-      if (hasInquisitor) {
-        const inquisitorCard = game.cards.find(
+      if (hasPolice) {
+        const policeCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
           !c.revealed && 
-          c.name === 'Inquisitor'
+          c.name === 'Police'
         );
         
-        if (inquisitorCard) {
-          const updatedCardsWithReveal = cardService.revealCard(game.cards, inquisitorCard.id);
-          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, inquisitorCard.id);
+        if (policeCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, policeCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, policeCard.id);
           result.cards = cardsAfterReplacement;
         }
         
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.fail('Inquisitor')
+          message: GameMessages.challenges.fail('Police')
         })];
 
         result.actionInProgress = {
@@ -541,14 +541,14 @@ export const swapAction: ActionHandler = {
           losingPlayer: playerId,
           challengeInProgress: true,
           challengeDefense: true,
-          revealedInquisitorCardId: inquisitorCard?.id,
+          revealedPoliceCardId: policeCard?.id,
           responses: updatedResponses
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.challenges.success('Inquisitor')
+          message: GameMessages.challenges.success('Police')
         })];
 
         result.actionInProgress = {

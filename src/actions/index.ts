@@ -1,12 +1,12 @@
 import { ActionHandler } from './types';
 import { incomeAction } from './income';
 import { foreignAidAction } from './foreignAid';
-import { dukeAction } from './duke';
-import { assassinateAction } from './assassinate';
+import { bankerAction } from './banker';
+import { hackAction } from './hacker';
 import { stealAction } from './steal';
 import { exchangeAction } from './exchange';
-import { coupAction } from './coup';
-import { investigateAction, swapAction } from './inquisitor';
+import { scandalAction } from './scandal';
+import { investigateAction, swapAction } from './police';
 import { ResponseType, CardType } from '../types';
 
 // Export the ActionResponse interface directly
@@ -22,11 +22,11 @@ export interface ActionResponse {
 export const actions: Record<string, ActionHandler> = {
   'income': incomeAction,
   'foreign-aid': foreignAidAction,
-  'duke': dukeAction,
-  'assassinate': assassinateAction,
+  'banker': bankerAction,
+  'hack': hackAction,
   'steal': stealAction,
   'exchange': exchangeAction,
-  'coup': coupAction,
+  'scandal': scandalAction,
   'investigate': investigateAction,
   'swap': swapAction
 };

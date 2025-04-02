@@ -17,7 +17,7 @@ export interface ICardService {
 export class CardService implements ICardService {
   createDeck(): Card[] {
     const cards: Card[] = [];
-    const cardTypes: CardType[] = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'];
+    const cardTypes: CardType[] = ['Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police'];
     
     cardTypes.forEach(cardType => {
       for (let i = 0; i < 3; i++) {
@@ -164,7 +164,7 @@ export class CardService implements ICardService {
   validateCardCounts(cards: Card[]): boolean {
     if (cards.length !== 18) return false;
     
-    const cardTypes: CardType[] = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'];
+    const cardTypes: CardType[] = ['Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police'];
     for (const cardType of cardTypes) {
       const count = cards.filter(c => c.name === cardType).length;
       if (count !== 3) return false;

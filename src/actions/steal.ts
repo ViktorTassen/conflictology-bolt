@@ -106,7 +106,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
+          message: GameMessages.results.steal(stolenCoins)
         }));
         
         result.players = updatedPlayers;
@@ -127,13 +127,6 @@ export const stealAction: ActionHandler = {
         }
         
         if (playerId !== game.actionInProgress.target) {
-          const targetCanBlock = cardService.hasCardType(game.cards, game.actionInProgress.target ?? 0, 'Captain') ||
-                                cardService.hasCardType(game.cards, game.actionInProgress.target ?? 0, 'Ambassador') ||
-                                cardService.hasCardType(game.cards, game.actionInProgress.target ?? 0, 'Inquisitor');
-          
-          if (targetCanBlock) {
-            result.logs.push(loggingService.createSystemLog(GameMessages.system.blockingOptions(targetPlayer.name)));
-          }
           
           const { losingPlayer, challengeDefense, challengeInProgress, ...restActionProps } = game.actionInProgress;
           
@@ -156,7 +149,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
+          message: GameMessages.results.steal(stolenCoins)
         }));
         
         result.players = updatedPlayers;
@@ -172,8 +165,8 @@ export const stealAction: ActionHandler = {
     }
 
     if (response.type === 'block') {
-      if (!response.card || !['Captain', 'Ambassador', 'Inquisitor'].includes(response.card)) {
-        throw new Error('Must block with Captain, Ambassador, or Inquisitor');
+      if (!response.card || !['Mafia', 'Reporter', 'Police'].includes(response.card)) {
+        throw new Error('Must block with Mafia, Reporter, or Police');
       }
       
       if (playerId !== game.actionInProgress.target) {
@@ -200,27 +193,27 @@ export const stealAction: ActionHandler = {
     } 
 
     if (response.type === 'challenge' && game.actionInProgress.blockingPlayer === undefined) {
-      const hasCaptain = cardService.hasCardType(game.cards, actionPlayer.id, 'Captain');
+      const hasMafia = cardService.hasCardType(game.cards, actionPlayer.id, 'Mafia');
 
-      if (hasCaptain) {
-        const captainCard = game.cards.find(
+      if (hasMafia) {
+        const mafiaCard = game.cards.find(
           c => c.playerId === actionPlayer.id && 
           c.location === 'player' && 
           !c.revealed && 
-          c.name === 'Captain'
+          c.name === 'Mafia'
         );
         
-        if (captainCard) {
-          const updatedCardsWithReveal = cardService.revealCard(game.cards, captainCard.id);
-          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, captainCard.id);
+        if (mafiaCard) {
+          const updatedCardsWithReveal = cardService.revealCard(game.cards, mafiaCard.id);
+          const cardsAfterReplacement = cardService.replaceCard(updatedCardsWithReveal, mafiaCard.id);
           result.cards = cardsAfterReplacement;
         }
         
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          card: 'Captain',
-          message: GameMessages.challenges.fail('Captain')
+          card: 'Mafia',
+          message: GameMessages.challenges.fail('Mafia')
         })];
 
         result.actionInProgress = {
@@ -229,14 +222,14 @@ export const stealAction: ActionHandler = {
           challengeInProgress: true,
           challengeDefense: true,
           responses: updatedResponses,
-          revealedCaptainCardId: captainCard?.id
+          revealedMafiaCardId: mafiaCard?.id
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          card: 'Captain',
-          message: GameMessages.challenges.success('Captain')
+          card: 'Mafia',
+          message: GameMessages.challenges.success('Mafia')
         })];
 
         result.actionInProgress = {
@@ -351,7 +344,7 @@ export const stealAction: ActionHandler = {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
+          message: GameMessages.results.steal(stolenCoins)
         }));
 
         result.players = updatedPlayers;
@@ -395,7 +388,7 @@ export const stealAction: ActionHandler = {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: GameMessages.results.steal(stolenCoins, targetPlayer.name)
+            message: GameMessages.results.steal(stolenCoins)
           })];
 
           result.players = updatedPlayers;

@@ -18,7 +18,7 @@ export interface Player {
 }
 
 // Game state types
-export const CARDS = ['Duke', 'Assassin', 'Captain', 'Ambassador', 'Contessa', 'Inquisitor'] as const;
+export const CARDS = ['Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police'] as const;
 export type CardType = typeof CARDS[number];
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
@@ -33,16 +33,17 @@ export type GameState =
   | 'waiting_for_card_selection'
   | 'waiting_for_investigate_decision';
 
-// Action types
+
+
 export type ActionType = 
   | 'income'
   | 'foreign-aid'
-  | 'duke'
-  | 'assassinate'
+  | 'banker' 
+  | 'hack'
   | 'steal'
   | 'exchange'
-  | 'coup'
-  | 'contessa'
+  | 'scandal'
+  | 'judge' 
   | 'investigate'
   | 'swap';
 
@@ -117,19 +118,19 @@ export interface Game {
     losingPlayer?: number;
     challengeDefense?: boolean;
     challengeInProgress?: boolean;
-    loseTwo?: boolean; // Flag to indicate that challenger loses two influence cards (for Assassin)
+    loseTwo?: boolean; // Flag to indicate that challenger loses two influence cards (for Hacker)
     exchangeCards?: string[]; // Now stores card IDs instead of CardType
     investigateCard?: {
       cardId: string;
       cardIndex: number;
     };
-    // IDs of cards revealed during successful defense of challenges
-    revealedDukeCardId?: string;
-    revealedCaptainCardId?: string;
-    revealedAmbassadorCardId?: string;
-    revealedAssassinCardId?: string;
-    revealedContessaCardId?: string;
-    revealedInquisitorCardId?: string;
+
+    revealedBankerCardId?: string;
+    revealedMafiaCardId?: string;
+    revealedReporterCardId?: string;
+    revealedHackerCardId?: string;
+    revealedJudgeCardId?: string;
+    revealedPoliceCardId?: string;
     revealedBlockingCardId?: string; // Generic for any blocking card
     responses: Record<number, { 
       type: ResponseType;

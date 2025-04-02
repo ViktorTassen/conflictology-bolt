@@ -46,7 +46,7 @@ export class LoggingService implements ILoggingService {
       case 'foreign-aid':
         return data.coins ? GameMessages.results.foreignAid : GameMessages.actions.foreignAid;
       
-      case 'duke':
+      case 'banker':
         return data.coins ? GameMessages.results.tax : GameMessages.actions.tax;
       
       case 'steal':
@@ -54,10 +54,10 @@ export class LoggingService implements ILoggingService {
           GameMessages.results.steal(data.coins, data.target) : 
           GameMessages.actions.steal;
       
-      case 'assassinate':
+      case 'hack':
         return data.target ? 
-          GameMessages.results.assassinate(data.target) : 
-          GameMessages.actions.assassinate;
+          GameMessages.results.hack(data.target) : 
+          GameMessages.actions.hack;
       
       case 'exchange':
         return GameMessages.results.exchange;
@@ -70,8 +70,8 @@ export class LoggingService implements ILoggingService {
         }
         return GameMessages.actions.investigate;
       
-      case 'coup':
-        return GameMessages.actions.coup(data.coins || 0);
+      case 'scandal':
+        return GameMessages.actions.scandal(data.coins || 0);
       
       case 'block':
         return data.card ? 
