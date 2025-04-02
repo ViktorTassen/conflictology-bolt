@@ -1,6 +1,5 @@
 import { ActionHandler, ActionResponse, ActionResult, advanceToNextTurn } from './types';
 import { GameMessages } from '../messages';
-import { CardType } from '../types';
 import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
 
