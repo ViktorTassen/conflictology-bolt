@@ -47,7 +47,6 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
   // Get winner info
   const winnerIndex = game.winner !== undefined ? game.winner : -1;
   const winner = winnerIndex !== -1 ? game.players[winnerIndex] : undefined;
-  const isCurrentPlayerWinner = winner?.id === currentPlayerId;
 
   return (
     <div className="relative h-full">
@@ -106,26 +105,23 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
             {/* Content */}
             <div className="relative flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Trophy className="w-6 h-6 text-yellow-400 animate-pulse-slow" />
-                  <h3 className="text-yellow-100 font-semibold text-md uppercase tracking-wide">Last Match Winner</h3>
-                </div>
+              <h3 className="text-yellow-100 font-semibold text-md tracking-wide mb-2 text-center">Last Match Winner</h3>
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-md shadow-md ring-2 ring-yellow-500/30" 
+                    className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-md shadow-md" 
                     style={{ backgroundColor: winner.color }}
                   >
                     {winner.name.substring(0, 1).toUpperCase()}
                   </div>
                   <span className="text-lg text-white font-medium">
-                    {isCurrentPlayerWinner ? 'You' : winner.name}
+                    {winner.name}
                   </span>
                 </div>
               </div>
               
               {/* Trophy on the right */}
               <div className="opacity-20 absolute right-4 bottom-0 transform translate-y-1/4">
-                <Trophy className="w-24 h-24 text-yellow-400/60" />
+                <Trophy className="w-24 h-24 text-yellow-400" />
               </div>
             </div>
           </div>
