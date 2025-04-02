@@ -1,6 +1,6 @@
 import { DollarSign, Skull } from 'lucide-react';
 import { Player, Card } from '../types';
-import backImage from '../assets/images/back.png';
+import backImage from '../assets/images/back-2.png';
 import { cardService } from '../services/CardService';
 
 interface PlayerCardProps {
@@ -151,7 +151,7 @@ export function PlayerCard({
               shadow-sm
             `}
             style={{
-              transform: `translateY(${index * 2}px) rotate(${index * 5}deg)`,
+              transform: `translateY(${index * -3}px) rotate(${index * -6 }deg)`,
             }}
           >
             <img 

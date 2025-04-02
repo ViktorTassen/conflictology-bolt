@@ -1,5 +1,5 @@
 import { Card } from '../types';
-import backImage from '../assets/images/back.png';
+import backImage from '../assets/images/back-2.png';
 
 interface InfluenceCardsProps {
   playerId: number;
