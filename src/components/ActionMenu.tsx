@@ -113,10 +113,6 @@ export function ActionMenu({ onClose, onActionSelect, playerCoins }: ActionMenuP
       
       {/* Character actions section */}
       <div className="space-y-1.5">
-        <div className="px-2 py-1 text-xs text-slate-500 uppercase tracking-wider font-medium flex items-center">
-          <span>Character Actions</span>
-          <div className="flex-1 h-px bg-slate-800/50 ml-2"></div>
-        </div>
         {characterActions.map((action, index) => {
           // Make Contessa non-actionable as it's just for reference
           const isContessa = action.type === 'contessa';
