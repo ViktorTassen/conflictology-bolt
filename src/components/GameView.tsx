@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, ArrowLeft, Info, Skull, X } from 'lucide-react';
+import { Fingerprint, ArrowLeft, Info, Skull, X } from 'lucide-react';
 import { GameAction, GameState, CardType } from '../types';
 import { GameLog } from './GameLog';
 import { PlayerCard } from './PlayerCard';
@@ -509,7 +509,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                         ${!isCurrentTurn ? 'bg-amber-400/20 opacity-0' : ''}
                       `} />
 
-                      <Menu className={`
+                      <Fingerprint className={`
                         relative
                         w-6 h-6
                         transition-all duration-300
