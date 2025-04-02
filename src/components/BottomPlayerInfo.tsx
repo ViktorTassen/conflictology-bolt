@@ -53,7 +53,7 @@ export function BottomPlayerInfo({ player }: BottomPlayerInfoProps) {
             <div className="flex items-center gap-1 bg-black/20 rounded-full px-1.5 py-0.5 w-fit">
               <DollarSign className="w-3 h-3 text-yellow-500" />
               <span className="text-[10px] font-bold text-yellow-500">
-                {player.coins}.0M
+                {player.coins}M
               </span>
             </div>
           </div>
