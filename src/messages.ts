@@ -16,7 +16,6 @@ export const GameMessages = {
     hackBlocked: 'The hack was blocked.',
     secondInfluenceLoss: (name: string) => `${name} must lose a second card after failed Hacker challenge.`,
     failedBlockDefense: (name: string, card: string) => `${name} must lose two cards (hack and failed ${card} defense).`,
-    cardReveal: (name: string, card: string) => `${name} reveals ${card}.`,
     swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`
   },
@@ -29,7 +28,7 @@ export const GameMessages = {
     hack: 'pays $3M to launch a Hack on',
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
-    swap: 'claims Police to Swap cards',
+    swap: 'claims Police to Swap one card',
     scandal: (coins: number) => coins >= 10 ? 'has >$10M! Pays $7M to Scandal' : 'pays $7M to Scandal'
   },
 
@@ -67,7 +66,7 @@ export const GameMessages = {
     allow: 'allows action',
     allowBlock: 'allows to block',
     eliminated: 'eliminated from game',
-    loseInfluence: 'loses 1 card of influence',
+    loseInfluence: 'loses one card of influence',
     showCard: 'shows a card to',
   }
 };

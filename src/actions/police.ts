@@ -195,7 +195,6 @@ export const investigateAction: ActionHandler = {
           playerId === game.actionInProgress.player && 
           game.actionInProgress.challengeDefense) {
           
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.cardReveal(actionPlayer.name, cardToReveal.name)));
           
         result.actionInProgress = {
           type: 'investigate',
@@ -226,7 +225,6 @@ export const investigateAction: ActionHandler = {
           return result;
         }
         
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.cardReveal(actionPlayer.name, cardToReveal.name)));
           
         result.actionInProgress = {
           type: game.actionInProgress.type,
@@ -469,7 +467,6 @@ export const swapAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.cardReveal(actionPlayer.name, cardToReveal.name)));
         
         const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
         
@@ -490,7 +487,6 @@ export const swapAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.cardReveal(actionPlayer.name, cardToReveal.name)));
         
         result.actionInProgress = {
           type: game.actionInProgress.type,
