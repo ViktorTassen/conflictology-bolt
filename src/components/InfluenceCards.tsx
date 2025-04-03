@@ -28,13 +28,25 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
     return a.position - b.position;
   });
   
-  // Keep track of previous cards for animation
-  const [previousCards, setPreviousCards] = useState<Card[]>([]);
-  const [animatingPositions, setAnimatingPositions] = useState<number[]>([]);
-  const cardMapRef = useRef(new Map<number, string>());
+  // Use refs to track previous cards without causing re-renders
+  const previousCardsRef = useRef<Card[]>([]);
+  const animationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [animationState, setAnimationState] = useState<{
+    animatingPositions: number[],
+    outgoingCards: Map<number, Card>
+  }>({
+    animatingPositions: [],
+    outgoingCards: new Map()
+  });
   
-  // Detect card replacements
+  // Detect card replacements - runs only once on mount and when sortedPlayerCards changes
   useEffect(() => {
+    // Skip the first render when previousCardsRef is empty
+    if (previousCardsRef.current.length === 0) {
+      previousCardsRef.current = [...sortedPlayerCards];
+      return;
+    }
+    
     // Create a map of the current cards by position for easy lookup
     const currentCardMap = new Map<number, string>();
     sortedPlayerCards.forEach(card => {
@@ -43,47 +55,66 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
       }
     });
     
-    // Check for replaced cards (same position, different card ID)
-    const replacedPositions: number[] = [];
-    previousCards.forEach(prevCard => {
-      if (prevCard.position !== null) {
-        const currentCardId = currentCardMap.get(prevCard.position);
-        if (currentCardId && currentCardId !== prevCard.id) {
-          replacedPositions.push(prevCard.position);
-        }
+    // Create map of previous cards by position for comparison
+    const prevCardsByPosition = new Map<number, Card>();
+    previousCardsRef.current.forEach(card => {
+      if (card.position !== null) {
+        prevCardsByPosition.set(card.position, card);
       }
     });
     
+    // Check for replaced cards (same position, different card ID)
+    const replacedPositions: number[] = [];
+    const newOutgoingCards = new Map<number, Card>();
+    
+    // Compare previous cards to current cards
+    Array.from(prevCardsByPosition.entries()).forEach(([position, prevCard]) => {
+      const currentCardId = currentCardMap.get(position);
+      if (currentCardId && currentCardId !== prevCard.id) {
+        replacedPositions.push(position);
+        newOutgoingCards.set(position, prevCard);
+      }
+    });
+    
+    // Only update state if there are replaced positions
     if (replacedPositions.length > 0) {
       // Start animation for replaced positions
-      setAnimatingPositions(replacedPositions);
-      
-      // Keep track of cards before replacement
-      const prevCardMap = new Map<number, string>();
-      previousCards.forEach(card => {
-        if (card.position !== null) {
-          prevCardMap.set(card.position, card.id);
-        }
+      setAnimationState({
+        animatingPositions: replacedPositions,
+        outgoingCards: newOutgoingCards
       });
-      cardMapRef.current = prevCardMap;
+      
+      // Clear previous timer if it exists
+      if (animationTimerRef.current) {
+        clearTimeout(animationTimerRef.current);
+      }
       
       // Clear animation after duration
-      const timer = setTimeout(() => {
-        setAnimatingPositions([]);
+      animationTimerRef.current = setTimeout(() => {
+        setAnimationState(prev => ({
+          ...prev,
+          animatingPositions: []
+        }));
+        animationTimerRef.current = null;
       }, ANIMATION_DURATION);
-      
-      return () => clearTimeout(timer);
     }
     
-    // Update previous cards for next comparison
-    setPreviousCards(sortedPlayerCards);
-  }, [sortedPlayerCards, previousCards]);
+    // Update previous cards ref for next comparison
+    previousCardsRef.current = [...sortedPlayerCards];
+    
+    // Clean up animation timer on unmount
+    return () => {
+      if (animationTimerRef.current) {
+        clearTimeout(animationTimerRef.current);
+      }
+    };
+  }, [sortedPlayerCards]);
 
   return (
     <div className="flex gap-1 transform -rotate-6">
       {sortedPlayerCards.map((card) => {
         // Check if this card position is being animated
-        const isAnimating = card.position !== null && animatingPositions.includes(card.position);
+        const isAnimating = card.position !== null && animationState.animatingPositions.includes(card.position);
         
         // Import dynamically from assets for face-up cards
         const cardImage = showFaceUp 
@@ -156,18 +187,18 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
                 }}
               >
                 <img
-                  src={showFaceUp 
+                  src={showFaceUp && card.position !== null && animationState.outgoingCards.has(card.position)
                     ? `${new URL(`../assets/images/${
-                        previousCards.find(pc => pc.position === card.position)?.name.toLowerCase() || 'back'
+                        animationState.outgoingCards.get(card.position)?.name.toLowerCase() || 'back'
                       }.png`, import.meta.url).href}`
                     : backImage}
                   alt="Previous card"
                   className="w-full h-full object-cover"
                 />
-                {showFaceUp && (
+                {showFaceUp && card.position !== null && animationState.outgoingCards.has(card.position) && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
                     <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
-                      {previousCards.find(pc => pc.position === card.position)?.name}
+                      {animationState.outgoingCards.get(card.position)?.name}
                     </div>
                   </div>
                 )}
