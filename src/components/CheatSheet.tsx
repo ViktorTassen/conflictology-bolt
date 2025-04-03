@@ -1,5 +1,5 @@
 import { CardType } from '../types';
-import { DollarSign, Skull, Euro, Shield, Swords } from 'lucide-react';
+import { DollarSign, Skull, Euro, Shield, Swords, ExternalLink } from 'lucide-react';
 
 import bankerImage from '../assets/images/banker.png';
 import hackerImage from '../assets/images/hacker.png';
@@ -13,7 +13,8 @@ interface ActionInfo {
   type: string;
   card?: CardType;
   cost?: number;
-  description: string;
+  description1: string;
+  description2: string;
   canBeBlocked?: boolean;
   canBeChallenged?: boolean;
   blockedBy?: CardType[];
@@ -22,57 +23,14 @@ interface ActionInfo {
   isDefensive?: boolean;
 }
 
-function ActionCard({ action }: { action: ActionInfo }) {
-  return (
-    <div className="relative flex gap-3 p-3 rounded-xl bg-[#2a2a2a] shadow-sm">
-      {/* Icon or Image */}
-      <div className="flex-shrink-0 w-10 h-14 rounded-md overflow-hidden shadow-md">
-        {action.icon && <action.icon className="w-6 h-6 text-amber-400 mt-4 ml-2" />}
-        {action.cardImage && (
-          <img src={action.cardImage} alt={action.card || action.name} className="w-full h-full object-cover" />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 relative">
-        <div className="pr-12">
-          <h3 className="text-xs font-bold text-slate-200">
-            {action.name}
-            {action.cost && <span className="ml-1 text-amber-400">(${action.cost}M)</span>}
-            {action.isDefensive && <span className="ml-1 text-purple-400 text-[10px] font-medium">Defensive</span>}
-          </h3>
-          <p className="text-[11px] text-slate-300 mt-0.5">{action.description}</p>
-        </div>
-
-        {/* Chips */}
-        <div className="absolute top-0 right-0 flex gap-1">
-          {!action.isDefensive && action.canBeChallenged !== false && (
-            <div className="flex items-center gap-1 bg-yellow-500/10 border border-yellow-500 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full">
-              <Swords className="w-3 h-3" /> Challenge
-            </div>
-          )}
-          {action.isDefensive && (
-            <div className="flex items-center gap-1 bg-yellow-500/10 border border-yellow-500 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full">
-              <Swords className="w-3 h-3" /> Block Challenge
-            </div>
-          )}
-          {action.blockedBy && (
-            <div className="flex items-center gap-1 bg-red-500/10 border border-red-500 text-red-400 text-[10px] px-2 py-0.5 rounded-full">
-              <Shield className="w-3 h-3" /> Blocked: {action.blockedBy.join(', ')}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function CheatSheet() {
   const basicActions: ActionInfo[] = [
     {
       name: 'Income',
       type: 'income',
-      description: 'Take $1M from treasury',
+      description1: 'Take $1M from the Treasury',
+      description2: '',
       canBeBlocked: false,
       canBeChallenged: false,
       icon: DollarSign,
@@ -80,8 +38,10 @@ export function CheatSheet() {
     {
       name: 'Foreign Aid',
       type: 'foreign-aid',
-      description: 'Take $2M from treasury',
+      description1: 'Take $2M from the Treasury',
+      description2: '',
       canBeBlocked: true,
+      canBeChallenged: false,
       blockedBy: ['Banker'],
       icon: Euro,
     },
@@ -89,26 +49,30 @@ export function CheatSheet() {
       name: 'Scandal',
       type: 'scandal',
       cost: 7,
-      description: 'Pay $7M to force 1 card loss. Required with $10M+.',
+      description1: 'Pay $7M. Choose a player to lose 1 card. Mandatory if your balance is $10M+',
+      description2: '',
       canBeBlocked: false,
+      canBeChallenged: false,
       icon: Skull,
     },
   ];
 
   const characterActions: ActionInfo[] = [
     {
-      name: 'Banker (Tax)',
+      name: 'Banker',
       type: 'banker',
       card: 'Banker',
-      description: 'Take $3M from treasury',
+      description1: 'Take $3M from the Treasury',
+      description2: '',
       canBeBlocked: false,
       cardImage: bankerImage,
     },
     {
-      name: 'Mafia (Steal)',
+      name: 'Mafia',
       type: 'steal',
       card: 'Mafia',
-      description: 'Take up to $2M from another player',
+      description1: 'Steal up to $2M from target player',
+      description2: '',
       canBeBlocked: true,
       blockedBy: ['Mafia', 'Reporter', 'Police'],
       cardImage: mafiaImage,
@@ -118,16 +82,18 @@ export function CheatSheet() {
       type: 'hack',
       card: 'Hacker',
       cost: 3,
-      description: 'Pay $3M to force card loss',
+      description1: 'Pay $3M to force a target player to lose 1 card. If blocked, hack fails, but the Hacker’s fee is not refunded.',
+      description2: '',
       canBeBlocked: true,
       blockedBy: ['Judge'],
       cardImage: hackerImage,
     },
     {
-      name: 'Reporter (Exchange)',
+      name: 'Reporter',
       type: 'exchange',
       card: 'Reporter',
-      description: 'Exchange cards with Court deck',
+      description1: 'Draw 2 cards from the deck. You may exchange one or both with your face-down cards. Then return 2 cards to the deck.',
+      description2: '',
       canBeBlocked: false,
       cardImage: reporterImage,
     },
@@ -135,7 +101,8 @@ export function CheatSheet() {
       name: 'Police',
       type: 'police',
       card: 'Police',
-      description: 'Investigate: Look at card & decide swap OR Swap: Exchange one card with Court',
+      description1: "Investigate: Look at one of a target player's face-down cards. You may either ① Let them keep it or ② Force them to discard it and draw a new card from the deck",
+      description2: 'Swap: Draw 1 card from the deck. You may swap it with one of your face-down cards. Then return 1 card to the deck.',
       canBeBlocked: false,
       cardImage: policeImage,
     },
@@ -143,64 +110,128 @@ export function CheatSheet() {
       name: 'Judge',
       type: 'judge',
       card: 'Judge',
-      description: 'Blocks hack attempts against you',
+      description1: 'Targeted player may claim the Judge to block Hacker. ',
+      description2: '',
       isDefensive: true,
+      canBeChallenged: true,
       cardImage: judgeImage,
     },
   ];
 
   return (
 
-    <div className="mx-auto overflow-y-auto p-3 bg-[#1e1e1e] rounded-xl shadow-inner">
-      <div className="flex flex-col gap-3">
+    <div className="mx-auto p-1">
+      <div className="flex flex-col gap-1">
+
+
         {[...basicActions, ...characterActions].map((action, index) => (
           <div
             key={index}
-            className="flex items-start gap-3 p-3 rounded-lg bg-[#2a2a2a] shadow-sm border border-white/5"
+            className="flex items-start gap-2 px-2 py-2.5 rounded-md bg-[#2a2a2a]/40"
           >
             {/* Left: Icon or Card Image */}
-            <div className="w-10 h-10 flex-shrink-0 rounded-md bg-black/20 flex items-center justify-center overflow-hidden">
-              {action.icon && <action.icon className="w-5 h-5 text-amber-400" />}
-              {action.cardImage && (
+
+            {action.cardImage && (
+              <div className="w-7 h-10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+
                 <img
                   src={action.cardImage}
                   alt={action.card || action.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-sm"
                 />
-              )}
-            </div>
+
+              </div>
+            )}
+
+            {action.icon && (
+              <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <action.icon className="w-5 h-5 text-slate-400" />
+              </div>
+            )}
+
+
+
 
             {/* Right: Content */}
-            <div className="flex-1">
-              <h3 className="text-[13px] font-semibold text-slate-200 leading-snug">
-                {action.name}
-                {action.cost && (
-                  <span className="ml-1 text-amber-400 text-[11px]">(${action.cost}M)</span>
-                )}
-                {action.isDefensive && (
-                  <span className="ml-1 text-purple-400 text-[10px] font-medium">Defensive</span>
-                )}
-              </h3>
-              <p className="text-[11px] text-slate-300 mt-0.5 leading-tight">
-                {action.description}
-              </p>
+            <div className="flex-1 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-slate-200 leading-snug">
+                  {action.name}
+                </h3>
 
-              <div className="flex flex-wrap gap-1 mt-1">
-                {(!action.isDefensive && action.canBeChallenged !== false) || action.isDefensive ? (
-                  <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 rounded-full border border-yellow-400">
-                    <Swords className="w-3 h-3" /> Challenge
-                  </span>
-                ) : null}
+                {/* Chips */}
+                <div className="flex flex-wrap gap-2">
+                  {action.blockedBy && (
+                    <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 bg-red-500/10 text-red-400 rounded-full border border-red-400">
+                      <Shield className="w-2.5 h-2.5" /> {action.blockedBy.join(', ')}
+                    </span>
+                  )}
 
-                {action.blockedBy && (
-                  <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 bg-red-500/10 text-red-400 rounded-full border border-red-400">
-                    <Shield className="w-3 h-3" /> {action.blockedBy.join(', ')}
-                  </span>
+                  {action.isDefensive && (
+                    <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 bg-purple-400/10 text-purple-400 rounded-full border border-purple-400">
+                      Defensive
+                    </span>
+
+                  )}
+
+                  {(action.canBeChallenged !== false) ? (
+                    <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 rounded-full border border-yellow-400">
+                      <Swords className="w-2.5 h-2.5" />
+                    </span>
+                  ) : null}
+                </div>
+
+              </div>
+
+
+              <div>
+                <p className="text-[10px] text-slate-300 leading-tight">
+                  {action.description1}
+                </p>
+
+                {action.description2 && (
+                  <>
+                    {/* Divider with OR */}
+                    <div className="flex items-center my-0.5 w-12">
+                      <div className="flex-grow border-t border-slate-400"></div>
+                      <span className="px-1 text-[8px] text-slate-400">OR</span>
+                      <div className="flex-grow border-t border-slate-400"></div>
+                    </div>
+
+                    <p className="text-[10px] text-slate-300 leading-tight">
+                      {action.description2}
+                    </p>
+                  </>
                 )}
               </div>
+
+
             </div>
           </div>
         ))}
+
+
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400 mt-1">
+          <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 bg-red-500/10 text-red-400 rounded-full border border-red-400">
+            <Shield className="w-2.5 h-2.5" /> Can be Blocked by
+          </span>
+          <span className="flex items-center gap-1 text-[9px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 rounded-full border border-yellow-400">
+            <Swords className="w-2.5 h-2.5" /> Can be Challenged
+          </span>
+
+        </div>
+        <div className="flex flex-wrap items-center justify-center mt-1">
+          <a
+            href="https://conflictologygames.com/capitol/rules"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-blue-500 hover:underline text-[10px]"
+          >
+            Full Rules <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+
+
       </div>
     </div>
   );

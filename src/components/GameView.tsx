@@ -372,7 +372,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
           >
             <X className="w-5 h-5 text-white/80" />
           </button>
-          <div className="h-full overflow-auto p-4">
+          <div className="h-full overflow-auto p-2">
             <CheatSheet />
           </div>
         </div>
