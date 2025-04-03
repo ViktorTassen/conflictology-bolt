@@ -29,7 +29,7 @@ export const GameMessages = {
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
     swap: 'claims Police to Swap one card',
-    scandal: (coins: number) => coins >= 10 ? 'has >$10M! Pays $7M to Scandal' : 'pays $7M to Scandal'
+    scandal: (coins: number) => coins >= 10 ? 'forced to pay $7M to Scandalch' : 'pays $7M to Scandal'
   },
 
   // Action results
@@ -39,7 +39,7 @@ export const GameMessages = {
     foreignAid: 'receives Foreign Aid (+$2M)',
     steal: (coins: number) => `Steals $${coins}M from`,
     exchange: 'completes the 2 cards Exchange',
-    swap: 'completes the card Swap',
+    swap: 'completes the card swap',
     investigateKeep: () => 'lets them keep their card',
     investigateSwap: () => 'forces them to swap their card',
     hack: (targetName: string) => `executed Hacker attack on ${targetName}`
@@ -55,10 +55,10 @@ export const GameMessages = {
   // Challenges
   challenges: {
     generic: 'challenges',
-    success: (card: string) => `challenges ${card} claim! Success`,
-    fail: (card: string) => `challenges ${card} claim! Fails`,
-    blockSuccess: (card: string) => `challenges ${card} block! Success`,
-    blockFail: (card: string) => `challenges ${card} block! Fails`
+    success: (card: string) => `challenges ${card} claim.. Success!`,
+    fail: (card: string) => `challenges ${card} claim.. Fails!`,
+    blockSuccess: (card: string) => `challenges ${card} block.. Success`,
+    blockFail: (card: string) => `challenges ${card} block.. Fails`
   },
 
   // Player responses

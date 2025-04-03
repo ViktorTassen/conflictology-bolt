@@ -97,8 +97,11 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       
+      // Check if this is a player who should lose a second card 
+      // (only the target of Hacker action who failed a challenge)
       if (game.actionInProgress.loseTwo && remainingCards.length > 0 && 
           playerId === game.actionInProgress.losingPlayer &&
+          playerId === game.actionInProgress.target &&
           playerId !== game.actionInProgress.player) {
         
         result.actionInProgress = {
@@ -159,13 +162,21 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         }
         
         if (playerId !== game.actionInProgress.target) {
+          // This is a third-party challenger (not the target) who failed
+          // Continue with the action against the original target
           
-          const { losingPlayer, challengeDefense, challengeInProgress, ...restActionProps } = game.actionInProgress;
+          // Reset challenges flags and set up for target to lose influence
+          const { losingPlayer, challengeDefense, challengeInProgress, loseTwo, ...restActionProps } = game.actionInProgress;
           
           result.actionInProgress = {
             ...restActionProps,
+            losingPlayer: game.actionInProgress.target, // Set the target to lose influence
             responses: {}
           };
+          
+          result.logs.push(loggingService.createSystemLog(
+            `${targetPlayer.name} must now lose influence as the target of the Hacker action.`
+          ));
           
           result.players = game.players;
           return result;
@@ -236,7 +247,8 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           challengeDefense: true,
           responses: updatedResponses,
           revealedHackerCardId: hackerCard?.id,
-          loseTwo: true
+          // Only set loseTwo flag to true if the challenger is the target of the Hacker action
+          loseTwo: playerId === game.actionInProgress.target
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
