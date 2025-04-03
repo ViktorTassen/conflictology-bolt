@@ -50,7 +50,6 @@ export const investigateAction: ActionHandler = {
     }
 
     const actionPlayer = game.players[game.actionInProgress.player];
-    const targetPlayer = game.players[game.actionInProgress.target ?? 0];
     const result: ActionResult = {};
     
     if (response.type === 'select_card_for_investigation' && response.card) {
@@ -330,7 +329,7 @@ export const investigateAction: ActionHandler = {
 };
 
 export const swapAction: ActionHandler = {
-  execute: async ({ game, player, playerId }) => {
+  execute: async ({ player, playerId }) => {
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');
     }

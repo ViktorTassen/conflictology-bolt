@@ -51,7 +51,7 @@ export class LoggingService implements ILoggingService {
       
       case 'steal':
         return data.coins && data.target ? 
-          GameMessages.results.steal(data.coins, data.target) : 
+          GameMessages.results.steal(data.coins) : 
           GameMessages.actions.steal;
       
       case 'hack':
@@ -65,8 +65,8 @@ export class LoggingService implements ILoggingService {
       case 'investigate':
         if (data.target) {
           return data.keepCard ? 
-            GameMessages.results.investigateKeep(data.target) : 
-            GameMessages.results.investigateSwap(data.target);
+            GameMessages.results.investigateKeep() : 
+            GameMessages.results.investigateSwap();
         }
         return GameMessages.actions.investigate;
       

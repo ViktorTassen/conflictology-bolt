@@ -65,7 +65,7 @@ export function SelectCardForInvestigationDialog({
           {/* Cards */}
           <div className="mb-8">
             <div className="flex justify-center gap-3 flex-wrap">
-              {playerCards.map((card, i) => (
+              {playerCards.map((card) => (
                 <button
                   key={card.id}
                   onClick={() => onCardSelect(card.name)}

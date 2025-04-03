@@ -48,7 +48,7 @@ export type ActionType =
   | 'investigate'
   | 'swap';
 
-export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence' | 'exchange_selection' | 'select_card_for_investigation' | 'investigate_decision';
+export type ResponseType = 'allow' | 'block' | 'challenge' | 'lose_influence' | 'exchange_selection' | 'select_card_for_investigation' | 'investigate_decision'
 
 export interface GameAction {
   type: ActionType;
@@ -134,7 +134,7 @@ export interface Game {
     revealedPoliceCardId?: string;
     revealedBlockingCardId?: string; // Generic for any blocking card
     responses: Record<number, { 
-      type: ResponseType;
+      type: ResponseType | null;
       card?: CardType;
       selectedIndices?: number[];
     }>;

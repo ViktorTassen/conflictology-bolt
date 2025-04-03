@@ -4,7 +4,7 @@ import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
 
 export const foreignAidAction: ActionHandler = {
-  execute: async ({ game, player, playerId }) => {
+  execute: async ({ player, playerId }) => {
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');
     }
@@ -86,7 +86,6 @@ export const foreignAidAction: ActionHandler = {
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
         
-        const blockingPlayer = game.players[game.actionInProgress.blockingPlayer];
       }
 
       if (game.actionInProgress.blockingPlayer === playerId) {

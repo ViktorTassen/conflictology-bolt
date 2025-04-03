@@ -60,7 +60,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         // For other players during card investigation
         if (actionInProgress.type === 'investigate') {
           // If this player has already allowed, they should wait
-          if (actionInProgress.responses[playerId]?.type === 'allow') {
+          if ((actionInProgress.responses[playerId] as { type: string })?.type === 'allow') {
             return 'waiting_for_others';
           }
           
@@ -220,7 +220,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       // Special case: Don't show response buttons during investigation
       if (actionInProgress.type === 'investigate') {
         // Hide buttons if this player has already allowed
-        if (actionInProgress.responses[playerId]?.type === 'allow') {
+        if ((actionInProgress.responses[playerId] as { type: string })?.type === 'allow') {
           return false;
         }
         
@@ -256,8 +256,11 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       
       // Check if target has any non-revealed cards for investigate action
       if (selectedAction === 'investigate') {
-        const targetPlayer = game.players[targetId];
-        const targetHasCards = targetPlayer.influence.some(i => !i.revealed);
+        const targetHasCards = game.cards.some(card => 
+          card.playerId === targetId && 
+          card.location === 'player' && 
+          !card.revealed
+        );
         return targetHasCards && targetId !== playerId;
       }
       

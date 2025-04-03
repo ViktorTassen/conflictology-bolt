@@ -86,7 +86,7 @@ export function ExchangeCardsDialog({
             <div>
               <h4 className="text-white/80 text-sm font-semibold mb-3 text-center">Your Current Cards</h4>
               <div className="flex justify-center gap-3 flex-wrap">
-                {playerCards.map((card, i) => {
+                {playerCards.map((card) => {
                   const index = availableCards.findIndex(c => c.id === card.id);
                   
                   return (
@@ -123,7 +123,7 @@ export function ExchangeCardsDialog({
             <div>
               <h4 className="text-white/80 text-sm font-semibold mb-3 text-center">New Cards From Deck</h4>
               <div className="flex justify-center gap-3 flex-wrap">
-                {exchangeCards.map((card, i) => {
+                {exchangeCards.map((card) => {
                   const index = availableCards.findIndex(c => c.id === card.id);
                   
                   return (

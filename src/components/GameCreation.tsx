@@ -7,17 +7,6 @@ interface GameCreationProps {
   playerId: number;
 }
 
-// Six distinct colors for the game
-// const PLAYER_COLORS = [
-//   '#E74C3C', // Red
-//   '#2ECC71', // Green
-//   '#3498DB', // Blue
-//   '#F1C40F', // Yellow
-//   '#9B59B6', // Purple
-//   '#E67E22', // Orange
-
-// ];
-
 const PLAYER_COLORS = [
   "#C0392B", // Vibrant Red
   "#27AE60", // Bright Green
@@ -27,14 +16,6 @@ const PLAYER_COLORS = [
   "#E67E22"  // Bright Orange
 ]
 
-// For players who don't connect a profile picture
-// Note: We're not using these URLs anymore, but our avatar component
-// now handles showing the player's first initial with their color as background
-const AVATARS = [
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e',
-];
 
 export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
   const { createGame, joinGame } = useGame();

@@ -4,7 +4,7 @@ import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
 
 export const bankerAction: ActionHandler = { // Kept the name bankerAction for compatibility with index.ts
-  execute: async ({ game, player, playerId }) => {
+  execute: async ({ player, playerId }) => {
     if (player.eliminated) {
       throw new Error('Eliminated players cannot perform actions');
     }
