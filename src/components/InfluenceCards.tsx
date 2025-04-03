@@ -15,9 +15,16 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
     !card.revealed
   );
 
+  // Sort cards by position to ensure consistent display
+  const sortedPlayerCards = [...playerCards].sort((a, b) => {
+    // Handle null positions (should not happen for player cards)
+    if (a.position === null || b.position === null) return 0;
+    return a.position - b.position;
+  });
+
   return (
     <div className="flex gap-1 transform -rotate-6">
-      {playerCards.map((card, index) => {
+      {sortedPlayerCards.map((card) => {
         // Import dynamically from assets for face-up cards
         const cardImage = showFaceUp 
           ? new URL(`../assets/images/${card.name.toLowerCase()}.png`, import.meta.url).href
@@ -27,7 +34,7 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
           <div
             key={card.id}
             className={`w-[75px] h-[105px] rounded-md overflow-hidden transform ${
-              index === 1 ? 'rotate-6' : ''
+              card.position === 1 ? 'rotate-6' : ''
             }`}
             style={{
               boxShadow: '0 0 20px rgba(0,0,0,0.3)',

@@ -127,15 +127,28 @@ export const stealAction: ActionHandler = {
         }
         
         if (playerId !== game.actionInProgress.target) {
+          // This is a third-party challenger who failed (not the target)
+          // Complete the steal action immediately instead of showing more response buttons
+          const stolenCoins = Math.min(targetPlayer.coins, 2);
           
-          const { losingPlayer, challengeDefense, challengeInProgress, ...restActionProps } = game.actionInProgress;
+          const updatedPlayers = [...game.players];
+          updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
+          updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
           
-          result.actionInProgress = {
-            ...restActionProps,
-            responses: {}
-          };
+          result.logs.push(loggingService.createLog('steal', actionPlayer, {
+            target: targetPlayer.name,
+            targetColor: targetPlayer.color,
+            coins: stolenCoins,
+            message: GameMessages.results.steal(stolenCoins)
+          }));
           
-          result.players = game.players;
+          result.players = updatedPlayers;
+          result.actionInProgress = null; // Immediately resolve the action
+          
+          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
+          result.currentTurn = nextTurn.currentTurn;
+          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
+          
           return result;
         }
         

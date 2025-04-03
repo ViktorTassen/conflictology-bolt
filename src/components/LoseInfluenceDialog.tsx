@@ -26,11 +26,18 @@ interface LoseInfluenceDialogProps {
 }
 
 export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInfluenceDialogProps) {
-  const availableCards = cards.filter(card => 
-    card.playerId === playerId && 
-    card.location === 'player' && 
-    !card.revealed
-  );
+  // Get available cards and sort by position
+  const availableCards = cards
+    .filter(card => 
+      card.playerId === playerId && 
+      card.location === 'player' && 
+      !card.revealed
+    )
+    .sort((a, b) => {
+      // Handle null positions (should not happen for player cards)
+      if (a.position === null || b.position === null) return 0;
+      return a.position - b.position;
+    });
 
   if (availableCards.length === 0) return null;
 

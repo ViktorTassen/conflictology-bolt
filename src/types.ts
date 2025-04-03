@@ -5,6 +5,7 @@ export interface Card {
   playerId: number | null;
   location: 'player' | 'deck' | 'exchange' | 'investigate';
   revealed?: boolean;
+  position: number | null; // 0 or 1 for player cards, null for other locations
 }
 
 export interface Player {

@@ -60,14 +60,50 @@ export const exchangeAction: ActionHandler = {
         .map(card => card.id);
       
       let updatedCards = [...game.cards];
-      keptCardIds.forEach(cardId => {
+      
+      // Track which positions are already filled
+      const existingPlayerCards = playerCards.map(card => card.id);
+      const newKeptCards = keptCardIds.filter(id => !existingPlayerCards.includes(id));
+      const keptExistingCards = keptCardIds.filter(id => existingPlayerCards.includes(id));
+      
+      // First, handle cards that are already in the player's hand (maintain their positions)
+      keptExistingCards.forEach(cardId => {
+        // These already have the correct position, just ensure they stay in player's hand
         const cardIndex = updatedCards.findIndex(c => c.id === cardId);
         if (cardIndex !== -1) {
           updatedCards[cardIndex] = {
             ...updatedCards[cardIndex],
             playerId: actionPlayer.id,
             location: 'player'
+            // position remains unchanged
           };
+        }
+      });
+      
+      // Now assign new cards to positions that aren't filled
+      // Get positions that are now available (from cards that were discarded)
+      const availablePositions = [0, 1].filter(pos => {
+        return !updatedCards.some(card => 
+          card.playerId === actionPlayer.id && 
+          card.location === 'player' && 
+          !card.revealed && 
+          keptExistingCards.includes(card.id) && 
+          card.position === pos
+        );
+      });
+      
+      // Assign new cards to available positions
+      newKeptCards.forEach((cardId, index) => {
+        if (index < availablePositions.length) {
+          const cardIndex = updatedCards.findIndex(c => c.id === cardId);
+          if (cardIndex !== -1) {
+            updatedCards[cardIndex] = {
+              ...updatedCards[cardIndex],
+              playerId: actionPlayer.id,
+              location: 'player',
+              position: availablePositions[index]
+            };
+          }
         }
       });
       

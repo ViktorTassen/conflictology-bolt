@@ -26,7 +26,8 @@ export class CardService implements ICardService {
           name: cardType,
           playerId: null,
           location: 'deck',
-          revealed: false
+          revealed: false,
+          position: null
         });
       }
     });
@@ -55,7 +56,8 @@ export class CardService implements ICardService {
           updatedCards[cardIndex] = {
             ...updatedCards[cardIndex],
             playerId,
-            location: 'player'
+            location: 'player',
+            position: i // Set position to 0 or 1 based on the card order
           };
         }
       }
@@ -89,7 +91,8 @@ export class CardService implements ICardService {
       if (cardIndex !== -1) {
         updatedCards[cardIndex] = {
           ...updatedCards[cardIndex],
-          location
+          location,
+          position: null // Exchange and investigate cards have null position
         };
       }
     }
@@ -107,7 +110,8 @@ export class CardService implements ICardService {
           ...updatedCards[cardIndex],
           playerId: null,
           location: 'deck',
-          revealed: false
+          revealed: false,
+          position: null // Clear position when returning to deck
         };
       }
     });
@@ -142,23 +146,29 @@ export class CardService implements ICardService {
       return updatedCards;
     }
     
+    // Store the position from the card being replaced
+    const positionToMaintain = cardToReplace.position;
+    
     const cardIndex = updatedCards.findIndex(c => c.id === cardId);
     if (cardIndex !== -1) {
       updatedCards[cardIndex] = {
         ...updatedCards[cardIndex],
         playerId: null,
         location: 'deck',
-        revealed: false
+        revealed: false,
+        position: null // Clear position when returning to deck
       };
     }
     
     updatedCards[newCardIndex] = {
       ...updatedCards[newCardIndex],
       playerId: cardToReplace.playerId,
-      location: 'player'
+      location: 'player',
+      position: positionToMaintain // Preserve the same position (0 or 1)
     };
     
-    return this.shuffleCards(updatedCards);
+    // Don't shuffle when replacing cards to maintain the positions in a more predictable way
+    return updatedCards;
   }
 
   validateCardCounts(cards: Card[]): boolean {
