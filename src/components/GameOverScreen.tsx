@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Game } from '../types';
 import confetti from 'canvas-confetti';
 

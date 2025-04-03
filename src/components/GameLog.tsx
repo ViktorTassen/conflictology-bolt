@@ -1,3 +1,4 @@
+import React from 'react';
 import { GameLogEntry, GameState } from '../types';
 import { Clock } from 'lucide-react';
 import { GameMessages } from '../messages';
@@ -165,13 +166,44 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                       {truncateName(log.target || '')}
                     </span>
                   </>
+                ) : log.type === 'scandal' ? (
+                  <>
+                    {/* Special format for scandal message with target name in the middle */}
+                    {log.message && log.message.includes('@@TARGET@@') ? (
+                      <>
+                        <span className="text-gray-300 break-words">
+                          {log.message.split('@@TARGET@@')[0]}
+                        </span>
+                        <span 
+                          className="font-semibold whitespace-nowrap" 
+                          style={{ color: log.targetColor ?? '#FFFFFF' }}
+                        >
+                          {truncateName(log.target || '')}
+                        </span>
+                        <span className="text-gray-300 break-words">
+                          {log.message.split('@@TARGET@@')[1].split('##').map((part, i) => {
+                            // Even indices are regular text, odd indices are bold
+                            return i % 2 === 0 ? (
+                              <React.Fragment key={i}>{part}</React.Fragment>
+                            ) : (
+                              <span key={i} className="font-bold">{part}</span>
+                            );
+                          })}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-300 break-words">
+                        {log.message}
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <>
                     <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
                       {formatMessage(log.message || '', log.type === 'system')}
                     </span>
-                    {/* Show target name for all action types that have targets */}
-                    {log.target && log.type !== 'system' && ['hack', 'scandal', 'investigate', 'show-card'].includes(log.type) && (
+                    {/* Show target name for all action types that have targets except scandal */}
+                    {log.target && log.type !== 'system' && ['hack', 'investigate', 'show-card'].includes(log.type) && (
                       <span 
                         className="font-semibold whitespace-nowrap" 
                         style={{ color: log.targetColor ?? '#FFFFFF' }}

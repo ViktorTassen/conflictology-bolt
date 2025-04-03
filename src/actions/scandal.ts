@@ -43,8 +43,8 @@ export const scandalAction: ActionHandler = {
       logs: [loggingService.createLog('scandal', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        coins: player.coins,
-        message: GameMessages.actions.scandal(player.coins)
+        coins: 7, // Fixed cost of Scandal action
+        message: `pays $7M to expose @@TARGET@@ in a ##Scandal##.` // Special markers for target and bold
       })],
       actionInProgress: {
         type: 'scandal',

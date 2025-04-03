@@ -29,7 +29,7 @@ export const GameMessages = {
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
     swap: 'claims Police to Swap one card',
-    scandal: (coins: number) => coins >= 10 ? 'forced to pay $7M to Scandalch' : 'pays $7M to Scandal'
+    scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose' : 'pays $7M to expose'
   },
 
   // Action results
