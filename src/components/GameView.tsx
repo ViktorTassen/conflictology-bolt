@@ -439,8 +439,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
               <div className="absolute left-[56%] bottom-6 transform -translate-x-1/2 z-10">
                 <InfluenceCards 
                   playerId={playerId} 
-                  cards={game.cards} 
-                  showFaceUp={true} 
+                  cards={game.cards}
                 />
               </div>
 

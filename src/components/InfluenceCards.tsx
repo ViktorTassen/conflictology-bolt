@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '../types';
-import backImage from '../assets/images/back-2.png';
 
 interface InfluenceCardsProps {
   playerId: number;
   cards: Card[];
-  showFaceUp?: boolean;
 }
 
 // Animation timing constants
@@ -13,7 +11,7 @@ const ANIMATION_DURATION = 2000; // 2 seconds in ms
 const FADE_OUT_DURATION = ANIMATION_DURATION / 2;
 const FADE_IN_DURATION = ANIMATION_DURATION / 2;
 
-export function InfluenceCards({ playerId, cards, showFaceUp = false }: InfluenceCardsProps) {
+export function InfluenceCards({ playerId, cards }: InfluenceCardsProps) {
   // Get player's active (non-revealed) cards
   const playerCards = cards.filter(card => 
     card.playerId === playerId && 
@@ -116,11 +114,9 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
         // Check if this card position is being animated
         const isAnimating = card.position !== null && animationState.animatingPositions.includes(card.position);
         
-        // Import dynamically from assets for face-up cards
-        const cardImage = showFaceUp 
-          ? new URL(`../assets/images/${card.name.toLowerCase()}.png`, import.meta.url).href
-          : backImage;
-
+        // Get card image URL
+        const cardImage = new URL(`../assets/images/${card.name.toLowerCase()}.png`, import.meta.url).href;
+        
         return (
           <div
             key={card.id}
@@ -146,39 +142,14 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
             >
               <img
                 src={cardImage}
-                alt={showFaceUp ? card.name : "Card back"}
+                alt={card.name}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.warn(`Failed to load card image: ${card.name}`);
-                  // Apply a colored background with text as fallback
-                  const target = e.currentTarget;
-                  target.style.display = 'none';
-                  
-                  // Create fallback element
-                  const fallback = document.createElement('div');
-                  fallback.className = 'w-full h-full bg-gray-800 flex items-center justify-center';
-                  fallback.style.color = 'white';
-                  fallback.style.fontWeight = 'bold';
-                  fallback.style.fontSize = '14px';
-                  fallback.textContent = card.name;
-                  
-                  // Add to parent
-                  if (target.parentElement) {
-                    target.parentElement.appendChild(fallback);
-                  }
-                }}
               />
-              {showFaceUp && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
-                  <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
-                    {card.name}
-                  </div>
-                </div>
-              )}
+              
             </div>
             
             {/* Outgoing card that fades out */}
-            {isAnimating && (
+            {isAnimating && card.position !== null && animationState.outgoingCards.has(card.position) && (
               <div 
                 className="w-full h-full absolute inset-0 animate-fadeOut opacity-100"
                 style={{
@@ -186,22 +157,19 @@ export function InfluenceCards({ playerId, cards, showFaceUp = false }: Influenc
                   animationFillMode: 'forwards'
                 }}
               >
+                {/* Get the previous card's image */}
                 <img
-                  src={showFaceUp && card.position !== null && animationState.outgoingCards.has(card.position)
-                    ? `${new URL(`../assets/images/${
-                        animationState.outgoingCards.get(card.position)?.name.toLowerCase() || 'back'
-                      }.png`, import.meta.url).href}`
-                    : backImage}
+                  src={new URL(`../assets/images/${animationState.outgoingCards.get(card.position)?.name.toLowerCase() || 'back'}.png`, import.meta.url).href}
                   alt="Previous card"
                   className="w-full h-full object-cover"
                 />
-                {showFaceUp && card.position !== null && animationState.outgoingCards.has(card.position) && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
-                    <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
-                      {animationState.outgoingCards.get(card.position)?.name}
-                    </div>
+                
+                {/* Previous card name overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
+                  <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
+                    {animationState.outgoingCards.get(card.position)?.name}
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>

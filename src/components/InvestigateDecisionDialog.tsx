@@ -62,11 +62,6 @@ export function InvestigateDecisionDialog({
                   alt={card}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                  <div className="absolute bottom-3 left-3 text-white font-bold text-lg">
-                    {card}
-                  </div>
-                </div>
               </div>
             </div>
           </div>

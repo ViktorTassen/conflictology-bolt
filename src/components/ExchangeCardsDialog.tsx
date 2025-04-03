@@ -103,11 +103,6 @@ export function ExchangeCardsDialog({
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                            <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                              {card.name}
-                            </div>
-                          </div>
                           
                           <div className={`absolute inset-0 ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
                         </div>
@@ -140,11 +135,6 @@ export function ExchangeCardsDialog({
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                            <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                              {card.name}
-                            </div>
-                          </div>
                           
                           <div className={`absolute inset-0 ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
                         </div>
