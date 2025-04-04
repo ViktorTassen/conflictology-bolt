@@ -37,7 +37,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [showCheatSheet, setShowCheatSheet] = useState(false);
-  const [showTurnBanner, setShowTurnBanner] = useState(false);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const {
@@ -85,6 +84,13 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     const playerIndex = game.players.findIndex(player => player.id === playerId);
     const isCurrentTurn = game.currentTurn === playerIndex && !game.players[playerIndex]?.eliminated;
 
+    // Reset visibility when game status changes or game ID changes (new match)
+    if (!isCurrentTurn) {
+      setVisible(false);
+      setAnimatingOut(false);
+      return;
+    }
+
     if (isCurrentTurn) {
       setAnimatingOut(false);
       setVisible(true);
@@ -98,7 +104,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         clearTimeout(timer);
       };
     }
-  }, [game?.currentTurn, game?.status]);
+  }, [game?.currentTurn, game?.id, game?.status]);
 
   if (!game) {
     return <div className="p-4 text-white">Loading game...</div>;
