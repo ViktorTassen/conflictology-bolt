@@ -233,14 +233,25 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     setIsActionInProgress(true);
     
     try {
+      // Keep track of the current loseTwo flag to see if we need a second card
+      const needSecondCard = actionInProgress.loseTwo;
+      
       await respondToAction(playerIndex, {
         type: 'lose_influence',
         playerId: playerIndex,
         card: cardName
       });
+      
+      // Small delay to ensure the state updates properly before allowing the next selection
+      if (needSecondCard) {
+        setTimeout(() => {
+          setIsActionInProgress(false);
+        }, 100);
+      } else {
+        setIsActionInProgress(false);
+      }
     } catch (error) {
       console.error('Failed to lose influence:', error);
-    } finally {
       setIsActionInProgress(false);
     }
   };

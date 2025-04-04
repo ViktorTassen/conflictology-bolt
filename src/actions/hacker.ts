@@ -98,28 +98,20 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       
       // Check if this is a player who should lose a second card 
-      // (only the target of Hacker action who failed a challenge)
+      // (for Hacker action or failed Judge block challenge)
       if (game.actionInProgress.loseTwo && remainingCards.length > 0 && 
-          playerId === game.actionInProgress.losingPlayer &&
-          playerId === game.actionInProgress.target &&
-          playerId !== game.actionInProgress.player) {
+          playerId === game.actionInProgress.losingPlayer) {
         
         result.actionInProgress = {
           ...game.actionInProgress,
-          loseTwo: false,
+          // Keep loseTwo flag true until both cards are lost
           responses: {},
         };
         
-        // Different messages depending on which card was challenged
-        if (game.actionInProgress.revealedJudgeCardId) {
-          result.logs.push(loggingService.createSystemLog(
-            GameMessages.system.failedBlockDefense(player.name, 'Judge')
-          ));
-        } else {
-          result.logs.push(loggingService.createSystemLog(
-            GameMessages.system.secondInfluenceLoss(player.name)
-          ));
-        }
+        // Add message that player needs to lose a second card
+        result.logs.push(loggingService.createSystemLog(
+          GameMessages.system.secondCardRequired(player.name)
+        ));
         
         return result;
       }
@@ -129,6 +121,27 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
         result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
+      }
+
+      // If this was the second card lost when loseTwo is true, update the flag
+      if (game.actionInProgress.loseTwo && 
+          playerId === game.actionInProgress.losingPlayer && 
+          !game.actionInProgress.cardsLostCounter) {
+        // This was the first card, set counter to 1
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          cardsLostCounter: 1
+        };
+        
+      } else if (game.actionInProgress.loseTwo && 
+                 playerId === game.actionInProgress.losingPlayer && 
+                 game.actionInProgress.cardsLostCounter === 1) {
+        // This was the second card, clear loseTwo flag and counter
+        result.actionInProgress = {
+          ...game.actionInProgress,
+          loseTwo: false,
+          cardsLostCounter: undefined
+        };
       }
 
       if (game.actionInProgress.blockingPlayer === playerId) {
@@ -310,12 +323,13 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           card: 'Judge',
           message: GameMessages.challenges.blockSuccess('Judge')
         })];
-
+        
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: game.actionInProgress.blockingPlayer,
           challengeInProgress: true,
-          responses: updatedResponses
+          responses: updatedResponses,
+          loseTwo: true // Set loseTwo flag for the player who falsely claimed Judge
         };
       }
 

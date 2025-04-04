@@ -53,6 +53,9 @@ export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInflu
     
     try {
       await onCardSelect(card.name);
+      // Reset the state to allow selecting another card if needed
+      setIsProcessing(false);
+      setSelectedCardId(null);
     } catch (error) {
       console.error('Failed to lose influence:', error);
       setIsProcessing(false);

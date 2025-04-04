@@ -120,6 +120,7 @@ export interface Game {
     challengeDefense?: boolean;
     challengeInProgress?: boolean;
     loseTwo?: boolean; // Flag to indicate that challenger loses two influence cards (for Hacker)
+    cardsLostCounter?: number; // Counter to track how many cards have been lost when loseTwo is true
     exchangeCards?: string[]; // Now stores card IDs instead of CardType
     investigateCard?: {
       cardId: string;

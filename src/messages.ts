@@ -14,8 +14,7 @@ export const GameMessages = {
     playerEliminated: (name: string) => `${name} has been eliminated!`,
     stealBlocked: 'The steal was blocked.',
     hackBlocked: 'The hack was blocked.',
-    secondInfluenceLoss: (name: string) => `${name} must lose a second card after failed Hacker challenge.`,
-    failedBlockDefense: (name: string, card: string) => `${name} must lose two cards (hack and failed ${card} defense).`,
+    secondCardRequired: (name: string) => `${name} was hacked. Must lose a second card.`,
     swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
     deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`,
     loseInfluence: (name: string) => `${name} must select a card to lose.`
