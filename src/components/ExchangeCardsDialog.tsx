@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CardType, Card } from '../types';
-import { Shuffle } from 'lucide-react';
+import { Shuffle, LoaderPinwheel } from 'lucide-react';
 import { cardService } from '../services/CardService';
 
 // Import card images
@@ -35,6 +35,7 @@ export function ExchangeCardsDialog({
   onExchangeComplete 
 }: ExchangeCardsDialogProps) {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const playerCards = cardService.getPlayerCards(cards, playerId);
   
@@ -46,6 +47,8 @@ export function ExchangeCardsDialog({
   const requiredSelectionCount = playerCards.length;
 
   const handleCardSelect = (index: number) => {
+    if (isProcessing) return;
+    
     if (selectedIndices.includes(index)) {
       setSelectedIndices(selectedIndices.filter(i => i !== index));
     } else {
@@ -55,9 +58,16 @@ export function ExchangeCardsDialog({
     }
   };
   
-  const handleConfirmSelection = () => {
-    if (selectedIndices.length === requiredSelectionCount) {
-      onExchangeComplete(selectedIndices);
+  const handleConfirmSelection = async () => {
+    if (selectedIndices.length !== requiredSelectionCount || isProcessing) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      await onExchangeComplete(selectedIndices);
+    } catch (error) {
+      console.error('Failed to complete exchange:', error);
+      setIsProcessing(false);
     }
   };
 
@@ -88,26 +98,50 @@ export function ExchangeCardsDialog({
               <div className="flex justify-center gap-3 flex-wrap">
                 {playerCards.map((card) => {
                   const index = availableCards.findIndex(c => c.id === card.id);
+                  const isSelected = selectedIndices.includes(index);
+                  const isDisabled = isProcessing && !isSelected;
                   
                   return (
                     <button
                       key={card.id}
                       onClick={() => handleCardSelect(index)}
-                      className={`group relative ${selectedIndices.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
+                      disabled={isDisabled || isProcessing}
+                      className={`
+                        group relative 
+                        ${isSelected ? 'ring-2 ring-blue-500' : ''} 
+                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                        ${isProcessing ? 'cursor-wait' : ''}
+                      `}
                     >
-                      <div className={`absolute -inset-2 rounded-xl ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
+                      <div className={`
+                        absolute -inset-2 rounded-xl 
+                        ${isSelected ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} 
+                        transition-all duration-300
+                      `} />
                       <div className="relative">
-                        <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                        <div className={`
+                          w-20 h-32 rounded-lg overflow-hidden 
+                          transform transition-all duration-300
+                          ${isSelected ? 'scale-105 -translate-y-1' : 'group-hover:scale-105 group-hover:-translate-y-1'}
+                        `}>
                           <img
                             src={cardImages[card.name]}
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
                           
-                          <div className={`absolute inset-0 ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
+                          <div className={`
+                            absolute inset-0 
+                            ${isSelected ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} 
+                            transition-colors duration-300
+                          `} />
                         </div>
 
-                        <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedIndices.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`} />
+                        <div className={`
+                          absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform 
+                          ${isSelected ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} 
+                          transition-transform duration-300
+                        `} />
                       </div>
                     </button>
                   );
@@ -120,26 +154,50 @@ export function ExchangeCardsDialog({
               <div className="flex justify-center gap-3 flex-wrap">
                 {exchangeCards.map((card) => {
                   const index = availableCards.findIndex(c => c.id === card.id);
+                  const isSelected = selectedIndices.includes(index);
+                  const isDisabled = isProcessing && !isSelected;
                   
                   return (
                     <button
                       key={card.id}
                       onClick={() => handleCardSelect(index)}
-                      className={`group relative ${selectedIndices.includes(index) ? 'ring-2 ring-blue-500' : ''}`}
+                      disabled={isDisabled || isProcessing}
+                      className={`
+                        group relative 
+                        ${isSelected ? 'ring-2 ring-blue-500' : ''} 
+                        ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                        ${isProcessing ? 'cursor-wait' : ''}
+                      `}
                     >
-                      <div className={`absolute -inset-2 rounded-xl ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-all duration-300`} />
+                      <div className={`
+                        absolute -inset-2 rounded-xl 
+                        ${isSelected ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} 
+                        transition-all duration-300
+                      `} />
                       <div className="relative">
-                        <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
+                        <div className={`
+                          w-20 h-32 rounded-lg overflow-hidden 
+                          transform transition-all duration-300
+                          ${isSelected ? 'scale-105 -translate-y-1' : 'group-hover:scale-105 group-hover:-translate-y-1'}
+                        `}>
                           <img
                             src={cardImages[card.name]}
                             alt={card.name}
                             className="w-full h-full object-cover"
                           />
                           
-                          <div className={`absolute inset-0 ${selectedIndices.includes(index) ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} transition-colors duration-300`} />
+                          <div className={`
+                            absolute inset-0 
+                            ${isSelected ? 'bg-blue-500/30' : 'bg-blue-500/0 group-hover:bg-blue-500/20'} 
+                            transition-colors duration-300
+                          `} />
                         </div>
 
-                        <div className={`absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform ${selectedIndices.includes(index) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} transition-transform duration-300`}/>
+                        <div className={`
+                          absolute -bottom-1 inset-x-0 h-1 bg-blue-500 transform 
+                          ${isSelected ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} 
+                          transition-transform duration-300
+                        `}/>
                       </div>
                     </button>
                   );
@@ -151,16 +209,17 @@ export function ExchangeCardsDialog({
           <div className="flex justify-center">
             <button
               onClick={handleConfirmSelection}
-              disabled={selectedIndices.length !== requiredSelectionCount}
+              disabled={selectedIndices.length !== requiredSelectionCount || isProcessing}
               className={`
-                px-6 py-2 rounded-full 
-                ${selectedIndices.length === requiredSelectionCount ? 
+                px-6 py-2 rounded-full flex items-center gap-2
+                ${selectedIndices.length === requiredSelectionCount && !isProcessing ? 
                   'bg-blue-600 hover:bg-blue-700 text-white' : 
                   'bg-gray-700 text-gray-400 cursor-not-allowed'}
                 transition-colors duration-300
               `}
             >
-              Confirm Selection ({selectedIndices.length}/{requiredSelectionCount})
+              {isProcessing && <LoaderPinwheel className="w-4 h-4 animate-spin" />}
+              {isProcessing ? 'Processing...' : `Confirm Selection (${selectedIndices.length}/${requiredSelectionCount})`}
             </button>
           </div>
         </div>

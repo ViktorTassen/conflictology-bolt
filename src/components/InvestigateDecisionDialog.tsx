@@ -1,5 +1,6 @@
 import { CardType } from '../types';
-import { Eye, RefreshCw } from 'lucide-react';
+import { Eye, RefreshCw, LoaderPinwheel } from 'lucide-react';
+import { useState } from 'react';
 
 // Import card images
 import bankerImg from '../assets/images/banker.png';
@@ -30,6 +31,24 @@ export function InvestigateDecisionDialog({
   targetName,
   onDecision 
 }: InvestigateDecisionDialogProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedDecision, setSelectedDecision] = useState<'keep' | 'swap' | null>(null);
+  
+  const handleDecision = async (keepCard: boolean) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    setSelectedDecision(keepCard ? 'keep' : 'swap');
+    
+    try {
+      await onDecision(keepCard);
+    } catch (error) {
+      console.error('Failed to make investigation decision:', error);
+      setIsProcessing(false);
+      setSelectedDecision(null);
+    }
+  };
+  
   return (
     <div className="absolute inset-x-0 bottom-0 z-50 animate-in fade-in slide-in-from-bottom-4">
       <div className="relative">
@@ -62,6 +81,13 @@ export function InvestigateDecisionDialog({
                   alt={card}
                   className="w-full h-full object-cover"
                 />
+                
+                {/* Loading overlay if processing */}
+                {isProcessing && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <LoaderPinwheel className="w-10 h-10 text-white/80 animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -69,18 +95,42 @@ export function InvestigateDecisionDialog({
           {/* Decision buttons */}
           <div className="flex justify-center gap-3 flex-wrap">
             <button
-              onClick={() => onDecision(true)}
-              className="flex items-center justify-center gap-1.5 px-5 py-2 rounded-full  bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors duration-200 shadow-sm"
+              onClick={() => handleDecision(true)}
+              disabled={isProcessing}
+              className={`
+                flex items-center justify-center gap-1.5 px-5 py-2 rounded-full
+                ${isProcessing ? 
+                  (selectedDecision === 'keep' ? 'bg-green-700' : 'bg-green-600/50 cursor-not-allowed') : 
+                  'bg-green-600 hover:bg-green-700'
+                } 
+                text-white text-sm font-medium transition-colors duration-200 shadow-sm
+              `}
             >
-              <Eye className="w-4 h-4" />
+              {isProcessing && selectedDecision === 'keep' ? (
+                <LoaderPinwheel className="w-4 h-4 animate-spin" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
               <span>Let Them Keep It</span>
             </button>
             
             <button
-              onClick={() => onDecision(false)}
-              className="flex items-center justify-center gap-1.5 px-5 py-2 rounded-full  bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors duration-200 shadow-sm"
+              onClick={() => handleDecision(false)}
+              disabled={isProcessing}
+              className={`
+                flex items-center justify-center gap-1.5 px-5 py-2 rounded-full
+                ${isProcessing ? 
+                  (selectedDecision === 'swap' ? 'bg-purple-700' : 'bg-purple-600/50 cursor-not-allowed') : 
+                  'bg-purple-600 hover:bg-purple-700'
+                } 
+                text-white text-sm font-medium transition-colors duration-200 shadow-sm
+              `}
             >
-              <RefreshCw className="w-4 h-4" />
+              {isProcessing && selectedDecision === 'swap' ? (
+                <LoaderPinwheel className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
               <span>Force Card Swap</span>
             </button>
           </div>

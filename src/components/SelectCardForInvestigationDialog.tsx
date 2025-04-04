@@ -1,5 +1,6 @@
 import { Card, CardType } from '../types';
-import { Eye } from 'lucide-react';
+import { Eye, LoaderPinwheel } from 'lucide-react';
+import { useState } from 'react';
 
 // Import card images
 import bankerImg from '../assets/images/banker.png';
@@ -30,6 +31,9 @@ export function SelectCardForInvestigationDialog({
   playerId,
   onCardSelect
 }: SelectCardForInvestigationDialogProps) {
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   // Get player's active (non-revealed) cards
   const playerCards = cards.filter(card => 
     card.playerId === playerId && 
@@ -38,6 +42,21 @@ export function SelectCardForInvestigationDialog({
   );
 
   if (playerCards.length === 0) return null;
+
+  const handleCardSelect = async (card: Card) => {
+    if (isProcessing) return;
+    
+    setSelectedCardId(card.id);
+    setIsProcessing(true);
+    
+    try {
+      await onCardSelect(card.name);
+    } catch (error) {
+      console.error('Failed to select card for investigation:', error);
+      setIsProcessing(false);
+      setSelectedCardId(null);
+    }
+  };
 
   return (
     <div className="absolute inset-x-0 bottom-0 z-50 animate-in fade-in slide-in-from-bottom-4">
@@ -65,31 +84,60 @@ export function SelectCardForInvestigationDialog({
           {/* Cards */}
           <div className="mb-8">
             <div className="flex justify-center gap-3 flex-wrap">
-              {playerCards.map((card) => (
-                <button
-                  key={card.id}
-                  onClick={() => onCardSelect(card.name)}
-                  className="group relative"
-                >
-                  <div className="absolute -inset-2 rounded-xl bg-purple-500/0 group-hover:bg-purple-500/20 transition-all duration-300" />
-                  <div className="relative">
-                    {/* Card */}
-                    <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                      <img
-                        src={cardImages[card.name]}
-                        alt={card.name}
-                        className="w-full h-full object-cover"
-                      />
-                      
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/20 transition-colors duration-300" />
-                    </div>
+              {playerCards.map((card) => {
+                const isSelected = card.id === selectedCardId;
+                const isDisabled = isProcessing && !isSelected;
+                
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => handleCardSelect(card)}
+                    disabled={isDisabled}
+                    className={`group relative ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                  >
+                    <div className={`
+                      absolute -inset-2 rounded-xl 
+                      ${isSelected ? 'bg-purple-500/40' : 'bg-purple-500/0 group-hover:bg-purple-500/20'} 
+                      transition-all duration-300
+                    `} />
+                    <div className="relative">
+                      {/* Card */}
+                      <div className={`
+                        w-20 h-32 rounded-lg overflow-hidden 
+                        transform transition-all duration-300
+                        ${isSelected ? 'scale-105 -translate-y-1' : 'group-hover:scale-105 group-hover:-translate-y-1'}
+                      `}>
+                        <img
+                          src={cardImages[card.name]}
+                          alt={card.name}
+                          className="w-full h-full object-cover"
+                        />
+                        
+                        {/* Hover/Selected overlay */}
+                        <div className={`
+                          absolute inset-0 
+                          ${isSelected ? 'bg-purple-500/30' : 'bg-purple-500/0 group-hover:bg-purple-500/20'} 
+                          transition-colors duration-300
+                        `} />
+                        
+                        {/* Loading spinner overlay */}
+                        {isSelected && isProcessing && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                            <LoaderPinwheel className="w-8 h-8 text-white animate-spin" />
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Selection indicator */}
-                    <div className="absolute -bottom-1 inset-x-0 h-1 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-                  </div>
-                </button>
-              ))}
+                      {/* Selection indicator */}
+                      <div className={`
+                        absolute -bottom-1 inset-x-0 h-1 bg-purple-500 transform 
+                        ${isSelected ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} 
+                        transition-transform duration-300
+                      `} />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

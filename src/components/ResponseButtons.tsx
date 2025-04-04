@@ -1,4 +1,4 @@
-import { ShieldAlert, Swords, Check, Loader2 } from 'lucide-react';
+import { ShieldAlert, Swords, Check, LoaderPinwheel } from 'lucide-react';
 import { CardType } from '../types';
 import { useState } from 'react';
 
@@ -95,7 +95,7 @@ export function ResponseButtons({
             } text-red-400 px-3 py-2 rounded-lg transition-colors`}
           >
             {isProcessing && responseType === 'block' && blockCard === blockCards[0] ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoaderPinwheel className="w-4 h-4 animate-spin" />
             ) : (
               <ShieldAlert className="w-4 h-4" />
             )}
@@ -116,7 +116,7 @@ export function ResponseButtons({
             } text-red-400 px-3 py-2 rounded-lg transition-colors`}
           >
             {isProcessing && responseType === 'block' && blockCard === card ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <LoaderPinwheel className="w-3 h-3 animate-spin" />
             ) : (
               <ShieldAlert className="w-3 h-3" />
             )}
@@ -135,7 +135,7 @@ export function ResponseButtons({
             } text-yellow-400 px-3 py-2 rounded-lg transition-colors`}
           >
             {isProcessing && responseType === 'challenge' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoaderPinwheel className="w-4 h-4 animate-spin" />
             ) : (
               <Swords className="w-4 h-4" />
             )}
@@ -154,7 +154,7 @@ export function ResponseButtons({
             } text-green-400 px-3 py-2 rounded-lg transition-colors`}
           >
             {isProcessing && responseType === 'allow' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoaderPinwheel className="w-4 h-4 animate-spin" />
             ) : (
               <Check className="w-4 h-4" />
             )}

@@ -1,5 +1,6 @@
 import { Card, CardType } from '../types';
-import { Skull } from 'lucide-react';
+import { Skull, LoaderPinwheel } from 'lucide-react';
+import { useState } from 'react';
 
 // Import card images
 import reporterImg from '../assets/images/reporter.png';
@@ -26,6 +27,9 @@ interface LoseInfluenceDialogProps {
 }
 
 export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInfluenceDialogProps) {
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   // Get available cards and sort by position
   const availableCards = cards
     .filter(card => 
@@ -40,6 +44,21 @@ export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInflu
     });
 
   if (availableCards.length === 0) return null;
+
+  const handleCardSelect = async (card: Card) => {
+    if (isProcessing) return;
+    
+    setSelectedCardId(card.id);
+    setIsProcessing(true);
+    
+    try {
+      await onCardSelect(card.name);
+    } catch (error) {
+      console.error('Failed to lose influence:', error);
+      setIsProcessing(false);
+      setSelectedCardId(null);
+    }
+  };
 
   return (
     <div className="absolute inset-x-0 bottom-0 z-50 animate-in fade-in slide-in-from-bottom-4">
@@ -66,36 +85,65 @@ export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInflu
 
           {/* Cards */}
           <div className="flex justify-center gap-4">
-            {availableCards.map((card) => (
-              <button
-                key={card.id}
-                onClick={() => onCardSelect(card.name)}
-                className="group relative"
-              >
-                <div className="absolute -inset-2 rounded-xl bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative">
-                  {/* Card */}
-                  <div className="w-20 h-32 rounded-lg overflow-hidden transform transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-1">
-                    <img
-                      src={cardImages[card.name]}
-                      alt={card.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                      <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                        {card.name}
+            {availableCards.map((card) => {
+              const isSelected = card.id === selectedCardId;
+              const isDisabled = isProcessing && !isSelected;
+              
+              return (
+                <button
+                  key={card.id}
+                  onClick={() => handleCardSelect(card)}
+                  disabled={isDisabled}
+                  className={`group relative ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                >
+                  <div className={`
+                    absolute -inset-2 rounded-xl 
+                    ${isSelected ? 'bg-red-500/40' : 'bg-red-500/20 opacity-0 group-hover:opacity-100'}
+                    transition-opacity duration-300
+                  `} />
+                  <div className="relative">
+                    {/* Card */}
+                    <div className={`
+                      w-20 h-32 rounded-lg overflow-hidden 
+                      transform transition-all duration-300
+                      ${isSelected ? 'scale-105 -translate-y-1' : 'group-hover:scale-105 group-hover:-translate-y-1'}
+                    `}>
+                      <img
+                        src={cardImages[card.name]}
+                        alt={card.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
+                        <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
+                          {card.name}
+                        </div>
                       </div>
+                      
+                      {/* Hover/Selected overlay */}
+                      <div className={`
+                        absolute inset-0 
+                        ${isSelected ? 'bg-red-500/30' : 'bg-red-500/0 group-hover:bg-red-500/30'} 
+                        transition-colors duration-300
+                      `} />
+                      
+                      {/* Loading spinner overlay */}
+                      {isSelected && isProcessing && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                          <LoaderPinwheel className="w-8 h-8 text-white animate-spin" />
+                        </div>
+                      )}
                     </div>
-                    
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 transition-colors duration-300" />
-                  </div>
 
-                  {/* Selection indicator */}
-                  <div className="absolute -bottom-1 inset-x-0 h-1 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-                </div>
-              </button>
-            ))}
+                    {/* Selection indicator */}
+                    <div className={`
+                      absolute -bottom-1 inset-x-0 h-1 bg-red-500 transform 
+                      ${isSelected ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} 
+                      transition-transform duration-300
+                    `} />
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
