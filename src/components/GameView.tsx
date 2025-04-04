@@ -37,6 +37,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const [targetedPlayerId, setTargetedPlayerId] = useState<number | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [showCheatSheet, setShowCheatSheet] = useState(false);
+  const [isActionInProgress, setIsActionInProgress] = useState(false);
   const actionButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const {
@@ -139,7 +140,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   const actionInProgress = game.actionInProgress;
 
   const handleActionSelect = async (action: GameAction) => {
-    if (!canTakeAction || currentPlayer.eliminated) return;
+    if (!canTakeAction || currentPlayer.eliminated || isActionInProgress) return;
 
     if (action.cost && currentPlayer.coins < action.cost) {
       console.error(`Not enough coins for ${action.type}. Need ${action.cost}, have ${currentPlayer.coins}`);
@@ -150,21 +151,30 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     setTargetedPlayerId(null);
 
     if (['steal', 'hack', 'scandal', 'investigate'].includes(action.type)) {
+      // For actions requiring target, just close the action menu and wait for target selection
       setShowActions(false);
     } else {
+      // For immediate actions, show loading state and execute
+      setIsActionInProgress(true);
       try {
         await performAction(playerIndex, action);
         setSelectedAction(null);
       } catch (error) {
         console.error('Failed to perform action:', error);
+      } finally {
+        setIsActionInProgress(false);
       }
     }
   };
 
   const handlePlayerTarget = async (targetId: number) => {
-    if (selectedAction && ['steal', 'hack', 'scandal', 'investigate'].includes(selectedAction.type)) {
+    if (selectedAction && 
+        ['steal', 'hack', 'scandal', 'investigate'].includes(selectedAction.type) && 
+        !isActionInProgress) {
+      
       setTargetedPlayerId(targetId);
-
+      setIsActionInProgress(true);
+      
       try {
         const actionWithTarget = {
           ...selectedAction,
@@ -176,6 +186,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         setTargetedPlayerId(null);
       } catch (error) {
         console.error('Failed to target player:', error);
+      } finally {
+        setIsActionInProgress(false);
       }
     }
   };
@@ -186,8 +198,10 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   };
 
   const handleResponse = async (response: 'allow' | 'block' | 'challenge', card?: CardType) => {
-    if (!actionInProgress || currentPlayer.eliminated) return;
+    if (!actionInProgress || currentPlayer.eliminated || isActionInProgress) return;
 
+    setIsActionInProgress(true);
+    
     try {
       let responseData: any = {
         type: response,
@@ -203,12 +217,16 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       console.log(`Player ${currentPlayer.name} (index ${playerIndex}) responded with ${response}`);
     } catch (error) {
       console.error('Failed to respond:', error);
+    } finally {
+      setIsActionInProgress(false);
     }
   };
 
   const handleLoseInfluence = async (cardName: CardType) => {
-    if (!actionInProgress) return;
+    if (!actionInProgress || isActionInProgress) return;
 
+    setIsActionInProgress(true);
+    
     try {
       await respondToAction(playerIndex, {
         type: 'lose_influence',
@@ -217,12 +235,14 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       });
     } catch (error) {
       console.error('Failed to lose influence:', error);
+    } finally {
+      setIsActionInProgress(false);
     }
   };
 
   const handleExchangeCards = async (keptCardIndices: number[]) => {
-    if (!game || !game.actionInProgress || !game.actionInProgress.exchangeCards) {
-      console.error('Exchange/Swap attempted without proper game state');
+    if (!game || !game.actionInProgress || !game.actionInProgress.exchangeCards || isActionInProgress) {
+      console.error('Exchange/Swap attempted without proper game state or action in progress');
       return;
     }
 
@@ -245,6 +265,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
 
+    setIsActionInProgress(true);
+    
     try {
       await respondToAction(playerIndex, {
         type: 'exchange_selection',
@@ -253,12 +275,14 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       });
     } catch (error) {
       console.error('Failed to exchange/swap cards:', error);
+    } finally {
+      setIsActionInProgress(false);
     }
   };
 
   const handleCardSelectForInvestigation = async (card: CardType) => {
-    if (!game || !game.actionInProgress || game.actionInProgress.type !== 'investigate') {
-      console.error('Investigation card selection attempted without proper game state');
+    if (!game || !game.actionInProgress || game.actionInProgress.type !== 'investigate' || isActionInProgress) {
+      console.error('Investigation card selection attempted without proper game state or action in progress');
       return;
     }
 
@@ -267,6 +291,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
 
+    setIsActionInProgress(true);
+    
     try {
       await respondToAction(playerIndex, {
         type: 'select_card_for_investigation',
@@ -275,14 +301,17 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       });
     } catch (error) {
       console.error('Failed to select card for investigation:', error);
+    } finally {
+      setIsActionInProgress(false);
     }
   };
 
   const handleInvestigateDecision = async (keepCard: boolean) => {
     if (!game || !game.actionInProgress ||
       game.actionInProgress.type !== 'investigate' ||
-      !game.actionInProgress.investigateCard) {
-      console.error('Investigation decision attempted without proper game state');
+      !game.actionInProgress.investigateCard ||
+      isActionInProgress) {
+      console.error('Investigation decision attempted without proper game state or action in progress');
       return;
     }
 
@@ -291,6 +320,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       return;
     }
 
+    setIsActionInProgress(true);
+    
     try {
       await respondToAction(playerIndex, {
         type: 'investigate_decision',
@@ -299,6 +330,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       });
     } catch (error) {
       console.error('Failed to complete investigation decision:', error);
+    } finally {
+      setIsActionInProgress(false);
     }
   };
 
@@ -501,6 +534,8 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                   <button
                     ref={actionButtonRef}
                     onClick={() => {
+                      if (isActionInProgress) return;
+                      
                       if (selectedAction) {
                         setSelectedAction(null);
                         setTargetedPlayerId(null);
@@ -508,14 +543,18 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                       setShowActions(!showActions);
                     }}
                     className="relative group"
-                    disabled={!canTakeAction || gameState === 'waiting_for_influence_loss'}
+                    disabled={!canTakeAction || gameState === 'waiting_for_influence_loss' || isActionInProgress}
                   >
-                    {canTakeAction && (
+                    {canTakeAction && !isActionInProgress && (
                       <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/30 to-amber-500/20 fire-pulse" />
                     )}
 
-                    {isCurrentTurn && game.actionUsedThisTurn && (
+                    {isCurrentTurn && game.actionUsedThisTurn && !isActionInProgress && (
                       <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-gray-500/20 via-gray-400/30 to-gray-500/20" />
+                    )}
+                    
+                    {isActionInProgress && (
+                      <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-blue-500/20 via-blue-400/30 to-blue-500/20 pulse" />
                     )}
 
                     <div className={`
@@ -523,7 +562,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                       rounded-full
                       bg-gradient-to-r from-slate-700 via-slate-500 to-slate-700
                       ${showActions ? 'pulse-ring opacity-100' : 'opacity-0'}
-                      group-hover:opacity-100
+                      ${isActionInProgress ? 'opacity-0' : 'group-hover:opacity-100'}
                       transition-opacity duration-300
                     `} />
 
@@ -538,10 +577,12 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                       overflow-hidden
                       transition-all duration-300
                       ${showActions ? 'ring-2 ring-slate-400/30' : ''}
-                      ${canTakeAction ? 'ring-2 ring-amber-500/30' : ''} 
-                      ${isCurrentTurn && game.actionUsedThisTurn ? 'ring-2 ring-gray-500/30' : ''}
-                      ${!isCurrentTurn || gameState === 'waiting_for_influence_loss' ? 'opacity-50 cursor-not-allowed' : ''}
-                      ${isCurrentTurn && game.actionUsedThisTurn ? 'opacity-70 cursor-not-allowed' : ''}
+                      ${canTakeAction && !isActionInProgress ? 'ring-2 ring-amber-500/30' : ''} 
+                      ${isActionInProgress ? 'ring-2 ring-blue-500/30' : ''}
+                      ${isCurrentTurn && game.actionUsedThisTurn && !isActionInProgress ? 'ring-2 ring-gray-500/30' : ''}
+                      ${(!isCurrentTurn || gameState === 'waiting_for_influence_loss') && !isActionInProgress ? 'opacity-50 cursor-not-allowed' : ''}
+                      ${isCurrentTurn && game.actionUsedThisTurn && !isActionInProgress ? 'opacity-70 cursor-not-allowed' : ''}
+                      ${isActionInProgress ? 'opacity-90 cursor-wait' : ''}
                     `}>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/10 to-transparent transform -rotate-45 gem-shine" />
 
@@ -552,22 +593,27 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
                         absolute -inset-1
                         blur-lg
                         transition-opacity duration-300
-                        ${canTakeAction ? 'bg-amber-400/20 opacity-100' : ''}
-                        ${isCurrentTurn && game.actionUsedThisTurn ? 'bg-gray-400/20 opacity-100' : ''}
-                        ${!isCurrentTurn ? 'bg-amber-400/20 opacity-0' : ''}
+                        ${canTakeAction && !isActionInProgress ? 'bg-amber-400/20 opacity-100' : ''}
+                        ${isActionInProgress ? 'bg-blue-400/20 opacity-100' : ''}
+                        ${isCurrentTurn && game.actionUsedThisTurn && !isActionInProgress ? 'bg-gray-400/20 opacity-100' : ''}
+                        ${!isCurrentTurn && !isActionInProgress ? 'bg-amber-400/20 opacity-0' : ''}
                       `} />
 
-                      <Fingerprint className={`
-                        relative
-                        w-6 h-6
-                        transition-all duration-300
-                        ${showActions ? 'text-amber-300' : ''}
-                        ${canTakeAction ? 'text-amber-300' : ''}
-                        ${isCurrentTurn && game.actionUsedThisTurn ? 'text-gray-400' : ''}
-                        ${!isCurrentTurn ? 'text-slate-400' : ''}
-                        ${canTakeAction ? 'group-hover:text-amber-300' : ''}
-                        ${canTakeAction ? 'transform group-hover:scale-110' : ''}
-                      `} />
+                      {isActionInProgress ? (
+                        <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+                      ) : (
+                        <Fingerprint className={`
+                          relative
+                          w-6 h-6
+                          transition-all duration-300
+                          ${showActions ? 'text-amber-300' : ''}
+                          ${canTakeAction ? 'text-amber-300' : ''}
+                          ${isCurrentTurn && game.actionUsedThisTurn ? 'text-gray-400' : ''}
+                          ${!isCurrentTurn ? 'text-slate-400' : ''}
+                          ${canTakeAction ? 'group-hover:text-amber-300' : ''}
+                          ${canTakeAction ? 'transform group-hover:scale-110' : ''}
+                        `} />
+                      )}
                     </div>
                   </button>
                 )}
