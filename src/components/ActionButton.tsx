@@ -42,7 +42,7 @@ export const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
         )}
         
         {isActionInProgress && (
-          <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-blue-500/20 via-blue-400/30 to-blue-500/20 pulse" />
+          <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-blue-500/20 via-amber-100/30 to-amber-300/20 pulse" />
         )}
 
         <div className={`
@@ -66,7 +66,7 @@ export const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
           transition-all duration-300
           ${showActions ? 'ring-2 ring-slate-400/30' : ''}
           ${canTakeAction && !isActionInProgress ? 'ring-2 ring-amber-500/30' : ''} 
-          ${isActionInProgress ? 'ring-2 ring-blue-500/30' : ''}
+          ${isActionInProgress ? 'ring-2 ring-amber-300/30' : ''}
           ${isCurrentTurn && gameActionUsedThisTurn && !isActionInProgress ? 'ring-2 ring-gray-500/30' : ''}
           ${(!isCurrentTurn || gameState === 'waiting_for_influence_loss') && !isActionInProgress ? 'opacity-50 cursor-not-allowed' : ''}
           ${isCurrentTurn && gameActionUsedThisTurn && !isActionInProgress ? 'opacity-70 cursor-not-allowed' : ''}
@@ -82,13 +82,13 @@ export const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
             blur-lg
             transition-opacity duration-300
             ${canTakeAction && !isActionInProgress ? 'bg-amber-400/20 opacity-100' : ''}
-            ${isActionInProgress ? 'bg-blue-400/20 opacity-100' : ''}
+            ${isActionInProgress ? 'bg-amber-300/20 opacity-100' : ''}
             ${isCurrentTurn && gameActionUsedThisTurn && !isActionInProgress ? 'bg-gray-400/20 opacity-100' : ''}
             ${!isCurrentTurn && !isActionInProgress ? 'bg-amber-400/20 opacity-0' : ''}
           `} />
 
           {isActionInProgress ? (
-            <LoaderPinwheel className="w-6 h-6 text-blue-500 animate-spin" />
+            <LoaderPinwheel className="w-6 h-6 text-amber-300 animate-spin" />
           ) : (
             <Fingerprint className={`
               relative

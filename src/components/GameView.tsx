@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Info, Skull, X } from 'lucide-react';
+import { ArrowLeft, Info, Skull, X, LoaderPinwheel } from 'lucide-react';
 import yourTurnImage from '../assets/images/your-turn.png';
 import { ActionButton } from './ActionButton';
 import { GameAction, GameState, CardType } from '../types';
@@ -109,15 +109,19 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
   }, [game?.currentTurn, game?.id, game?.status]);
 
   if (!game) {
-    return <div className="p-4 text-white">Loading game...</div>;
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+        <LoaderPinwheel className="w-12 h-12 text-zinc-800 animate-spin" />
+      </div>
+    );
   }
 
   const currentPlayer = game.players.find(player => player.id === playerId);
 
   if (!currentPlayer) {
     return (
-      <div className="p-4 text-white">
-        Waiting to join game...
+      <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+        <LoaderPinwheel className="w-12 h-12 text-zinc-800 animate-spin" />
       </div>
     );
   }
