@@ -42,7 +42,7 @@ export const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
         )}
         
         {isActionInProgress && (
-          <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-blue-500/20 via-amber-100/30 to-amber-300/20 pulse" />
+          <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-100/30 to-amber-300/20 pulse" />
         )}
 
         <div className={`
