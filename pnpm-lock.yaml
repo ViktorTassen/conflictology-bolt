@@ -5,6 +5,15 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@fontsource-variable/inter':
+    specifier: ^5.2.5
+    version: 5.2.5
+  '@fontsource-variable/league-spartan':
+    specifier: ^5.2.5
+    version: 5.2.5
+  '@fontsource/bebas-neue':
+    specifier: ^5.2.5
+    version: 5.2.5
   canvas-confetti:
     specifier: ^1.9.3
     version: 1.9.3
@@ -1007,6 +1016,18 @@ packages:
 
   /@firebase/webchannel-wrapper@1.0.1:
     resolution: {integrity: sha512-jmEnr/pk0yVkA7mIlHNnxCi+wWzOFUg0WyIotgkKAb2u1J7fAeDBcVNSTjTihbAYNusCLQdW5s9IJ5qwnEufcQ==}
+    dev: false
+
+  /@fontsource-variable/inter@5.2.5:
+    resolution: {integrity: sha512-TrWffUAFOnT8zroE9YmGybagoOgM/HjRqMQ8k9R0vVgXlnUh/vnpbGPAS/Caz1KIlOPnPGh6fvJbb7DHbFCncA==}
+    dev: false
+
+  /@fontsource-variable/league-spartan@5.2.5:
+    resolution: {integrity: sha512-tZ+/Dy+4wDsNdf9atm7IIpzgOGUKEcj2QnuGEElGer8JhcMcZX3wec9pr26XLLHCD1uHQhD4q34eIdAJSRV2hg==}
+    dev: false
+
+  /@fontsource/bebas-neue@5.2.5:
+    resolution: {integrity: sha512-9hZCl9BpuwrIPRgprS17WRHMRyqprFKxNEDOl98en9XzikR8GGXpeiLaKf5HpNm1NKnVo/EowTjcgcgrvW3h0w==}
     dev: false
 
   /@grpc/grpc-js@1.9.15:
