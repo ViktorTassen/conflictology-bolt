@@ -1,5 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Game, GameState, CardType, ResponseOptions } from '../types';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db } from '../firebase';
+import { loggingService } from '../services/LoggingService';
+import { GameMessages } from '../messages';
 
 interface GameStateHelpers {
   getGameState: (playerId: number) => GameState;
@@ -9,6 +13,9 @@ interface GameStateHelpers {
 }
 
 export function useGameState(game: Game | null, selectedAction?: string | null): GameStateHelpers {
+  // Track the last game state to detect transitions
+  const lastGameStateRef = useRef<Record<number, GameState>>({});
+
   return useMemo(() => ({
     getGameState: (playerId: number): GameState => {
       if (!game) return 'waiting_for_others';
@@ -17,6 +24,21 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
       if (actionInProgress) {
         // Player needs to lose influence
         if (actionInProgress.losingPlayer === playerId) {
+          // If we're transitioning to waiting_for_influence_loss, add a system message
+          if (lastGameStateRef.current[playerId] !== 'waiting_for_influence_loss') {
+            const playerName = game.players[playerId].name;
+            const gameRef = doc(db, 'games', game.id);
+            
+            // Use setTimeout to avoid calling updateDoc during render
+            setTimeout(() => {
+              updateDoc(gameRef, {
+                logs: arrayUnion(loggingService.createSystemLog(GameMessages.system.loseInfluence(playerName)))
+              }).catch(err => console.error('Failed to add lose influence message:', err));
+            }, 0);
+          }
+          
+          // Update the last state
+          lastGameStateRef.current[playerId] = 'waiting_for_influence_loss';
           return 'waiting_for_influence_loss';
         }
         
@@ -24,6 +46,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         if (actionInProgress.type === 'exchange' && 
             actionInProgress.player === playerId && 
             actionInProgress.exchangeCards) {
+          lastGameStateRef.current[playerId] = 'waiting_for_exchange';
           return 'waiting_for_exchange';
         }
         
@@ -31,6 +54,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         if (actionInProgress.type === 'swap' && 
             actionInProgress.player === playerId && 
             actionInProgress.exchangeCards) {
+          lastGameStateRef.current[playerId] = 'waiting_for_exchange';
           return 'waiting_for_exchange';
         }
         
@@ -40,6 +64,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
             !actionInProgress.investigateCard &&
             !actionInProgress.challengeInProgress &&
             actionInProgress.responses[playerId]?.type === 'allow') {
+          lastGameStateRef.current[playerId] = 'waiting_for_card_selection';
           return 'waiting_for_card_selection';
         }
         
@@ -47,6 +72,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         if (actionInProgress.type === 'investigate' && 
             actionInProgress.player === playerId && 
             actionInProgress.investigateCard) {
+          lastGameStateRef.current[playerId] = 'waiting_for_investigate_decision';
           return 'waiting_for_investigate_decision';
         }
         
@@ -54,6 +80,7 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         if ((actionInProgress.type === 'exchange' || 
              actionInProgress.type === 'swap') && 
             actionInProgress.exchangeCards) {
+          lastGameStateRef.current[playerId] = 'waiting_for_others';
           return 'waiting_for_others';
         }
         
@@ -61,17 +88,20 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         if (actionInProgress.type === 'investigate') {
           // If this player has already allowed, they should wait
           if ((actionInProgress.responses[playerId] as { type: string })?.type === 'allow') {
+            lastGameStateRef.current[playerId] = 'waiting_for_others';
             return 'waiting_for_others';
           }
           
           // If target has allowed, everyone should wait
           if (actionInProgress.target !== undefined && 
               actionInProgress.responses[actionInProgress.target]?.type === 'allow') {
+            lastGameStateRef.current[playerId] = 'waiting_for_others';
             return 'waiting_for_others';
           }
           
           // If investigation card is being shown
           if (actionInProgress.investigateCard) {
+            lastGameStateRef.current[playerId] = 'waiting_for_others';
             return 'waiting_for_others';
           }
         }
@@ -79,22 +109,28 @@ export function useGameState(game: Game | null, selectedAction?: string | null):
         // Player who initiated the action waits for others, unless a block happened
         if (actionInProgress.player === playerId) {
           if (actionInProgress.blockingPlayer !== undefined) {
+            lastGameStateRef.current[playerId] = 'waiting_for_response';
             return 'waiting_for_response';
           }
+          lastGameStateRef.current[playerId] = 'waiting_for_others';
           return 'waiting_for_others';
         }
         
         // All other players are in response mode
+        lastGameStateRef.current[playerId] = 'waiting_for_response';
         return 'waiting_for_response';
       }
       
       // Player selected an action that requires target
       if (selectedAction) {
+        lastGameStateRef.current[playerId] = 'waiting_for_target';
         return 'waiting_for_target';
       }
       
       // Default states - active player or waiting player
-      return game.currentTurn === playerId ? 'waiting_for_action' : 'waiting_for_turn';
+      const newState = game.currentTurn === playerId ? 'waiting_for_action' : 'waiting_for_turn';
+      lastGameStateRef.current[playerId] = newState;
+      return newState;
     },
 
     getResponseOptions: (playerId: number): ResponseOptions | null => {

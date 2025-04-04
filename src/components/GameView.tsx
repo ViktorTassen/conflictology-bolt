@@ -98,7 +98,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
         clearTimeout(timer);
       };
     }
-  }, [game?.currentTurn]);
+  }, [game?.currentTurn, game?.status]);
 
   if (!game) {
     return <div className="p-4 text-white">Loading game...</div>;

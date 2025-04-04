@@ -17,7 +17,8 @@ export const GameMessages = {
     secondInfluenceLoss: (name: string) => `${name} must lose a second card after failed Hacker challenge.`,
     failedBlockDefense: (name: string, card: string) => `${name} must lose two cards (hack and failed ${card} defense).`,
     swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
-    deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`
+    deckReplace: (name: string, card: string) => `${name} revealed ${card}, drew a new card.`,
+    loseInfluence: (name: string) => `${name} must select a card to lose.`
   },
 
   // Action claims
@@ -57,8 +58,8 @@ export const GameMessages = {
     generic: 'challenges',
     success: (card: string) => `challenges ${card} claim.. Success!`,
     fail: (card: string) => `challenges ${card} claim.. Fails!`,
-    blockSuccess: (card: string) => `challenges ${card} block.. Success`,
-    blockFail: (card: string) => `challenges ${card} block.. Fails`
+    blockSuccess: (card: string) => `challenges ${card} block.. Success!`,
+    blockFail: (card: string) => `challenges ${card} block.. Fails!`
   },
 
   // Player responses
@@ -66,7 +67,7 @@ export const GameMessages = {
     allow: 'allows action',
     allowBlock: 'allows to block',
     eliminated: 'eliminated from game',
-    loseInfluence: 'loses one card of influence',
+    loseInfluence: 'lost one Influence card',
     showCard: 'shows a card to',
   }
 };
