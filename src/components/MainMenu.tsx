@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Users, ArrowLeft } from 'lucide-react';
+import { Plus, Users, ArrowLeft, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 import capitolBg from '../assets/images/capitol-bg.png';
 
@@ -24,6 +24,8 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   const [playerName, setPlayerName] = useState(`Player ${playerId % 1000}`);
   const [view, setView] = useState<'main' | 'join'>('main');
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [isJoiningGame, setIsJoiningGame] = useState(false);
 
   // Avatar color based on player ID
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
@@ -37,19 +39,24 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   });
 
   const handleCreateGame = async () => {
+    if (isCreatingGame) return;
+    
     try {
       setError(null);
+      setIsCreatingGame(true);
       const gameId = await createGame();
       const playerData = createPlayerData();
       await joinGame(gameId, playerData);
       onGameStart(gameId);
+      // No need to reset state as component unmounts
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create game');
+      setIsCreatingGame(false);
     }
   };
 
   const handleJoinGame = async () => {
-    if (!joiningId) {
+    if (!joiningId || isJoiningGame) {
       setError('Please enter a game ID');
       return;
     }
@@ -61,11 +68,14 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
     
     try {
       setError(null);
+      setIsJoiningGame(true);
       const playerData = createPlayerData();
       await joinGame(joiningId, playerData);
       onGameStart(joiningId);
+      // No need to reset state as component unmounts
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join game');
+      setIsJoiningGame(false);
     }
   };
 
@@ -143,17 +153,32 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           <div className="space-y-1">
             <button
               onClick={handleCreateGame}
-              className="w-full bg-[#111111]/80  hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
+              disabled={isCreatingGame}
+              className={`
+                w-full bg-[#111111]/80 
+                ${!isCreatingGame ? 'hover:bg-[#151515]' : ''} 
+                text-white rounded-md p-4 flex items-center justify-between group 
+                transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40
+                ${isCreatingGame ? 'cursor-wait' : ''}
+              `}
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#850c09] to-[#850c09]/20 group-hover:opacity-100 opacity-70"></div>
               <div className="absolute inset-y-0 left-0 w-1 bg-[#850c09]"></div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-md bg-[#850c09]/10 flex items-center justify-center group-hover:bg-[#850c09]/20 transition-colors">
-                  <Plus className="w-5 h-5 text-[#850c09]" />
+                  {isCreatingGame ? (
+                    <LoaderPinwheel className="w-5 h-5 text-[#850c09] animate-spin" />
+                  ) : (
+                    <Plus className="w-5 h-5 text-[#850c09]" />
+                  )}
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-base text-zinc-100">Create Game</div>
-                  <div className="text-xs text-zinc-400 group-hover:text-zinc-300">Start a new game room</div>
+                  <div className="font-semibold text-base text-zinc-100">
+                    {isCreatingGame ? 'Creating Game...' : 'Create Game'}
+                  </div>
+                  <div className="text-xs text-zinc-400 group-hover:text-zinc-300">
+                    {isCreatingGame ? 'Please wait' : 'Start a new game room'}
+                  </div>
                 </div>
               </div>
               <div className="w-6 h-6 text-zinc-600 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -283,14 +308,23 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           
           <button
             onClick={handleJoinGame}
-            disabled={joiningId.length !== 6}
+            disabled={joiningId.length !== 6 || isJoiningGame}
             className={`w-full py-3.5 rounded-lg font-medium text-md flex items-center justify-center gap-2 transition-all ${
-              joiningId.length === 6
+              joiningId.length === 6 && !isJoiningGame
                 ? 'bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white border border-zinc-700/30 shadow-lg'
-                : 'bg-zinc-900/50 text-zinc-600 cursor-not-allowed border border-zinc-800/30'
+                : isJoiningGame 
+                  ? 'bg-gradient-to-br from-zinc-700 to-zinc-800 text-white border border-zinc-700/30 shadow-lg cursor-wait'
+                  : 'bg-zinc-900/50 text-zinc-600 cursor-not-allowed border border-zinc-800/30'
             }`}
           >
-            Join Game
+            {isJoiningGame ? (
+              <>
+                <LoaderPinwheel className="w-5 h-5 animate-spin" />
+                <span>Joining Game...</span>
+              </>
+            ) : (
+              'Join Game'
+            )}
           </button>
         </div>
       </div>

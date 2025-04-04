@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 
 interface GameCreationProps {
@@ -22,6 +22,8 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
   const [joiningId, setJoiningId] = useState('');
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [isJoiningGame, setIsJoiningGame] = useState(false);
 
   const createPlayerData = () => ({
     id: playerId,
@@ -32,30 +34,38 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
   });
 
   const handleCreateGame = async () => {
+    if (isCreatingGame) return;
+    
     try {
       setError(null);
+      setIsCreatingGame(true);
       const gameId = await createGame();
       const playerData = createPlayerData();
       await joinGame(gameId, playerData);
       onGameStart(gameId);
+      // We don't reset isCreatingGame here because the component will unmount
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create game');
+      setIsCreatingGame(false);
     }
   };
 
   const handleJoinGame = async () => {
-    if (!joiningId) {
+    if (!joiningId || isJoiningGame) {
       setError('Please enter a game ID');
       return;
     }
     
     try {
       setError(null);
+      setIsJoiningGame(true);
       const playerData = createPlayerData();
       await joinGame(joiningId, playerData);
       onGameStart(joiningId);
+      // We don't reset isJoiningGame here because the component will unmount
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join game');
+      setIsJoiningGame(false);
     }
   };
 
@@ -69,15 +79,31 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
       
       <button
         onClick={handleCreateGame}
-        className="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-lg shadow-yellow-500/20"
+        disabled={isCreatingGame}
+        className={`
+          w-full bg-gradient-to-r 
+          ${isCreatingGame 
+            ? 'from-yellow-700 to-yellow-600 cursor-wait' 
+            : 'from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400'
+          } 
+          text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-lg shadow-yellow-500/20
+        `}
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center">
-            <Plus className="w-6 h-6" />
+            {isCreatingGame ? (
+              <LoaderPinwheel className="w-6 h-6 animate-spin" />
+            ) : (
+              <Plus className="w-6 h-6" />
+            )}
           </div>
           <div className="text-left">
-            <div className="font-semibold text-lg">Create Game</div>
-            <div className="text-sm text-yellow-200/80">Start a new game room</div>
+            <div className="font-semibold text-lg">
+              {isCreatingGame ? 'Creating Game...' : 'Create Game'}
+            </div>
+            <div className="text-sm text-yellow-200/80">
+              {isCreatingGame ? 'Please wait' : 'Start a new game room'}
+            </div>
           </div>
         </div>
       </button>
@@ -85,7 +111,15 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
       {!showJoinInput ? (
         <button
           onClick={() => setShowJoinInput(true)}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-lg shadow-blue-500/20"
+          disabled={isCreatingGame}
+          className={`
+            w-full bg-gradient-to-r 
+            ${isCreatingGame 
+              ? 'from-blue-700 to-blue-600 opacity-70 cursor-not-allowed' 
+              : 'from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400'
+            } 
+            text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-lg shadow-blue-500/20
+          `}
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-400/20 flex items-center justify-center">
@@ -109,9 +143,21 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
           <div className="flex gap-2">
             <button
               onClick={handleJoinGame}
-              className="flex-1 bg-blue-500 hover:bg-blue-400 text-white rounded-lg py-2 transition-colors"
+              disabled={isJoiningGame}
+              className={`
+                flex-1 flex items-center justify-center gap-2
+                ${isJoiningGame ? 'bg-blue-600 cursor-wait' : 'bg-blue-500 hover:bg-blue-400'}
+                text-white rounded-lg py-2 transition-colors
+              `}
             >
-              Join
+              {isJoiningGame ? (
+                <>
+                  <LoaderPinwheel className="w-4 h-4 animate-spin" />
+                  <span>Joining...</span>
+                </>
+              ) : (
+                'Join'
+              )}
             </button>
             <button
               onClick={() => {
@@ -119,7 +165,12 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
                 setError(null);
                 setJoiningId('');
               }}
-              className="flex-1 bg-[#1a1a1a] hover:bg-[#333333] text-white rounded-lg py-2 transition-colors"
+              disabled={isJoiningGame}
+              className={`
+                flex-1 
+                ${isJoiningGame ? 'bg-[#1a1a1a] opacity-50 cursor-not-allowed' : 'bg-[#1a1a1a] hover:bg-[#333333]'} 
+                text-white rounded-lg py-2 transition-colors
+              `}
             >
               Cancel
             </button>
