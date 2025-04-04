@@ -1,6 +1,6 @@
 import { Game, Player, ActionType } from '../types';
-import { ILoggingService, loggingService } from './LoggingService';
-import { ICardService, cardService } from './CardService';
+import { ILoggingService } from './LoggingService';
+import { ICardService } from './CardService';
 
 export interface IActionContext {
   game: Game;
@@ -70,10 +70,7 @@ export abstract class BaseActionHandler implements IActionHandler {
 export class ActionService {
   private handlers: Map<ActionType, IActionHandler>;
 
-  constructor(
-    private loggingService: ILoggingService,
-    private cardService: ICardService
-  ) {
+  constructor() {
     this.handlers = new Map();
     // Register handlers here
   }
@@ -102,4 +99,4 @@ export class ActionService {
   }
 }
 
-export const actionService = new ActionService(loggingService, cardService);
+export const actionService = new ActionService();

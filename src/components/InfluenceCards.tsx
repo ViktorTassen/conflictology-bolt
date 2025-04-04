@@ -28,7 +28,7 @@ export function InfluenceCards({ playerId, cards }: InfluenceCardsProps) {
   
   // Use refs to track previous cards without causing re-renders
   const previousCardsRef = useRef<Card[]>([]);
-  const animationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [animationState, setAnimationState] = useState<{
     animatingPositions: number[],
     outgoingCards: Map<number, Card>
