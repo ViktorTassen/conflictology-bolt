@@ -371,31 +371,61 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     return gameStateHelpers.getResponseOptions(playerIndex);
   };
 
-  const allPlayerSpots = Array(6).fill(null).map((_, index) => {
-    const player = game.players[index];
-    return {
-      index,
-      player: player || null
-    };
-  }).filter(({ index }) => index !== playerIndex);
+  // Create a clockwise array of players relative to the current player
+  const getClockwisePlayerSpots = () => {
+    const activePlayers = game.players.length;
+    if (activePlayers <= 1) return [];
+    
+    // Calculate positions in clockwise order relative to current player
+    const spots = [];
+    
+    // Arrange players in a specific visual order:
+    // 1. Middle left (8 o'clock)
+    // 2. Top left (10 o'clock)
+    // 3. Top center (12 o'clock)
+    // 4. Top right (2 o'clock)
+    // 5. Middle right (4 o'clock)
+    
+    // First, get all players except the current player
+    const otherPlayers = [];
+    for (let i = 1; i < activePlayers; i++) {
+      const nextPlayerIndex = (playerIndex + i) % activePlayers;
+      if (nextPlayerIndex !== playerIndex) {
+        otherPlayers.push({
+          index: nextPlayerIndex,
+          player: game.players[nextPlayerIndex] || null
+        });
+      }
+    }
+    
+    // Assign positions based on the number of players
+    // The position array maps to: [middle left, top left, top center, top right, middle right]
+    const positionMap = [3, 4, 0, 1, 2];
+    
+    // Assign positions based on available players
+    for (let i = 0; i < Math.min(otherPlayers.length, positionMap.length); i++) {
+      spots.push({
+        index: otherPlayers[i].index,
+        player: otherPlayers[i].player,
+        position: positionMap[i]
+      });
+    }
+    
+    return spots;
+  };
 
-  const getPlayerPosition = (index: number) => {
-    if (index === 0) {
-      return 'top-0 left-1/2 -translate-x-1/2';
+  const allPlayerSpots = getClockwisePlayerSpots();
+
+  const getPlayerPosition = (position: number) => {
+    // Position players in clockwise order around the table
+    switch (position) {
+      case 0: return 'top-0 left-1/2 -translate-x-1/2'; // top center (12 o'clock)
+      case 1: return 'top-20 right-8';                  // top right (2 o'clock)
+      case 2: return 'top-44 right-8';                  // middle right (4 o'clock)
+      case 3: return 'top-44 left-8';                   // middle left (8 o'clock)
+      case 4: return 'top-20 left-8';                   // top left (10 o'clock)
+      default: return '';
     }
-    if (index === 1) {
-      return 'top-20 left-8';
-    }
-    if (index === 2) {
-      return 'top-20 right-8';
-    }
-    if (index === 3) {
-      return 'top-44 left-8';
-    }
-    if (index === 4) {
-      return 'top-44 right-8';
-    }
-    return '';
   };
 
   const responseButtons = getResponseButtons();
@@ -478,10 +508,10 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
 
       <div className="flex-1 flex flex-col min-h-0 mt-6 relative z-20">
         <div className="h-72 relative">
-          {allPlayerSpots.map(({ player, index }, displayIndex) => (
+          {allPlayerSpots.map(({ player, index, position }) => (
             <div
               key={index}
-              className={`absolute ${getPlayerPosition(displayIndex)}`}
+              className={`absolute ${getPlayerPosition(position)}`}
             >
               {player ? (
                 <PlayerCard
