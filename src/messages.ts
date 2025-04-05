@@ -14,7 +14,7 @@ export const GameMessages = {
     playerEliminated: (name: string) => `${name} has been eliminated!`,
     stealBlocked: 'The Steal was blocked',
     foreignAidBlocked: 'The Foreign Aid was blocked',
-    hackBlocked: 'The Hack was blocked with Judge',
+    hackBlocked: 'Hacker was blocked bu Judge',
     secondCardRequired: (name: string) => `${name} was hacked. Must lose a second card`,
     swapAllowed: (name: string) => `${name} selecting card to swap..`,
     exchangeSelecting: (name: string) => `${name} selecting cards to keep..`,
