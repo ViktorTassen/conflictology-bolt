@@ -164,12 +164,6 @@ export function InfluenceCards({ playerId, cards }: InfluenceCardsProps) {
                   className="w-full h-full object-cover"
                 />
                 
-                {/* Previous card name overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent">
-                  <div className="absolute bottom-1 left-1 text-white font-bold text-[10px]">
-                    {animationState.outgoingCards.get(card.position)?.name}
-                  </div>
-                </div>
               </div>
             )}
           </div>

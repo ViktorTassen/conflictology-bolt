@@ -100,7 +100,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       const timer = setTimeout(() => {
         setAnimatingOut(true);
         setTimeout(() => setVisible(false), 500); // Match fadeSlideOut duration
-      }, 2000);
+      }, 1500);
 
       return () => {
         clearTimeout(timer);

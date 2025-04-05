@@ -159,7 +159,6 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
                 ${!isCreatingGame ? 'hover:bg-[#151515]' : ''} 
                 text-white rounded-md p-4 flex items-center justify-between group 
                 transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40
-                ${isCreatingGame ? 'cursor-wait' : ''}
               `}
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#850c09] to-[#850c09]/20 group-hover:opacity-100 opacity-70"></div>

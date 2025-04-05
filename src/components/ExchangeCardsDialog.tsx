@@ -110,7 +110,7 @@ export function ExchangeCardsDialog({
                         group relative 
                         ${isSelected ? 'ring-2 ring-blue-500' : ''} 
                         ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        ${isProcessing ? 'cursor-wait' : ''}
+                        
                       `}
                     >
                       <div className={`
@@ -166,7 +166,6 @@ export function ExchangeCardsDialog({
                         group relative 
                         ${isSelected ? 'ring-2 ring-blue-500' : ''} 
                         ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        ${isProcessing ? 'cursor-wait' : ''}
                       `}
                     >
                       <div className={`

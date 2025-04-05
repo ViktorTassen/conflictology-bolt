@@ -116,11 +116,6 @@ export function LoseInfluenceDialog({ cards, playerId, onCardSelect }: LoseInflu
                         alt={card.name}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent">
-                        <div className="absolute bottom-2 left-2 text-white font-bold text-sm">
-                          {card.name}
-                        </div>
-                      </div>
                       
                       {/* Hover/Selected overlay */}
                       <div className={`

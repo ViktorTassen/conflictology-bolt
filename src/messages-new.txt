@@ -311,13 +311,13 @@
 [S] Player A must select a card to swap
 [R] Player A completes the card swap
 
-// Scenario 10 (Swap) +
+// Scenario 10 (Swap)  +
 [A] Player A claims Police to Swap one card
 [C] Player B challenges Police claim... Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
-// Scenario 11 (Swap) +
+// Scenario 11 (Swap) 
 [A] Player A claims Police to Swap one card
 [C] Player B challenges Police claim... Fails!
 [S] Player B selecting a card to lose..
