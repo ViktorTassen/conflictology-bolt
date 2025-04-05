@@ -44,7 +44,7 @@ export const scandalAction: ActionHandler = {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
         coins: 7, // Fixed cost of Scandal action
-        message: `pays $7M to expose @@TARGET@@ in a ##Scandal##.` // Special markers for target and bold
+        message: `pays $7M to expose @@TARGET@@ in a ##Scandal##` // Special markers for target and bold
       })],
       actionInProgress: {
         type: 'scandal',

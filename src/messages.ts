@@ -12,11 +12,11 @@ export const GameMessages = {
     gameStarted: 'Game started',
     playerJoined: (name: string) => `${name} joined the game`,
     playerEliminated: (name: string) => `${name} has been eliminated!`,
-    stealBlocked: 'The steal was blocked.',
-    hackBlocked: 'The hack was blocked with Judge.',
-    secondCardRequired: (name: string) => `${name} was hacked. Must lose a second card.`,
-    swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
-    loseInfluence: (name: string) => `${name} must select a card to lose.`
+    stealBlocked: 'The steal was blocked',
+    hackBlocked: 'The hack was blocked with Judge',
+    secondCardRequired: (name: string) => `${name} was hacked. Must lose a second card`,
+    swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards to Swap`,
+    loseInfluence: (name: string) => `${name} must select a card to lose`
   },
 
   // Action claims
@@ -28,7 +28,7 @@ export const GameMessages = {
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
     swap: 'claims Police to Swap their card',
-    scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose' : 'pays $7M to expose'
+    scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose' : 'must pay $7M to expose'
   },
 
   // Action results

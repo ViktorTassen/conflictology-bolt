@@ -1,0 +1,318 @@
+// If any changes made in messages text or game logic (scenarios), add changes here.
+// legend: "S:" means system message
+
+
+
+
+
+Income messages:
+Player A takes Income (+$1M)
+
+
+
+
+Foreign Aid messages:
+Scenario 1
+Player A claims Foreign Aid
+Player A receives Foreign Aid (+$2M)
+
+Scenario 2
+Player A claims Foreign Aid
+Player B claims Banker to block
+Player A allows Player B to block
+
+Scenario 3
+Player A claims Foreign Aid
+Player B claims Banker to block
+Player A challenges Banker block.. Fails!
+S: Player A must select a card to lose
+Player A lost 1 influence card.
+
+
+
+
+Banker messages:
+Scenario 1
+Player A claims Banker to collect Tax
+Player A collects Tax with Banker (+$3M)
+
+Scenario 2
+Player A claims Banker to collect Tax
+Player B challenges Banker claim.. Success!
+Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 3
+Player A claims Banker to collect Tax
+Player B challenges Banker claim.. Fails!
+Player B must select a card to lose
+Player B lost 1 influence card
+Player A collects Tax with Banker (+$3M)
+
+
+
+
+Hacker messages:
+Scenario 1
+Player A pays $3M to hack Player B
+Player B allows action
+S: Player B must select a card to lose
+Player B lost 1 influence card
+
+Scenario 2
+Player A pays $3M to hack Player B
+Player B challenges Hacker claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 3
+Player A pays $3M to hack Player B
+Player B challenges Hacker claim.. Fails!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+S: Player B was hacked. Must lose a second card
+Player B lost 1 influence card
+
+Scenario 4
+Player A pays $3M to hack Player B
+Player C challenges Hacker claim.. Fails!
+S: Player C must select a card to lose
+Player C lost 1 influence card
+S: Player A was the target of the Hacker
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 5
+Player A pays $3M to hack Player B
+Player C challenges Hacker claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 6
+Player A pays $3M to hack Player B
+Player B claims Judge to block
+Player A challenges Judge block.. Fails!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 7
+Player A pays $3M to hack Player B
+Player B claims Judge to block
+Player C challenges Judge block.. Fails!
+S: Player C must select a card to lose
+Player C lost 1 influence card
+S: The hack was blocked with Judge
+
+Scenario 8
+Player A pays $3M to hack Player B
+Player B claims Judge to block
+Player A challenges Judge block.. Success!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+S: Player B was hacked. Must lose a second card
+Player B lost 1 influence card
+
+Scenario 9
+Player A pays $3M to hack Player B
+Player B claims Judge to block
+Player C challenges Judge block.. Success!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+S: Player B was hacked. Must lose a second card
+Player B lost 1 influence card
+
+
+
+Mafia messages:
+Scenario 1
+Player A claims Mafia to steal from Player B
+Player B allows action
+Player A steals $2M from Player B
+
+Scenario 2
+Player A claims Mafia to steal from Player B
+Player B challenges Mafia claim.. Fails!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+Player A steals $2M from Player B
+
+Scenario 3
+Player A claims Mafia to steal from Player B
+Player C challenges Mafia claim.. Fails!
+S: Player C must select a card to lose
+Player C lost 1 influence card
+Player A steals $2M from Player B
+
+Scenario 4
+Player A claims Mafia to steal from Player B
+Player B challenges Mafia claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 5
+Player A claims Mafia to steal from Player B
+Player C challenges Mafia claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 6 (block by Mafia/Reporter/Police)
+Player A claims Mafia to steal from Player B
+Player B claims Mafia to block
+Player A challenges Mafia block.. Fails!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 7 (block by Mafia/Reporter/Police)
+Player A claims Mafia to steal from Player B
+Player B claims Mafia to block
+Player A challenges Mafia block.. Success!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+Player A steals $2M from Player B
+
+Scenario 8 (block by Mafia/Reporter/Police)
+Player A claims Mafia to steal from Player B
+Player B claims Mafia to block
+Player C challenges Mafia block.. Fails!
+S: Player C must select a card to lose
+Player C lost 1 influence card
+S: The steal was blocked
+
+Scenario 9 (block by Mafia/Reporter/Police)
+Player A claims Mafia to steal from Player B
+Player B claims Mafia to block
+Player C challenges Mafia block.. Success!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+Player A steals $2M from Player B
+
+
+
+Reporter messages:
+Scenario 1
+Player A claims Reporter to Exchange
+S: Exchange allowed. Player A selecting cards.
+Player A completes the 2 cards Exchange
+
+Scenario 2
+Player A claims Reporter to Exchange
+Player B challenges Reporter claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 3
+Player A claims Reporter to Exchange
+Player B challenges Reporter claim.. Fails!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+S: Player A will now exchange cards
+Player A completes the 2 cards Exchange
+
+
+
+
+Police messages:
+Scenario 1 (Investigate)
+Player A claims Police to Investigate Player B
+Player B allows action
+(here missing system message about Player B selecting card to show)
+Player B shows a card to Player A
+(here missing system message about Player A desiding what to do with investigation result)
+Player A lets Player B keep their card
+
+Scenario 2 (Investigate)
+Player A claims Police to Investigate Player B
+Player B allows action
+(here missing system message about Player B selecting card to show)
+Player B shows a card to Player A
+(here missing system message about Player A desiding what to do with investigation result)
+Player A forces Player B swap their card
+
+
+Scenario 3 (Investigate)
+Player A claims Police to Investigate Player B
+Player B challenges Police claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 4 (Investigate)
+Player A claims Police to Investigate Player B
+Player C challenges Police claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 5 (Investigate)
+Player A claims Police to Investigate Player B
+Player B challenges Police claim.. Fails!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+(here missing system message about Player B selecting card to show)
+Player B shows a card to Player A
+(here missing system message about Player A desiding what to do with investigation result)
+Player A lets Player B keep their card
+
+
+Scenario 6 (Investigate)
+Player A claims Police to Investigate Player B
+Player B challenges Police claim.. Fails!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+(here missing system message about Player B selecting card to show)
+Player B shows a card to Player A
+(here missing system message about Player A desiding what to do with investigation result)
+Player A forces Player B swap their card
+
+Scenario 7 (Investigate)
+Player A claims Police to Investigate Player B
+Player C challenges Police claim.. Fails!
+S: Player C must select a card to lose
+Player C lost 1 influence card
+(here missing system message about Player B selecting card to show)
+Player B shows a card to Player A
+(here missing system message about Player A desiding what to do with investigation result)
+Player A lets Player B keep their card
+
+
+Scenario 8 (Investigate)
+Player A claims Police to Investigate Player B
+Player C challenges Police claim.. Fails!
+S: Player C must select a card to lose
+Player C lost 1 influence card
+(here missing system message about Player B selecting card to show)
+Player B shows a card to Player A
+(here missing system message about Player A desiding what to do with investigation result)
+Player A forces Player B swap their card
+
+
+Scenario 9 (Swap)
+Player A claims Police to Swap their card
+S: Swap allowed. Player A selecting cards
+Player A completes the card swap
+
+Scenario 10 (Swap)
+Player A claims Police to Swap their card
+Player B challenges Police claim.. Success!
+S: Player A must select a card to lose
+Player A lost 1 influence card
+
+Scenario 11 (Swap)
+Player A claims Police to Swap their card
+Player B challenges Police claim.. Fails!
+S: Player B must select a card to lose
+Player B lost 1 influence card
+(here missing system message about Player A selecting cards to swap)
+Player A completes the card swap
+
+
+
+
+Scandal messages:
+Scenario 1
+Player A pays $7M to expose Player B in a Scandal
+S: Player B must select a card to lose
+Player B lost 1 influence card
+
+Scenario 2
+Player A must pay $7M to expose Player B in a Scandal
+S: Player B must select a card to lose
+Player B lost 1 influence card
