@@ -31,8 +31,7 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       logs: [loggingService.createLog('hack', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        targetName: targetPlayer.name,
-        message: GameMessages.actions.hack(targetPlayer.name)
+        message: GameMessages.actions.hack
       })],
       actionInProgress: {
         type: 'hack',
@@ -199,9 +198,13 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
             responses: {}
           };
           
-          result.logs.push(loggingService.createSystemLog(
-            `${targetPlayer.name} was the target of the Hacker`
-          ));
+          // Add result message that the hack succeeded
+          result.logs.push(loggingService.createLog('hack', actionPlayer, {
+            target: targetPlayer.name, 
+            targetColor: targetPlayer.color,
+            coins: 1, // Any non-zero value to trigger result message
+            message: GameMessages.results.hack
+          }));
           
           result.players = game.players;
           return result;

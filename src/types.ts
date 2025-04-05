@@ -99,6 +99,7 @@ export interface GameLogEntry {
   coins?: number;
   timestamp: number;
   message?: string;
+  actionType?: string; // Used by LoggingService to determine the message for 'allow' actions
 }
 
 // Game interface

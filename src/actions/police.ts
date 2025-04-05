@@ -113,7 +113,7 @@ export const investigateAction: ActionHandler = {
         const replacedCardPosition = game.cards[investigateCard.cardIndex].position;
         
         const finalCards = cardsWithReturnedCard.map(card => {
-          if (card.id === drawnCard.id) {
+          if (drawnCard && card.id === drawnCard.id) {
             return {
               ...card,
               playerId: targetPlayer.id,

@@ -73,43 +73,43 @@
 
 
 // HACKER MESSAGES:
-// Scenario 1 +
-[A] Player A pays $3M to launch a Hack on Player B
+// Scenario 1 + +
+[A] Player A pays $3M to hack Player B
 [P] Player B allows Hack
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 
-// Scenario 2 +
-[A] Player A pays $3M to launch a Hack on Player B
+// Scenario 2 + +
+[A] Player A pays $3M to hack Player B
 [C] Player B challenges Hacker claim... Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
-// Scenario 3 +
-[A] Player A pays $3M to launch a Hack on Player B
+// Scenario 3 + +
+[A] Player A pays $3M to hack Player B
 [C] Player B challenges Hacker claim... Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [S] Player B was hacked. Must lose a second card
 [R] Player B lost 1 influence card
 
-// Scenario 4 +
-[A] Player A pays $3M to launch a Hack on Player B
+// Scenario 4 + 
+[A] Player A pays $3M to hack Player B
 [C] Player C challenges Hacker claim... Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
-// Player B was the target of the Hacker (we have this message now)
+//  Player A completed the Hacker attack on Player B (we have this message now)
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 
 // Scenario 5 +
-[A] Player A pays $3M to launch a Hack on Player B
+[A] Player A pays $3M to hack Player B
 [C] Player C challenges Hacker claim... Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 6 +
-[A] Player A pays $3M to launch a Hack on Player B
+[A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player A challenges Judge claim... Fails!
 [S] Player A selecting a card to lose..
@@ -117,7 +117,7 @@
 [S] The Hack was blocked with Judge
 
 // Scenario 7 +
-[A] Player A pays $3M to launch a Hack on Player B
+[A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player C challenges Judge claim... Fails!
 [S] Player C selecting a card to lose..
@@ -125,7 +125,7 @@
 [S] The Hack was blocked with Judge
 
 // Scenario 8 +
-[A] Player A pays $3M to launch a Hack on Player B
+[A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player A challenges Judge claim... Success!
 [S] Player B selecting a card to lose..
@@ -134,7 +134,7 @@
 [R] Player B lost 1 influence card
 
 // Scenario 9 +
-[A] Player A pays $3M to launch a Hack on Player B
+[A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player C challenges Judge claim... Success!
 [S] Player B selecting a card to lose..

@@ -28,7 +28,7 @@ export const GameMessages = {
     tax: 'claims Banker to collect Tax',
     foreignAid: 'claims Foreign Aid',
     steal: 'claims Mafia to Steal from',
-    hack: (target: string) => `pays $3M to hack ${target}`,
+    hack: 'pays $3M to hack',
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
     swap: 'claims Police to Swap one card',
@@ -45,7 +45,7 @@ export const GameMessages = {
     swap: 'completes the card swap',
     investigateKeep: 'lets them keep their card',
     investigateSwap: 'forces them to swap their card',
-    hack: 'executed Hacker attack',
+    hack: 'completed the Hacker attack on',
     loseInfluence: 'lost 1 influence card',
     showCard: 'shows a card to'
   },

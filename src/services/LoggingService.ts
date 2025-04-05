@@ -100,9 +100,9 @@ export class LoggingService implements ILoggingService {
           GameMessages.actions.steal;
       
       case 'hack':
-        return data.target ? 
+        return data.coins ? 
           GameMessages.results.hack : 
-          data.targetName ? GameMessages.actions.hack(data.targetName) : GameMessages.actions.hack('');
+          data.target ? GameMessages.actions.hack : GameMessages.actions.hack;
       
       case 'exchange':
         return data.completed ? GameMessages.results.exchange : GameMessages.actions.exchange;
