@@ -108,6 +108,15 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           responses: {},
         };
         
+        // Add completed hack message (Scenarios 3/8/9)
+        const actionPlayer = game.players[game.actionInProgress.player];
+        result.logs.push(loggingService.createLog('hack', actionPlayer, {
+          target: player.name,
+          targetColor: player.color,
+          coins: 1, // Any non-zero value to trigger result message
+          message: GameMessages.results.hack
+        }));
+        
         // Add message that player needs to lose a second card
         result.logs.push(loggingService.createSystemLog(
           GameMessages.system.secondCardRequired(player.name)
@@ -198,9 +207,9 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
             responses: {}
           };
           
-          // Add result message that the hack succeeded
+          // Add completed hack message (Scenario 4)
           result.logs.push(loggingService.createLog('hack', actionPlayer, {
-            target: targetPlayer.name, 
+            target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: 1, // Any non-zero value to trigger result message
             message: GameMessages.results.hack
@@ -396,6 +405,14 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           actionType: 'hack',
           message: GameMessages.responses.allowHack
         })];
+        
+        // Add completed hack message (Scenario 1)
+        result.logs.push(loggingService.createLog('hack', actionPlayer, {
+          target: targetPlayer.name,
+          targetColor: targetPlayer.color,
+          coins: 1, // Any non-zero value to trigger result message
+          message: GameMessages.results.hack
+        }));
       }
 
       return result;
