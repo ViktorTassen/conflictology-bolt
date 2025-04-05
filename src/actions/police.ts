@@ -102,15 +102,6 @@ export const investigateAction: ActionHandler = {
         const updatedCards = cardService.drawCards(game.cards, 1, 'investigate');
         const drawnCard = updatedCards.find(c => c.location === 'investigate');
         
-        if (!drawnCard) {
-          result.logs = [loggingService.createSystemLog(GameMessages.system.deckReplace(targetPlayer.name, game.cards[investigateCard.cardIndex].name))];
-          result.actionInProgress = null;
-          const nextTurn = advanceToNextTurn(game.players, game.currentTurn);
-          result.currentTurn = nextTurn.currentTurn;
-          result.actionUsedThisTurn = nextTurn.actionUsedThisTurn;
-          return result;
-        }
-        
         const cardsWithReturnedCard = cardService.returnCardsToDeck(updatedCards, [investigateCard.cardId]);
         
         // Find the position of the card being replaced
