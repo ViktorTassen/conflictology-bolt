@@ -89,6 +89,7 @@ export function useGame(gameId?: string, playerId?: number) {
         id: newGameId,
         players: [],
         currentTurn: 0,
+        firstPlayerOfMatch: 0, // Initialize first player (host gets first turn in first match)
         cards,
         logs: [loggingService.createSystemLog(GameMessages.system.gameCreated)],
         status: 'waiting',
@@ -356,7 +357,15 @@ export function useGame(gameId?: string, playerId?: number) {
         eliminated: false
       }));
       
-      let newMatchLogMessage = 'New game started!';
+      // Rotate first turn to next player in each new match
+      const playerCount = updatedPlayers.length;
+      // Store which player will go first
+      const nextFirstPlayer = (game.firstPlayerOfMatch !== undefined) 
+        ? (game.firstPlayerOfMatch + 1) % playerCount
+        : 1; // If this is the first rotation, move from player 0 to player 1
+      
+      const firstPlayerName = updatedPlayers[nextFirstPlayer].name;
+      let newMatchLogMessage = `New game started! ${firstPlayerName} will take the first turn.`;
 
       
       // Complete game state reset
@@ -364,7 +373,8 @@ export function useGame(gameId?: string, playerId?: number) {
         status: 'playing',
         players: updatedPlayers,
         cards: updatedCards,
-        currentTurn: 0,
+        currentTurn: nextFirstPlayer, // Set turn to the rotated player index
+        firstPlayerOfMatch: nextFirstPlayer, // Store who went first in this match
         actionInProgress: null,
         responses: {},
         voteNextMatch: {},
@@ -376,7 +386,7 @@ export function useGame(gameId?: string, playerId?: number) {
         logs: [loggingService.createSystemLog(newMatchLogMessage)]
       });
       
-      console.log("Game reset completed - new match started");
+      console.log(`Game reset completed - new match started with ${firstPlayerName} going first`);
     } catch (err) {
       console.error('Failed to start new match', err);
       setError('Failed to start new match');

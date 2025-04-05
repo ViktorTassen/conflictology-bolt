@@ -107,6 +107,7 @@ export interface Game {
   id: string;
   players: Player[];
   currentTurn: number;
+  firstPlayerOfMatch?: number; // Track which player started the current match
   cards: Card[]; // Replace deck with cards array
   logs: GameLogEntry[];
   status: GameStatus;
