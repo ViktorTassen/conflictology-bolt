@@ -70,7 +70,7 @@ export const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
           ${isCurrentTurn && gameActionUsedThisTurn && !isActionInProgress ? 'ring-2 ring-gray-500/30' : ''}
           ${(!isCurrentTurn || gameState === 'waiting_for_influence_loss') && !isActionInProgress ? 'opacity-50 cursor-not-allowed' : ''}
           ${isCurrentTurn && gameActionUsedThisTurn && !isActionInProgress ? 'opacity-70 cursor-not-allowed' : ''}
-          ${isActionInProgress ? 'opacity-90 cursor-wait' : ''}
+          ${isActionInProgress ? 'opacity-90' : ''}
         `}>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/10 to-transparent transform -rotate-45 gem-shine" />
 

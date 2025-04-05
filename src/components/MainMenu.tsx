@@ -313,7 +313,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
               joiningId.length === 6 && !isJoiningGame
                 ? 'bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white border border-zinc-700/30 shadow-lg'
                 : isJoiningGame 
-                  ? 'bg-gradient-to-br from-zinc-700 to-zinc-800 text-white border border-zinc-700/30 shadow-lg cursor-wait'
+                  ? 'bg-gradient-to-br from-zinc-700 to-zinc-800 text-white border border-zinc-700/30 shadow-lg'
                   : 'bg-zinc-900/50 text-zinc-600 cursor-not-allowed border border-zinc-800/30'
             }`}
           >

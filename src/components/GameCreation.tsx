@@ -83,7 +83,7 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
         className={`
           w-full bg-gradient-to-r 
           ${isCreatingGame 
-            ? 'from-yellow-700 to-yellow-600 cursor-wait' 
+            ? 'from-yellow-700 to-yellow-600' 
             : 'from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400'
           } 
           text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-lg shadow-yellow-500/20
@@ -146,7 +146,7 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
               disabled={isJoiningGame}
               className={`
                 flex-1 flex items-center justify-center gap-2
-                ${isJoiningGame ? 'bg-blue-600 cursor-wait' : 'bg-blue-500 hover:bg-blue-400'}
+                ${isJoiningGame ? 'bg-blue-600' : 'bg-blue-500 hover:bg-blue-400'}
                 text-white rounded-lg py-2 transition-colors
               `}
             >
