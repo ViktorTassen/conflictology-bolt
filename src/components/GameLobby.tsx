@@ -105,7 +105,7 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
             {/* Content */}
             <div className="relative flex items-center justify-between">
               <div className="flex-1">
-              <h3 className="text-yellow-100 font-semibold text-md tracking-wide mb-2 text-center">Match Winner</h3>
+              <h3 className="text-yellow-100 font-semibold text-md tracking-wide mb-2">Game Winner</h3>
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-md shadow-md" 
@@ -241,15 +241,12 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
             className="w-full bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white rounded-xl p-4 flex items-center justify-between group transition-all duration-200 shadow-xl shadow-black/40 border border-zinc-700/30 relative z-20 mt-2"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+              <div className="w-10 h-10 flex items-center justify-center">
                 <PlayCircle className="w-6 h-6 text-zinc-300 group-hover:text-white" />
               </div>
               <div className="text-left">
                 <div className="font-semibold text-lg text-zinc-200 group-hover:text-white">
-                  {game.winner !== undefined ? 'Start New Match' : 'Start Game'}
-                </div>
-                <div className="text-sm text-zinc-400 group-hover:text-zinc-300">
-                  {game.winner !== undefined ? 'Begin a new match' : 'Begin the match'}
+                  {game.winner !== undefined ? 'Start New Game' : 'Start Game'}
                 </div>
               </div>
             </div>
