@@ -379,13 +379,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
     // Calculate positions in clockwise order relative to current player
     const spots = [];
     
-    // Arrange players in a specific visual order:
-    // 1. Middle left (8 o'clock)
-    // 2. Top left (10 o'clock)
-    // 3. Top center (12 o'clock)
-    // 4. Top right (2 o'clock)
-    // 5. Middle right (4 o'clock)
-    
     // First, get all players except the current player
     const otherPlayers = [];
     for (let i = 1; i < activePlayers; i++) {
@@ -398,9 +391,28 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       }
     }
     
-    // Assign positions based on the number of players
-    // The position array maps to: [middle left, top left, top center, top right, middle right]
-    const positionMap = [3, 4, 0, 1, 2];
+    // Get the total opponents (excluding current player)
+    const totalOpponents = otherPlayers.length;
+    
+    // Dynamic position mapping based on number of players
+    let positionMap: number[] = [];
+    
+    if (totalOpponents === 1) {
+      // Only one opponent - place them at top center (12 o'clock)
+      positionMap = [0]; // top center only
+    } 
+    else if (totalOpponents <= 3) {
+      // 3-4 players (2-3 opponents) - start at top left
+      // The position array maps to: [top left, top center, top right, middle right]
+      positionMap = [4, 0, 1, 2];
+    }
+    else {
+      // 5-6 players (4-5 opponents) - start at middle left
+      // The position array maps to: [middle left, top left, top center, top right, middle right]
+      positionMap = [3, 4, 0, 1, 2];
+    }
+    
+    console.log(`Total players: ${activePlayers}, Total opponents: ${totalOpponents}, Position map:`, positionMap);
     
     // Assign positions based on available players
     for (let i = 0; i < Math.min(otherPlayers.length, positionMap.length); i++) {

@@ -101,9 +101,8 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
       <div className="bg-[#333333] border-b border-white/5 p-1.5">
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
             <span 
-              className="text-xs font-medium"
+              className="text-xs font-medium animate-pulse"
               style={{ color: currentTurnPlayer.color }}
             >
               {truncateName(currentTurnPlayer.name)}'s Turn
