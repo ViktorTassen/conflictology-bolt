@@ -97,6 +97,10 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
         
+        // Add message about players allowing tax collection
+        result.logs.push(loggingService.createSystemLog(GameMessages.responses.allowTax));
+        
+        // Add result message
         result.logs.push(loggingService.createLog('banker', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
@@ -116,6 +120,10 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
           const updatedPlayers = [...game.players];
           updatedPlayers[game.actionInProgress.player].coins += 3;
           
+          // Add message about players allowing tax collection
+          result.logs.push(loggingService.createSystemLog(GameMessages.responses.allowTax));
+          
+          // Add result message
           result.logs.push(loggingService.createLog('banker', actionPlayer, {
             coins: 3,
             message: GameMessages.results.tax
@@ -210,10 +218,14 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
 
-        result.logs = [loggingService.createLog('banker', actionPlayer, {
+        // Add message about players allowing tax collection as a system message
+        result.logs = [loggingService.createSystemLog(GameMessages.responses.allowTax)];
+        
+        // Add result message
+        result.logs.push(loggingService.createLog('banker', actionPlayer, {
           coins: 3,
           message: GameMessages.results.tax
-        })];
+        }));
 
         result.players = updatedPlayers;
         result.actionInProgress = null;

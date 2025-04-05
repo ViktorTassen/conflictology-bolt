@@ -21,9 +21,11 @@ interface GameLogProps {
 const formatMessage = (message: string, isSystem: boolean = false) => {
   if (isSystem) return message;
 
-  const parts = message.split(/(Banker|Hacker|Mafia|Reporter|Judge|Police)/g);
+  const parts = message.split(/(Banker|Hacker|Mafia|Reporter|Judge|Police|Income|Foreign Aid|Tax|Steal|Exchange|Hack|Investigation|Scandal)/g);
   return parts.map((part, index) => {
-    if (['Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police'].includes(part)) {
+    if (['Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police', 
+         'Income', 'Foreign Aid', 'Tax', 'Steal', 'Exchange', 'Hack', 
+         'Investigation', 'Scandal'].includes(part)) {
       return (
         <span key={index} className="font-bold">
           {part}
@@ -74,6 +76,25 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
     return name.length > 14 ? `${name.slice(0, 13)}...` : name;
   };
 
+  // Function to get the CSS class for different message types for visual styling
+  const getMessageTypeClass = (logType: string, isSystemMessage: boolean): string => {
+    if (isSystemMessage) return 'text-gray-400 italic';
+    
+    // Visual styling based on message type
+    switch (logType) {
+      case 'system':
+        return 'text-gray-400 italic';
+      case 'challenge':
+      case 'challenge-success':
+      case 'challenge-fail':
+        return 'text-amber-300';
+      case 'block':
+        return 'text-red-300';
+      default:
+        return 'text-gray-300';
+    }
+  };
+
   return (
     <div className="backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden">
       {/* Turn indicator */}
@@ -120,8 +141,8 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                 {/* Special cases for messages that need target name in the middle */}
                 {log.type === 'investigate-result' ? (
                   <>
-                    <span className="text-gray-300 break-words">
-                      {log.message === GameMessages.results.investigateKeep() ? 'lets ' : 'forces '}
+                    <span className={getMessageTypeClass(log.type, false)}>
+                      {log.message === GameMessages.results.investigateKeep ? 'lets ' : 'forces '}
                     </span>
                     <span 
                       className="font-semibold whitespace-nowrap" 
@@ -129,13 +150,13 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                     >
                       {truncateName(log.target || '')}
                     </span>
-                    <span className="text-gray-300 break-words">
-                      {log.message === GameMessages.results.investigateKeep() ? ' keep their card' : ' swap their card'}
+                    <span className={getMessageTypeClass(log.type, false)}>
+                      {log.message === GameMessages.results.investigateKeep ? ' keep their card' : ' swap their card'}
                     </span>
                   </>
                 ) : log.type === 'allow' && log.message === GameMessages.responses.allowBlock ? (
                   <>
-                    <span className="text-gray-300 break-words">
+                    <span className={getMessageTypeClass(log.type, false)}>
                       allows 
                     </span>
                     <span 
@@ -144,18 +165,18 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                     >
                       {truncateName(log.target || '')}
                     </span>
-                    <span className="text-gray-300 break-words">
+                    <span className={getMessageTypeClass(log.type, false)}>
                       to block
                     </span>
                   </>
                 ) : log.type === 'steal' ? (
                   <>
                     {log.coins !== undefined ? (
-                      <span className="text-gray-300 break-words">
+                      <span className={getMessageTypeClass(log.type, false)}>
                         steals ${log.coins}M from 
                       </span>
                     ) : (
-                      <span className="text-gray-300 break-words">
+                      <span className={getMessageTypeClass(log.type, false)}>
                         claims <span className="font-bold">Mafia</span> to steal from 
                       </span>
                     )}
@@ -166,12 +187,44 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                       {truncateName(log.target || '')}
                     </span>
                   </>
+                ) : log.type === 'hack' ? (
+                  <>
+                    {/* Use string splitting to insert the colored target name */}
+                    {log.message && log.message.includes('on ') ? (
+                      <>
+                        <span className={getMessageTypeClass(log.type, false)}>
+                          {/* Display up to the "on " part */}
+                          {formatMessage(log.message.split('on ')[0] + 'on ', log.type === 'system')}
+                        </span>
+                        <span 
+                          className="font-semibold whitespace-nowrap" 
+                          style={{ color: log.targetColor ?? '#FFFFFF' }}
+                        >
+                          {truncateName(log.target || '')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className={getMessageTypeClass(log.type, false)}>
+                          {formatMessage(log.message || '', log.type === 'system')} 
+                        </span>
+                        {log.target && (
+                          <span 
+                            className="font-semibold whitespace-nowrap" 
+                            style={{ color: log.targetColor ?? '#FFFFFF' }}
+                          >
+                            {truncateName(log.target)}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </>
                 ) : log.type === 'scandal' ? (
                   <>
                     {/* Special format for scandal message with target name in the middle */}
                     {log.message && log.message.includes('@@TARGET@@') ? (
                       <>
-                        <span className="text-gray-300 break-words">
+                        <span className={getMessageTypeClass(log.type, false)}>
                           {log.message.split('@@TARGET@@')[0]}
                         </span>
                         <span 
@@ -180,7 +233,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                         >
                           {truncateName(log.target || '')}
                         </span>
-                        <span className="text-gray-300 break-words">
+                        <span className={getMessageTypeClass(log.type, false)}>
                           {log.message.split('@@TARGET@@')[1].split('##').map((part, i) => {
                             // Even indices are regular text, odd indices are bold
                             return i % 2 === 0 ? (
@@ -192,18 +245,28 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                         </span>
                       </>
                     ) : (
-                      <span className="text-gray-300 break-words">
-                        {log.message}
-                      </span>
+                      <>
+                        <span className={getMessageTypeClass(log.type, false)}>
+                          {formatMessage(log.message || '', log.type === 'system')}
+                        </span>
+                        {log.target && (
+                          <span 
+                            className="font-semibold whitespace-nowrap ml-1" 
+                            style={{ color: log.targetColor ?? '#FFFFFF' }}
+                          >
+                            {truncateName(log.target)}
+                          </span>
+                        )}
+                      </>
                     )}
                   </>
                 ) : (
                   <>
-                    <span className={`text-gray-300 break-words ${log.type === 'system' ? 'text-gray-400 italic' : ''}`}>
+                    <span className={`break-words ${getMessageTypeClass(log.type, log.type === 'system')}`}>
                       {formatMessage(log.message || '', log.type === 'system')}
                     </span>
-                    {/* Show target name for all action types that have targets except scandal */}
-                    {log.target && log.type !== 'system' && ['hack', 'investigate', 'show-card'].includes(log.type) && (
+                    {/* Show target name for all action types that have targets except special cases */}
+                    {log.target && log.type !== 'system' && ['investigate', 'show-card'].includes(log.type) && (
                       <span 
                         className="font-semibold whitespace-nowrap" 
                         style={{ color: log.targetColor ?? '#FFFFFF' }}

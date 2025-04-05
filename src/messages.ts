@@ -12,11 +12,15 @@ export const GameMessages = {
     gameStarted: 'Game started',
     playerJoined: (name: string) => `${name} joined the game`,
     playerEliminated: (name: string) => `${name} has been eliminated!`,
-    stealBlocked: 'The steal was blocked',
-    hackBlocked: 'The hack was blocked with Judge',
+    stealBlocked: 'The Steal was blocked',
+    foreignAidBlocked: 'The Foreign Aid was blocked',
+    hackBlocked: 'The Hack was blocked with Judge',
     secondCardRequired: (name: string) => `${name} was hacked. Must lose a second card`,
-    swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards to Swap`,
-    loseInfluence: (name: string) => `${name} must select a card to lose`
+    swapAllowed: (name: string) => `${name} selecting card to swap..`,
+    exchangeSelecting: (name: string) => `${name} selecting cards to keep..`,
+    loseInfluence: (name: string) => `${name} selecting a card to lose..`,
+    selectCardToShow: (name: string) => `${name} selecting a card to show..`,
+    decideInvestigation: (name: string) => `${name} making a decision about the card..`
   },
 
   // Action claims
@@ -24,10 +28,10 @@ export const GameMessages = {
     tax: 'claims Banker to collect Tax',
     foreignAid: 'claims Foreign Aid',
     steal: 'claims Mafia to Steal from',
-    hack: 'pays $3M to hack',
+    hack: (target: string) => `pays $3M to hack ${target}`,
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
-    swap: 'claims Police to Swap their card',
+    swap: 'claims Police to Swap one card',
     scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose' : 'must pay $7M to expose'
   },
 
@@ -36,12 +40,14 @@ export const GameMessages = {
     income: 'takes Income (+$1M)',
     tax: 'collects Tax with Banker (+$3M)',
     foreignAid: 'receives Foreign Aid (+$2M)',
-    steal: (coins: number) => `Steals $${coins}M from`,
+    steal: (coins: number) => `steals $${coins}M from`,
     exchange: 'completes the 2 cards Exchange',
     swap: 'completes the card swap',
-    investigateKeep: () => 'lets them keep their card',
-    investigateSwap: () => 'forces them to swap their card',
-    hack: (targetName: string) => `executed Hacker attack on ${targetName}`
+    investigateKeep: 'lets them keep their card',
+    investigateSwap: 'forces them to swap their card',
+    hack: 'executed Hacker attack',
+    loseInfluence: 'lost 1 influence card',
+    showCard: 'shows a card to'
   },
 
   // Blocks
@@ -54,18 +60,24 @@ export const GameMessages = {
   // Challenges
   challenges: {
     generic: 'challenges',
-    success: (card: string) => `challenges ${card} claim.. Success!`,
-    fail: (card: string) => `challenges ${card} claim.. Fails!`,
-    blockSuccess: (card: string) => `challenges ${card} block.. Success!`,
-    blockFail: (card: string) => `challenges ${card} block.. Fails!`
+    success: (card: string) => `challenges ${card} claim... Success!`,
+    fail: (card: string) => `challenges ${card} claim... Fails!`,
+    blockSuccess: (card: string) => `challenges ${card} block... Success!`,
+    blockFail: (card: string) => `challenges ${card} block... Fails!`
   },
 
   // Player responses
   responses: {
     allow: 'allows action',
+    allowAll: 'Players allow action',
+    allowForeignAid: 'Players allow Foreign Aid',
+    allowTax: 'Players allow Tax collection',
+    allowExchange: 'Players allow Exchange',
+    allowInvestigation: 'allows Investigation',
+    allowSwap: 'Players allow card Swap',
+    allowSteal: 'allows Steal',
+    allowHack: 'allows Hack',
     allowBlock: 'allows to block',
-    eliminated: 'eliminated from game',
-    loseInfluence: 'lost 1 influence card',
-    showCard: 'shows a card to',
+    eliminated: 'eliminated from game'
   }
 };

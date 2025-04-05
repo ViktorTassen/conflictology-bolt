@@ -68,8 +68,13 @@ export const investigateAction: ActionHandler = {
       result.logs = [loggingService.createLog('show-card', player, {
         target: investigator.name,
         targetColor: investigator.color,
-        message: GameMessages.responses.showCard
+        message: GameMessages.results.showCard
       })];
+      
+      // Add system message about investigator deciding next
+      result.logs.push(loggingService.createSpecificSystemLog('decideInvestigation', {
+        playerName: investigator.name
+      }));
       
       result.actionInProgress = {
         ...game.actionInProgress,
@@ -96,7 +101,7 @@ export const investigateAction: ActionHandler = {
         result.logs = [loggingService.createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
-          message: GameMessages.results.investigateKeep()
+          message: GameMessages.results.investigateKeep
         })];
       } else {
         const updatedCards = cardService.drawCards(game.cards, 1, 'investigate');
@@ -124,7 +129,7 @@ export const investigateAction: ActionHandler = {
         result.logs = [loggingService.createLog('investigate-result', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
-          message: GameMessages.results.investigateSwap()
+          message: GameMessages.results.investigateSwap
         })];
       }
       
@@ -219,6 +224,11 @@ export const investigateAction: ActionHandler = {
         }
         
           
+        // Add system message about selecting card to show after losing challenge
+        result.logs.push(loggingService.createSpecificSystemLog('selectCardToShow', {
+          playerName: targetPlayer.name
+        }));
+        
         result.actionInProgress = {
           type: game.actionInProgress.type,
           player: game.actionInProgress.player,
@@ -299,8 +309,14 @@ export const investigateAction: ActionHandler = {
         result.logs = [loggingService.createLog('allow', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.responses.allow
+          actionType: 'investigate',
+          message: GameMessages.responses.allowInvestigation
         })];
+        
+        // Add system message about selecting card to show
+        result.logs.push(loggingService.createSpecificSystemLog('selectCardToShow', {
+          playerName: player.name
+        }));
         
         result.actionInProgress = {
           ...game.actionInProgress,
@@ -496,6 +512,10 @@ export const swapAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
+        // Add system message about selecting a card to swap
+        result.logs.push(loggingService.createSpecificSystemLog('swapAllowed', {
+          playerName: player.name
+        }));
         
         const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
         
@@ -516,6 +536,10 @@ export const swapAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
+        // Add system message about selecting a card to swap 
+        result.logs.push(loggingService.createSpecificSystemLog('swapAllowed', {
+          playerName: game.players[game.actionInProgress.player].name
+        }));
         
         result.actionInProgress = {
           type: game.actionInProgress.type,
@@ -615,7 +639,11 @@ export const swapAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.swapAllowed(actionPlayer.name))];
+        result.logs = [loggingService.createSystemLog(GameMessages.responses.allowSwap)];
+        
+        result.logs.push(loggingService.createSpecificSystemLog('swapAllowed', {
+          playerName: actionPlayer.name
+        }));
         
         result.actionInProgress = {
           ...game.actionInProgress,

@@ -95,6 +95,15 @@ export const stealAction: ActionHandler = {
         result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
 
+      // Add system message if this is a player who challenged a block and failed
+      if (game.actionInProgress.challengeDefense && 
+          game.actionInProgress.blockingPlayer !== undefined &&
+          playerId === game.actionInProgress.losingPlayer) {
+        
+        // Add the message that the steal was blocked
+        result.logs.push(loggingService.createSpecificSystemLog('stealBlocked', {}));
+      }
+      
       if (game.actionInProgress.blockingPlayer === playerId) {
         const stolenCoins = Math.min(targetPlayer.coins, 2);
         
@@ -324,7 +333,8 @@ export const stealAction: ActionHandler = {
             message: GameMessages.responses.allowBlock
           })];
           
-          // Remove the system message about the steal being blocked
+          // Add system message about the steal being blocked
+          result.logs.push(loggingService.createSpecificSystemLog('stealBlocked', {}));
 
           result.actionInProgress = null;
           
@@ -350,7 +360,8 @@ export const stealAction: ActionHandler = {
         result.logs = [loggingService.createLog('allow', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.responses.allow
+          actionType: 'steal',
+          message: GameMessages.responses.allowSteal
         })];
 
         result.logs.push(loggingService.createLog('steal', actionPlayer, {

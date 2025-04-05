@@ -31,7 +31,8 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       logs: [loggingService.createLog('hack', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.actions.hack
+        targetName: targetPlayer.name,
+        message: GameMessages.actions.hack(targetPlayer.name)
       })],
       actionInProgress: {
         type: 'hack',
@@ -124,6 +125,17 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       }
 
       // If this was the second card lost when loseTwo is true, update the flag
+      // After a player loses a card due to a failed challenge on a Judge block
+      if (game.actionInProgress.challengeDefense && 
+          game.actionInProgress.blockingPlayer !== undefined &&
+          game.actionInProgress.blockingCard === 'Judge' &&
+          playerId === game.actionInProgress.losingPlayer &&
+          game.actionInProgress.revealedJudgeCardId) {
+        
+        // Add the message that the hack was blocked with Judge
+        result.logs.push(loggingService.createSpecificSystemLog('hackBlocked', {}));
+      }
+          
       if (game.actionInProgress.loseTwo && 
           playerId === game.actionInProgress.losingPlayer && 
           !game.actionInProgress.cardsLostCounter) {
@@ -352,7 +364,8 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
             message: GameMessages.responses.allowBlock
           })];
           
-          // Remove the system message about the hack being blocked
+          // Add system message about the hack being blocked
+          result.logs.push(loggingService.createSpecificSystemLog('hackBlocked', {}));
 
           result.actionInProgress = null;
           
@@ -377,7 +390,8 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs = [loggingService.createLog('allow', targetPlayer, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
-          message: GameMessages.responses.allow
+          actionType: 'hack',
+          message: GameMessages.responses.allowHack
         })];
       }
 

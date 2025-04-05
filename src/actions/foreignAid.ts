@@ -198,6 +198,9 @@ export const foreignAidAction: ActionHandler = {
             targetColor: blockingPlayer.color,
             message: GameMessages.responses.allowBlock
           })];
+          
+          // Add system message about foreign aid being blocked
+          result.logs.push(loggingService.createSpecificSystemLog('foreignAidBlocked', {}));
 
           result.actionInProgress = null;
           
@@ -248,10 +251,14 @@ export const foreignAidAction: ActionHandler = {
           const updatedPlayers = [...game.players];
           updatedPlayers[game.actionInProgress.player].coins += 2;
   
-          result.logs = [loggingService.createLog('foreign-aid', actionPlayer, {
+          // Add message about players allowing foreign aid as a system message
+          result.logs = [loggingService.createSystemLog(GameMessages.responses.allowForeignAid)];
+          
+          // Add result message
+          result.logs.push(loggingService.createLog('foreign-aid', actionPlayer, {
             coins: 2,
             message: GameMessages.results.foreignAid
-          })];
+          }));
   
           result.players = updatedPlayers;
           result.actionInProgress = null;

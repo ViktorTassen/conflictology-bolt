@@ -180,7 +180,9 @@ export const exchangeAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs.push(loggingService.createSystemLog(`${actionPlayer.name} will now exchange cards.`));
+        result.logs.push(loggingService.createSpecificSystemLog('exchangeSelecting', {
+          playerName: actionPlayer.name
+        }));
         
         const { losingPlayer, challengeInProgress, challengeDefense, ...restActionProps } = game.actionInProgress;
         
@@ -201,7 +203,9 @@ export const exchangeAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs.push(loggingService.createSystemLog(`${actionPlayer.name} will now exchange cards.`));
+        result.logs.push(loggingService.createSpecificSystemLog('exchangeSelecting', {
+          playerName: actionPlayer.name
+        }));
         
         result.actionInProgress = {
           type: game.actionInProgress.type,
@@ -301,7 +305,11 @@ export const exchangeAction: ActionHandler = {
           .filter(c => c.location === 'exchange')
           .map(c => c.id);
         
-        result.logs = [loggingService.createSystemLog(`Exchange allowed. ${actionPlayer.name} selecting cards.`)];
+        result.logs = [loggingService.createSystemLog(GameMessages.responses.allowExchange)];
+        
+        result.logs.push(loggingService.createSpecificSystemLog('exchangeSelecting', {
+          playerName: actionPlayer.name
+        }));
         
         result.actionInProgress = {
           ...game.actionInProgress,
