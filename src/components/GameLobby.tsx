@@ -105,7 +105,7 @@ export function GameLobby({ game, isHost, currentPlayerId, onStartGame, onReturn
             {/* Content */}
             <div className="relative flex items-center justify-between">
               <div className="flex-1">
-              <h3 className="text-yellow-100 font-semibold text-md tracking-wide mb-2 text-center">Last Match Winner</h3>
+              <h3 className="text-yellow-100 font-semibold text-md tracking-wide mb-2 text-center">Match Winner</h3>
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-md shadow-md" 

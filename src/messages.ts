@@ -66,7 +66,7 @@ export const GameMessages = {
     allow: 'allows action',
     allowBlock: 'allows to block',
     eliminated: 'eliminated from game',
-    loseInfluence: 'lost one Influence card',
+    loseInfluence: 'lost 1 influence card',
     showCard: 'shows a card to',
   }
 };

@@ -306,7 +306,7 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           message: GameMessages.challenges.blockFail('Judge')
         })];
 
-        // Player who challenged Judge and lost will need to lose the 2nd card because of the failed challenge
+        // Player who challenged Judge and lost only loses one card (not two)
         result.actionInProgress = {
           ...game.actionInProgress,
           losingPlayer: playerId,
@@ -314,7 +314,7 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           challengeDefense: true,
           responses: updatedResponses,
           revealedJudgeCardId: judgeCard?.id,
-          loseTwo: true
+          loseTwo: false // Player challenging a legitimate Judge block only loses one card
         };
       } else {
         result.logs = [loggingService.createLog('challenge-success', player, {
