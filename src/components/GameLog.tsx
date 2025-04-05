@@ -36,13 +36,6 @@ const formatMessage = (message: string, isSystem: boolean = false) => {
   });
 };
 
-const formatTimestamp = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
 const getStateMessage = (state: GameState, selectedAction?: string): string => {
   switch (state) {
     case 'waiting_for_action':
@@ -123,12 +116,12 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
           {lastThreeLogs.map((log, index) => (
             <div 
               key={index} 
-              className="flex flex-wrap items-center justify-between px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
+              className="flex flex-wrap items-center px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
               style={{
                 animationDelay: `${index * 50}ms`,
               }}
             >
-              <div className="flex flex-wrap items-center gap-1 text-[11px] min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1 text-[11px] w-full">
                 {log.type !== 'system' && (
                   <span 
                     className="font-semibold whitespace-nowrap" 
@@ -276,9 +269,6 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                   </>
                 )}
               </div>
-              <span className="text-[9px] text-gray-500 ml-2 whitespace-nowrap shrink-0">
-                {formatTimestamp(log.timestamp)}
-              </span>
             </div>
           ))}
         </div>
