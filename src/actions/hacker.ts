@@ -188,7 +188,7 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           };
           
           result.logs.push(loggingService.createSystemLog(
-            `${targetPlayer.name} must now lose influence as the target of the Hacker action.`
+            `${targetPlayer.name} was the target of the Hacker`
           ));
           
           result.players = game.players;

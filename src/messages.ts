@@ -13,7 +13,7 @@ export const GameMessages = {
     playerJoined: (name: string) => `${name} joined the game`,
     playerEliminated: (name: string) => `${name} has been eliminated!`,
     stealBlocked: 'The steal was blocked.',
-    hackBlocked: 'The hack was blocked.',
+    hackBlocked: 'The hack was blocked with Judge.',
     secondCardRequired: (name: string) => `${name} was hacked. Must lose a second card.`,
     swapAllowed: (name: string) => `Swap allowed. ${name} selecting cards.`,
     loseInfluence: (name: string) => `${name} must select a card to lose.`
@@ -24,10 +24,10 @@ export const GameMessages = {
     tax: 'claims Banker to collect Tax',
     foreignAid: 'claims Foreign Aid',
     steal: 'claims Mafia to Steal from',
-    hack: 'pays $3M to launch a Hack on',
+    hack: 'pays $3M to hack',
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
-    swap: 'claims Police to Swap one card',
+    swap: 'claims Police to Swap their card',
     scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose' : 'pays $7M to expose'
   },
 
