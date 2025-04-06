@@ -100,12 +100,29 @@ export class LoggingService implements ILoggingService {
         }
         break;
         
+      case 'scandal':
+        // Special handling for scandal action: "Player A pays $7M to expose Player B in a Scandal"
+        if (data?.target && data?.targetId !== undefined) {
+          log.messageParts = [
+            { type: 'text', content: message + ' ' },
+            { type: 'player', content: data.target, playerId: data.targetId, color: data.targetColor || '#FFFFFF' }
+          ];
+          
+          // Also update the legacy message
+          log.message = message + ' ' + data.target;
+        } else {
+          // Fallback for scandal message without target
+          log.messageParts = [
+            { type: 'text', content: message }
+          ];
+        }
+        break;
+        
       case 'hack':
       case 'income':
       case 'foreign-aid':
       case 'banker':
       case 'exchange':
-      case 'scandal':
       case 'investigate':
         // Action formats
         if (data?.target && data?.targetId !== undefined) {
@@ -212,28 +229,11 @@ export class LoggingService implements ILoggingService {
       messageParts: []
     };
     
-    // Create message parts - handle special cases with player names
-    if (playerName && playerId !== undefined && 
-        ['loseInfluence', 'selectCardToShow', 'decideInvestigation', 
-         'secondCardRequired', 'swapAllowed', 'exchangeSelecting'].includes(messageType)) {
-      // For messages like "Waiting for PlayerName to do X"
-      // Extract the parts before and after the player name
-      const parts = message.split(playerName);
-      log.messageParts = [
-        { type: 'text', content: parts[0] },
-        { type: 'player', content: playerName, playerId: playerId, color: params?.playerColor || '#FFFFFF' }
-      ];
-      
-      // Add the suffix if there is content after the player name
-      if (parts.length > 1 && parts[1]) {
-        log.messageParts.push({ type: 'text', content: parts[1] });
-      }
-    } else {
-      // Simple system message without player references
-      log.messageParts = [
-        { type: 'text', content: message }
-      ];
-    }
+    // System messages should display player names as regular text (no special formatting)
+    // Don't separate the player name as a different type of message part
+    log.messageParts = [
+      { type: 'text', content: message }
+    ];
     
     // Only add these properties if they're defined
     if (playerId !== undefined) log.playerId = playerId;

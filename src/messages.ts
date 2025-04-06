@@ -24,7 +24,7 @@ export const GameMessages = {
     foreignAidBlocked: 'The Foreign Aid was blocked',
     hackBlocked: 'Hacker was blocked by Judge',
     secondCardRequired: (name: string) => `Waiting for ${name} to select a second card to lose`,
-    swapAllowed: (name: string) => `${name} must select a card to swap`,
+    swapAllowed: (name: string) => `Waiting for ${name} to select cards to keep`,
     exchangeSelecting: (name: string) => `Waiting for ${name} to select cards to keep`,
     loseInfluence: (name: string) => `Waiting for ${name} to select a card to lose`,
     selectCardToShow: (name: string) => `Waiting for ${name} to select a card to show`,    
@@ -42,7 +42,7 @@ export const GameMessages = {
     exchange: 'claims Reporter to Exchange',
     investigate: 'claims Police to Investigate',
     swap: 'claims Police to Swap one card',
-    scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose' : 'must pay $7M to expose'
+    scandal: (coins: number) => coins >= 10 ? 'pays $7M to expose in a Scandal' : 'must pay $7M to expose in a Scandal'
   },
 
   // Action results [R]
@@ -50,13 +50,13 @@ export const GameMessages = {
     income: 'takes Income (+$1M)',
     tax: 'collected Tax with Banker (+$3M)',
     foreignAid: 'received Foreign Aid (+$2M)',
-    steal: (coins: number) => `steals $${coins}M from`,
+    steal: (coins: number) => `Steals $${coins}M from`,
     exchange: 'completes the 2 cards Exchange',
-    swap: 'completes the card swap',
+    swap: 'completes the card Swap',
     investigateKeep: 'lets',
     investigateKeepSuffix: 'keep their card',
     investigateSwap: 'forces',
-    investigateSwapSuffix: 'to swap their card',
+    investigateSwapSuffix: 'to Swap their card',
     hack: 'completed the Hacker attack on',
     loseInfluence: 'lost 1 influence card',
     showCard: 'shows a card to'
@@ -86,7 +86,7 @@ export const GameMessages = {
     allowTax: 'Players allow Tax collection',
     allowExchange: 'Players allow Exchange',
     allowInvestigation: 'allows Investigation',
-    allowSwap: 'Players allow card Swap',
+    allowSwap: 'Players allow to Swap 1 card',
     allowSteal: 'allows Steal',
     allowHack: 'allows Hack',
     allowBlock: 'allows',

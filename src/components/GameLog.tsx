@@ -23,7 +23,7 @@ const formatMessage = (message: string) => {
   const keywords = [
     'Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police',
     'Income', 'Foreign Aid', 'Tax', 'Steal', 'Exchange', 'Hack',
-    'Investigation', 'Scandal'
+    'Investigate', 'Scandal', 'Swap'
   ];
   
   // For action messages, highlight keywords
