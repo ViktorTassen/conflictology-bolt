@@ -88,17 +88,25 @@ export type LogType =
   | 'system'
   | 'eliminated';
 
+// Segmented message part for advanced log formatting
+export type MessagePart = 
+  | { type: 'text'; content: string }
+  | { type: 'player'; content: string; playerId: number; color: string };
+
 export interface GameLogEntry {
   type: LogType;
-  player: string
+  player: string;
   playerColor: string;
+  playerId?: number;  // Added player ID for coloring
   target?: string;
   targetColor?: string;
+  targetId?: number;  // Added target ID for coloring
   card?: CardType;
   targetCard?: CardType;
   coins?: number;
   timestamp: number;
   message?: string;
+  messageParts?: MessagePart[]; // New system for segmented messages with player coloring
   actionType?: string; // Used by LoggingService to determine the message for 'allow' actions
 }
 

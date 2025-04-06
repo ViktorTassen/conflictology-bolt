@@ -11,7 +11,8 @@ export const exchangeAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [loggingService.createLog('exchange', player, {
-        message: GameMessages.actions.exchange
+        message: GameMessages.actions.exchange,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'exchange',
@@ -110,7 +111,8 @@ export const exchangeAction: ActionHandler = {
       updatedCards = cardService.returnCardsToDeck(updatedCards, returnCardIds);
       
       result.logs = [loggingService.createLog('exchange-complete', player, {
-        message: GameMessages.results.exchange
+        message: GameMessages.results.exchange,
+        playerId: playerId
       })];
       
       result.cards = updatedCards;
@@ -160,7 +162,9 @@ export const exchangeAction: ActionHandler = {
 
       const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [loggingService.createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player, {
+        playerId: playerId
+      })];
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {

@@ -15,7 +15,8 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
 
     const result: ActionResult = {
       logs: [loggingService.createLog('banker', player, {
-        message: GameMessages.actions.tax
+        message: GameMessages.actions.tax,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'banker',
@@ -75,7 +76,9 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
 
       const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [loggingService.createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player, {
+        playerId: playerId
+      })];
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
@@ -97,13 +100,12 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
         const updatedPlayers = [...game.players];
         updatedPlayers[game.actionInProgress.player].coins += 3;
         
-        // Add message about players allowing tax collection
-        result.logs.push(loggingService.createSystemLog(GameMessages.responses.allowTax));
-        
-        // Add result message
+        // Add result message without the "Players allow Tax collection" message
+        // since this is following a challenge
         result.logs.push(loggingService.createLog('banker', actionPlayer, {
           coins: 3,
-          message: GameMessages.results.tax
+          message: GameMessages.results.tax,
+          playerId: game.actionInProgress.player
         }));
         
         result.players = updatedPlayers;
@@ -120,13 +122,14 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
           const updatedPlayers = [...game.players];
           updatedPlayers[game.actionInProgress.player].coins += 3;
           
-          // Add message about players allowing tax collection
-          result.logs.push(loggingService.createSystemLog(GameMessages.responses.allowTax));
+          // Remove message about players allowing tax collection
+          // since this is following a challenge
           
           // Add result message
           result.logs.push(loggingService.createLog('banker', actionPlayer, {
             coins: 3,
-            message: GameMessages.results.tax
+            message: GameMessages.results.tax,
+            playerId: game.actionInProgress.player
           }));
           
           result.players = updatedPlayers;
@@ -161,8 +164,10 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
+          targetId: game.actionInProgress.player,
           card: 'Banker',
-          message: GameMessages.challenges.fail('Banker')
+          message: GameMessages.challenges.fail('Banker'),
+          playerId: playerId
         })];
         
         result.actionInProgress = {
@@ -177,8 +182,10 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
+          targetId: game.actionInProgress.player,
           card: 'Banker',
-          message: GameMessages.challenges.success('Banker')
+          message: GameMessages.challenges.success('Banker'),
+          playerId: playerId
         })];
         
         result.actionInProgress = {
@@ -224,7 +231,8 @@ export const bankerAction: ActionHandler = { // Kept the name bankerAction for c
         // Add result message
         result.logs.push(loggingService.createLog('banker', actionPlayer, {
           coins: 3,
-          message: GameMessages.results.tax
+          message: GameMessages.results.tax,
+          playerId: game.actionInProgress.player
         }));
 
         result.players = updatedPlayers;

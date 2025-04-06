@@ -11,7 +11,8 @@ export const foreignAidAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [loggingService.createLog('foreign-aid', player, {
-        message: GameMessages.actions.foreignAid
+        message: GameMessages.actions.foreignAid,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'foreign-aid',
@@ -71,7 +72,9 @@ export const foreignAidAction: ActionHandler = {
 
       const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [loggingService.createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player, {
+        playerId: playerId
+      })];
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
@@ -85,7 +88,6 @@ export const foreignAidAction: ActionHandler = {
           playerId === game.actionInProgress.losingPlayer && 
           game.actionInProgress.blockingPlayer !== game.actionInProgress.losingPlayer &&
           game.actionInProgress.challengeDefense) {
-        
       }
 
       if (game.actionInProgress.blockingPlayer === playerId) {
@@ -113,8 +115,10 @@ export const foreignAidAction: ActionHandler = {
       result.logs = [loggingService.createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
+        targetId: game.actionInProgress.player,
         card: 'Banker',
-        message: GameMessages.blocks.generic('Banker')
+        message: GameMessages.blocks.banker,
+        playerId: playerId
       })];
 
       result.actionInProgress = {
@@ -151,8 +155,10 @@ export const foreignAidAction: ActionHandler = {
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
+          targetId: game.actionInProgress.blockingPlayer,
           card: 'Banker',
-          message: GameMessages.challenges.blockFail('Banker')
+          message: GameMessages.challenges.fail('Banker'),
+          playerId: playerId
         })];
 
         result.actionInProgress = {
@@ -168,8 +174,10 @@ export const foreignAidAction: ActionHandler = {
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
+          targetId: game.actionInProgress.blockingPlayer,
           card: 'Banker',
-          message: GameMessages.challenges.blockSuccess('Banker')
+          message: GameMessages.challenges.success('Banker'),
+          playerId: playerId
         })];
 
         result.actionInProgress = {
@@ -196,7 +204,10 @@ export const foreignAidAction: ActionHandler = {
           result.logs = [loggingService.createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: GameMessages.responses.allowBlock
+            targetId: game.actionInProgress.blockingPlayer,
+            actionType: 'block',
+            message: GameMessages.responses.allowBlock,
+            playerId: playerId
           })];
           
           // Add system message about foreign aid being blocked
@@ -257,7 +268,8 @@ export const foreignAidAction: ActionHandler = {
           // Add result message
           result.logs.push(loggingService.createLog('foreign-aid', actionPlayer, {
             coins: 2,
-            message: GameMessages.results.foreignAid
+            message: GameMessages.results.foreignAid,
+            playerId: game.actionInProgress.player
           }));
   
           result.players = updatedPlayers;

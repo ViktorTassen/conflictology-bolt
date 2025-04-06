@@ -31,7 +31,9 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       logs: [loggingService.createLog('hack', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.actions.hack
+        targetId: game.actionInProgress.target,
+        message: GameMessages.actions.hack,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'hack',
@@ -72,7 +74,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         
-        result.logs = [loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name))];
+        result.logs = [loggingService.createSystemLog(
+          GameMessages.system.playerEliminated(player.name),
+          playerId
+        )];
         result.players = updatedPlayers;
         result.actionInProgress = null;
         
@@ -93,7 +98,9 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
 
       const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [loggingService.createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player, {
+        playerId: playerId
+      })];
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       
@@ -113,13 +120,16 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs.push(loggingService.createLog('hack', actionPlayer, {
           target: player.name,
           targetColor: player.color,
+          targetId: playerId,
           coins: 1, // Any non-zero value to trigger result message
-          message: GameMessages.results.hack
+          message: GameMessages.results.hack,
+          playerId: game.actionInProgress.player
         }));
         
         // Add message that player needs to lose a second card
         result.logs.push(loggingService.createSystemLog(
-          GameMessages.system.secondCardRequired(player.name)
+          GameMessages.system.secondCardRequired(player.name),
+          playerId
         ));
         
         return result;
@@ -211,8 +221,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           result.logs.push(loggingService.createLog('hack', actionPlayer, {
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
+            targetId: game.actionInProgress.target,
             coins: 1, // Any non-zero value to trigger result message
-            message: GameMessages.results.hack
+            message: GameMessages.results.hack,
+            playerId: game.actionInProgress.player
           }));
           
           result.players = game.players;
@@ -237,8 +249,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
       result.logs = [loggingService.createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
+        targetId: game.actionInProgress.player,
         card: 'Judge',
-        message: GameMessages.blocks.generic('Judge')
+        message: GameMessages.blocks.judge,
+        playerId: playerId
       })];
 
       result.actionInProgress = {
@@ -273,8 +287,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
+          targetId: game.actionInProgress.player,
           card: 'Hacker',
-          message: GameMessages.challenges.fail('Hacker')
+          message: GameMessages.challenges.fail('Hacker'),
+          playerId: playerId
         })];
 
         result.actionInProgress = {
@@ -291,8 +307,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
+          targetId: game.actionInProgress.player,
           card: 'Hacker',
-          message: GameMessages.challenges.success('Hacker')
+          message: GameMessages.challenges.success('Hacker'),
+          playerId: playerId
         })];
 
         result.actionInProgress = {
@@ -326,8 +344,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs = [loggingService.createLog('challenge-fail', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
+          targetId: game.actionInProgress.target,
           card: 'Judge',
-          message: GameMessages.challenges.blockFail('Judge')
+          message: GameMessages.challenges.fail('Judge'),
+          playerId: playerId
         })];
 
         // Player who challenged Judge and lost only loses one card (not two)
@@ -344,8 +364,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs = [loggingService.createLog('challenge-success', player, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
+          targetId: game.actionInProgress.target,
           card: 'Judge',
-          message: GameMessages.challenges.blockSuccess('Judge')
+          message: GameMessages.challenges.success('Judge'),
+          playerId: playerId
         })];
         
         result.actionInProgress = {
@@ -373,7 +395,10 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
           result.logs = [loggingService.createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
-            message: GameMessages.responses.allowBlock
+            targetId: game.actionInProgress.blockingPlayer,
+            actionType: 'block',
+            message: GameMessages.responses.allowBlock,
+            playerId: playerId
           })];
           
           // Add system message about the hack being blocked
@@ -402,16 +427,20 @@ export const hackAction: ActionHandler = { // Kept as hackAction for compatibili
         result.logs = [loggingService.createLog('allow', targetPlayer, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
+          targetId: game.actionInProgress.player,
           actionType: 'hack',
-          message: GameMessages.responses.allowHack
+          message: GameMessages.responses.allowHack,
+          playerId: game.actionInProgress.target
         })];
         
         // Add completed hack message (Scenario 1)
         result.logs.push(loggingService.createLog('hack', actionPlayer, {
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
+          targetId: game.actionInProgress.target,
           coins: 1, // Any non-zero value to trigger result message
-          message: GameMessages.results.hack
+          message: GameMessages.results.hack,
+          playerId: game.actionInProgress.player
         }));
       }
 

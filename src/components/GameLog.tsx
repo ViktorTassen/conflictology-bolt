@@ -10,6 +10,7 @@ interface GameLogProps {
   game: {
     currentTurn: number;
     players: Array<{
+      id: number;
       name: string;
       color: string;
     }>;
@@ -18,18 +19,19 @@ interface GameLogProps {
 
 
 // Format message with highlighting for special terms and player names
-const formatMessage = (message: string) => {
+const formatMessage = (message: string, playerId?: number, targetId?: number, players?: Array<{id: number, name: string, color: string}>) => {
   const keywords = [
     'Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police',
     'Income', 'Foreign Aid', 'Tax', 'Steal', 'Exchange', 'Hack',
     'Investigation', 'Scandal'
   ];
   
-
-  
   // For action messages, highlight keywords
   const parts = message.split(new RegExp(`(${keywords.join('|')})`, 'g'));
-  return parts.map((part, index) => {
+  
+  // Format each part with keywords highlighted
+  const formattedParts = parts.map((part, index) => {
+    // Bold the keyword terms
     if (keywords.includes(part)) {
       return (
         <span key={index} className="font-bold">
@@ -37,8 +39,11 @@ const formatMessage = (message: string) => {
         </span>
       );
     }
+    
     return part;
   });
+  
+  return formattedParts;
 };
 
 const getStateMessage = (state: GameState, selectedAction?: string): string => {
@@ -127,14 +132,36 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
               <div className="flex flex-wrap gap-1 items-center text-[11px] w-full">
 
                 {/* if log.type is not 'system', show the player name */}
-                {log.type != 'system' && (
-                  <span className={`font-bold ${getMessageTypeClass(log.type)}`}>
+                {log.type !== 'system' && (
+                  <span 
+                    className={`font-bold ${getMessageTypeClass(log.type)}`}
+                    style={{ color: log.playerColor }}
+                  >
                     {truncateName(log.player)}
                   </span>
                 )}
-                <span className={`text-[10px] ${getMessageTypeClass(log.type)}`}>
-                  {log.message ? formatMessage(log.message) : ''}
-                </span>
+                {/* All logs now use message parts for consistent formatting */}
+                {log.messageParts && log.messageParts.map((part, partIndex) => {
+                  if (part.type === 'text') {
+                    return (
+                      <span key={partIndex} className={`text-[10px] ${getMessageTypeClass(log.type)}`}>
+                        {formatMessage(part.content, log.playerId, log.targetId, game.players)}
+                      </span>
+                    );
+                  } else if (part.type === 'player') {
+                    const playerInfo = game.players.find(p => p.id === part.playerId);
+                    return (
+                      <span 
+                        key={partIndex}
+                        className={`font-bold ${getMessageTypeClass(log.type)}`}
+                        style={{ color: playerInfo?.color || part.color }}
+                      >
+                        {truncateName(part.content)}
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
               </div>
             </div>
           ))}

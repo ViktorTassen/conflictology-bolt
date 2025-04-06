@@ -23,7 +23,9 @@ export const stealAction: ActionHandler = {
       logs: [loggingService.createLog('steal', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.actions.steal
+        targetId: game.actionInProgress.target,
+        message: GameMessages.actions.steal,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'steal',
@@ -85,7 +87,9 @@ export const stealAction: ActionHandler = {
 
       const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [loggingService.createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player, {
+        playerId: playerId
+      })];
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       if (remainingCards.length === 0) {
@@ -330,6 +334,8 @@ export const stealAction: ActionHandler = {
           result.logs = [loggingService.createLog('allow', player, {
             target: blockingPlayer.name,
             targetColor: blockingPlayer.color,
+            targetId: game.actionInProgress.blockingPlayer,
+            actionType: 'block',
             message: GameMessages.responses.allowBlock
           })];
           

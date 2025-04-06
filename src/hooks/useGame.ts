@@ -40,10 +40,17 @@ const assignUniqueColor = (existingPlayers: Player[]): string => {
 // Helper to clean objects before sending to Firebase
 function cleanFirebaseObject<T>(obj: T | null): T | null {
   if (obj === null || obj === undefined) return null;
-  return Object.fromEntries(
-    Object.entries(obj)
-      .filter(([_, value]) => value !== undefined)
-  ) as unknown as T;
+  
+  // Create a new object without undefined values
+  const cleaned = {} as Record<string, any>;
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  
+  return cleaned as unknown as T;
 }
 
 export function useGame(gameId?: string, playerId?: number) {

@@ -18,7 +18,8 @@ export const incomeAction: ActionHandler = {
       logs: [
         loggingService.createLog('income', player, { 
           coins: 1,
-          message: GameMessages.results.income
+          message: GameMessages.actions.income,
+          playerId: playerId
         })
       ],
       ...nextTurn

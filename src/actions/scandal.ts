@@ -43,8 +43,10 @@ export const scandalAction: ActionHandler = {
       logs: [loggingService.createLog('scandal', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
+        targetId: targetPlayerId,
         coins: player.coins + 7, // Original coins before deduction
-        message: `${GameMessages.actions.scandal(player.coins + 7)} @@TARGET@@ in a ##Scandal##` // Include required markers for formatting
+        message: GameMessages.actions.scandal(player.coins + 7),
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'scandal',
@@ -100,7 +102,9 @@ export const scandalAction: ActionHandler = {
 
       const updatedCards = cardService.revealCard(game.cards, cardToReveal.id);
       result.cards = updatedCards;
-      result.logs = [loggingService.createLog('lose-influence', player)];
+      result.logs = [loggingService.createLog('lose-influence', player, {
+        playerId: playerId
+      })];
       
       const remainingCards = cardService.getPlayerCards(updatedCards, player.id);
       
@@ -108,7 +112,10 @@ export const scandalAction: ActionHandler = {
         const updatedPlayers = [...game.players];
         updatedPlayers[playerId].eliminated = true;
         result.players = updatedPlayers;
-        result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
+        result.logs.push(loggingService.createSystemLog(
+          GameMessages.system.playerEliminated(player.name),
+          playerId
+        ));
       }
       
       result.actionInProgress = null;

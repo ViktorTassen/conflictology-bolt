@@ -28,7 +28,9 @@ export const investigateAction: ActionHandler = {
       logs: [loggingService.createLog('investigate', player, {
         target: targetPlayer.name,
         targetColor: targetPlayer.color,
-        message: GameMessages.actions.investigate
+        targetId: targetId,
+        message: GameMessages.actions.investigate,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'investigate',
@@ -309,13 +311,16 @@ export const investigateAction: ActionHandler = {
         result.logs = [loggingService.createLog('allow', player, {
           target: actionPlayer.name,
           targetColor: actionPlayer.color,
+          targetId: game.actionInProgress.player,
           actionType: 'investigate',
-          message: GameMessages.responses.allowInvestigation
+          message: GameMessages.responses.allowInvestigation,
+          playerId: playerId
         })];
         
         // Add system message about selecting card to show
         result.logs.push(loggingService.createSpecificSystemLog('selectCardToShow', {
-          playerName: player.name
+          playerName: player.name,
+          playerId: playerId
         }));
         
         result.actionInProgress = {
@@ -343,7 +348,8 @@ export const swapAction: ActionHandler = {
 
     const result: ActionResult = {
       logs: [loggingService.createLog('swap', player, {
-        message: GameMessages.actions.swap
+        message: GameMessages.actions.swap,
+        playerId: playerId
       })],
       actionInProgress: {
         type: 'swap',
@@ -442,7 +448,8 @@ export const swapAction: ActionHandler = {
       updatedCards = cardService.returnCardsToDeck(updatedCards, returnCardIds);
       
       result.logs = [loggingService.createLog('swap-complete', player, {
-        message: GameMessages.results.swap
+        message: GameMessages.results.swap,
+        playerId: playerId
       })];
       
       result.cards = updatedCards;
