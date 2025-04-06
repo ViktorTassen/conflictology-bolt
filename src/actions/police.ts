@@ -2,6 +2,7 @@ import { ActionHandler, ActionResponse, ActionResult, advanceToNextTurn } from '
 import { GameMessages } from '../messages';
 import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
+import { GameLogEntry, LogType } from '../types';
 
 export const investigateAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -68,8 +69,8 @@ export const investigateAction: ActionHandler = {
       
       const investigator = game.players[game.actionInProgress.player];
       // Create a custom log for show-card with explicit target player
-      const showCardLog = {
-        type: 'show-card',
+      const showCardLog: GameLogEntry = {
+        type: 'show-card' as LogType,
         player: player.name,
         playerColor: player.color,
         timestamp: Date.now(),
@@ -113,8 +114,8 @@ export const investigateAction: ActionHandler = {
       
       if (keepCard) {
         // Create a custom log for investigate-result with "keeps their card" message
-        const investigateResultLog = {
-          type: 'investigate-result',
+        const investigateResultLog: GameLogEntry = {
+          type: 'investigate-result' as LogType,
           player: player.name,
           playerColor: player.color,
           timestamp: Date.now(),
@@ -154,8 +155,8 @@ export const investigateAction: ActionHandler = {
         
         result.cards = finalCards;
         // Create a custom log for investigate-result with "forces to swap" message
-        const investigateSwapLog = {
-          type: 'investigate-result',
+        const investigateSwapLog: GameLogEntry = {
+          type: 'investigate-result' as LogType,
           player: player.name,
           playerColor: player.color,
           timestamp: Date.now(),

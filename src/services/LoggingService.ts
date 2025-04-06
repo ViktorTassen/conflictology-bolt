@@ -146,13 +146,13 @@ export class LoggingService implements ILoggingService {
         ];
     }
     
-    // Add all other properties from data, except those we've already handled
-    for (const key in data) {
-      if (key !== 'playerId' && key !== 'targetId' && key !== 'message' && 
-          key !== 'messageParts' && data[key] !== undefined) {
-        log[key] = data[key];
-      }
-    }
+    // Handle specific properties that we know exist in GameLogEntry
+    if (data?.coins !== undefined) log.coins = data.coins;
+    if (data?.card !== undefined) log.card = data.card;
+    if (data?.targetCard !== undefined) log.targetCard = data.targetCard;
+    if (data?.actionType !== undefined) log.actionType = data.actionType;
+    if (data?.target !== undefined) log.target = data.target;
+    if (data?.targetColor !== undefined) log.targetColor = data.targetColor;
     
     return log;
   }

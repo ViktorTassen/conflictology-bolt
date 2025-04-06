@@ -2,6 +2,7 @@ import { ActionHandler, ActionResponse, ActionResult, advanceToNextTurn } from '
 import { GameMessages } from '../messages';
 import { cardService } from '../services/CardService';
 import { loggingService } from '../services/LoggingService';
+import { GameLogEntry, LogType } from '../types';
 
 export const stealAction: ActionHandler = {
   execute: async ({ game, player, playerId }) => {
@@ -110,8 +111,8 @@ export const stealAction: ActionHandler = {
         updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
         
         // Create a custom log for steal with explicit target
-        const stealLog = {
-          type: 'steal',
+        const stealLog: GameLogEntry = {
+          type: 'steal' as LogType, // Type assertion to LogType
           player: actionPlayer.name,
           playerColor: actionPlayer.color,
           timestamp: Date.now(),
@@ -160,8 +161,8 @@ export const stealAction: ActionHandler = {
           updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
           
           // Create a custom log with explicit message parts for the steal result
-          const stealLog = {
-            type: 'steal',
+          const stealLog: GameLogEntry = {
+            type: 'steal' as LogType,
             player: actionPlayer.name,
             playerColor: actionPlayer.color,
             timestamp: Date.now(),
@@ -196,8 +197,8 @@ export const stealAction: ActionHandler = {
         updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
         
         // Create a custom log for steal with explicit target
-        const stealLog = {
-          type: 'steal',
+        const stealLog: GameLogEntry = {
+          type: 'steal' as LogType,
           player: actionPlayer.name,
           playerColor: actionPlayer.color,
           timestamp: Date.now(),
@@ -414,8 +415,8 @@ export const stealAction: ActionHandler = {
         })];
 
         // Create a custom log for steal with explicit target
-        const stealLog = {
-          type: 'steal',
+        const stealLog: GameLogEntry = {
+          type: 'steal' as LogType,
           player: actionPlayer.name,
           playerColor: actionPlayer.color,
           timestamp: Date.now(),
@@ -470,8 +471,8 @@ export const stealAction: ActionHandler = {
           updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
 
           // Create a custom log for steal with explicit target
-          const stealLog = {
-            type: 'steal',
+          const stealLog: GameLogEntry = {
+            type: 'steal' as LogType,
             player: actionPlayer.name,
             playerColor: actionPlayer.color,
             timestamp: Date.now(),
