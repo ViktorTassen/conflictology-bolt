@@ -151,41 +151,41 @@
 [P] Player B allows Steal
 [R] Player A steals $2M from Player B
 
-// Scenario 2
+// Scenario 2 +
 [A] Player A claims Mafia to Steal from Player B
 [C] Player B challenges Mafia claim. Fails!
 [S] Waiting for Player B to select a card to lose
 [R] Player B lost 1 influence card
 [R] Player A steals $2M from Player B
 
-// Scenario 3
+// Scenario 3 +
 [A] Player A claims Mafia to Steal from Player B
 [C] Player C challenges Mafia claim. Fails!
 [S] Waiting for Player C to select a card to lose
 [R] Player C lost 1 influence card
 [R] Player A steals $2M from Player B
 
-// Scenario 4
+// Scenario 4 +
 [A] Player A claims Mafia to Steal from Player B
 [C] Player B challenges Mafia claim. Success!
 [S] Waiting for Player A to select a card to lose
 [R] Player A lost 1 influence card
 
-// Scenario 5
+// Scenario 5 +
 [A] Player A claims Mafia to Steal from Player B
 [C] Player C challenges Mafia claim. Success!
 [S] Waiting for Player A to select a card to lose
 [R] Player A lost 1 influence card
 
-// Scenario 6 (Block by Mafia/Reporter/Police)
+// Scenario 6 (Block by Mafia/Reporter/Police) + 
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
 [C] Player A challenges Mafia claim. Fails!
 [S] Waiting for Player A to select a card to lose
 [R] Player A lost 1 influence card
-[S] "The Steal was blocked"
+[S] The Steal was blocked
 
-// Scenario 7 (Block by Mafia/Reporter/Police)
+// Scenario 7 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
 [C] Player A challenges Mafia claim. Success!
@@ -193,7 +193,7 @@
 [R] Player B lost 1 influence card
 [R] Player A steals $2M from Player B
 
-// Scenario 8 (Block by Mafia/Reporter/Police)
+// Scenario 8 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
 [C] Player C challenges Mafia claim. Fails!
@@ -201,7 +201,7 @@
 [R] Player C lost 1 influence card
 [S] The Steal was blocked
 
-// Scenario 9 (Block by Mafia/Reporter/Police)
+// Scenario 9 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
 [C] Player C challenges Mafia claim. Success!
@@ -211,25 +211,25 @@
 
 
 
-// REPORTER MESSAGES:
-// Scenario 1
+// REPORTER MESSAGES: 
+// Scenario 1 +
 [A] Player A claims Reporter to Exchange
 [S] Players allow Exchange
-[S] Player A selecting cards to keep..
+[S] Waiting for Player A to select cards to keep
 [R] Player A completes the 2 cards Exchange
 
-// Scenario 2
+// Scenario 2 +
 [A] Player A claims Reporter to Exchange
 [C] Player B challenges Reporter claim. Success!
 [S] Waiting for Player A to select a card to lose
 [R] Player A lost 1 influence card
 
-// Scenario 3 
+// Scenario 3 +
 [A] Player A claims Reporter to Exchange
 [C] Player B challenges Reporter claim. Fails!
 [S] Waiting for Player B to select a card to lose
 [R] Player B lost 1 influence card
-[S] Player A selecting cards to keep..
+[S] Waiting for A to select cards to keep
 [R] Player A completes the 2 cards Exchange
 
 

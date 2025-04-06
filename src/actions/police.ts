@@ -67,11 +67,23 @@ export const investigateAction: ActionHandler = {
       }
       
       const investigator = game.players[game.actionInProgress.player];
-      result.logs = [loggingService.createLog('show-card', player, {
+      // Create a custom log for show-card with explicit target player
+      const showCardLog = {
+        type: 'show-card',
+        player: player.name,
+        playerColor: player.color,
+        timestamp: Date.now(),
+        playerId: playerId,
+        targetId: game.actionInProgress.player,
         target: investigator.name,
         targetColor: investigator.color,
-        message: GameMessages.results.showCard
-      })];
+        message: `${GameMessages.results.showCard} ${investigator.name}`,
+        messageParts: [
+          { type: 'text', content: `${GameMessages.results.showCard} ` },
+          { type: 'player', content: investigator.name, playerId: game.actionInProgress.player, color: investigator.color }
+        ]
+      };
+      result.logs = [showCardLog];
       
       // Add system message about investigator deciding next
       result.logs.push(loggingService.createSpecificSystemLog('decideInvestigation', {
@@ -100,11 +112,24 @@ export const investigateAction: ActionHandler = {
       const keepCard = response.keepCard === true;
       
       if (keepCard) {
-        result.logs = [loggingService.createLog('investigate-result', player, {
+        // Create a custom log for investigate-result with "keeps their card" message
+        const investigateResultLog = {
+          type: 'investigate-result',
+          player: player.name,
+          playerColor: player.color,
+          timestamp: Date.now(),
+          playerId: playerId,
+          targetId: targetId,
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
-          message: GameMessages.results.investigateKeep
-        })];
+          message: `${GameMessages.results.investigateKeep} ${targetPlayer.name} ${GameMessages.results.investigateKeepSuffix}`,
+          messageParts: [
+            { type: 'text', content: `${GameMessages.results.investigateKeep} ` },
+            { type: 'player', content: targetPlayer.name, playerId: targetId, color: targetPlayer.color },
+            { type: 'text', content: ` ${GameMessages.results.investigateKeepSuffix}` }
+          ]
+        };
+        result.logs = [investigateResultLog];
       } else {
         const updatedCards = cardService.drawCards(game.cards, 1, 'investigate');
         const drawnCard = updatedCards.find(c => c.location === 'investigate');
@@ -128,11 +153,24 @@ export const investigateAction: ActionHandler = {
         });
         
         result.cards = finalCards;
-        result.logs = [loggingService.createLog('investigate-result', player, {
+        // Create a custom log for investigate-result with "forces to swap" message
+        const investigateSwapLog = {
+          type: 'investigate-result',
+          player: player.name,
+          playerColor: player.color,
+          timestamp: Date.now(),
+          playerId: playerId,
+          targetId: targetId,
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
-          message: GameMessages.results.investigateSwap
-        })];
+          message: `${GameMessages.results.investigateSwap} ${targetPlayer.name} ${GameMessages.results.investigateSwapSuffix}`,
+          messageParts: [
+            { type: 'text', content: `${GameMessages.results.investigateSwap} ` },
+            { type: 'player', content: targetPlayer.name, playerId: targetId, color: targetPlayer.color },
+            { type: 'text', content: ` ${GameMessages.results.investigateSwapSuffix}` }
+          ]
+        };
+        result.logs = [investigateSwapLog];
       }
       
       result.actionInProgress = null;

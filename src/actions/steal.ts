@@ -99,14 +99,8 @@ export const stealAction: ActionHandler = {
         result.logs.push(loggingService.createSystemLog(GameMessages.system.playerEliminated(player.name)));
       }
 
-      // Add system message if this is a player who challenged a block and failed
-      if (game.actionInProgress.challengeDefense && 
-          game.actionInProgress.blockingPlayer !== undefined &&
-          playerId === game.actionInProgress.losingPlayer) {
-        
-        // Add the message that the steal was blocked
-        result.logs.push(loggingService.createSpecificSystemLog('stealBlocked', {}));
-      }
+      // We'll add the "The Steal was blocked" message elsewhere to avoid duplicates
+      // This section is for when a player who challenged a block has failed
       
       if (game.actionInProgress.blockingPlayer === playerId) {
         const stolenCoins = Math.min(targetPlayer.coins, 2);
@@ -140,7 +134,11 @@ export const stealAction: ActionHandler = {
                playerId !== game.actionInProgress.player) {
         
         if (game.actionInProgress.blockingPlayer !== undefined) {
-          result.logs.push(loggingService.createSystemLog(GameMessages.system.stealBlocked));
+          // Only add the 'steal blocked' message if this is from a challenge on a block
+          // If it's a regular lose_influence, the message will be added when player allows the block
+          if (game.actionInProgress.challengeDefense) {
+            result.logs.push(loggingService.createSystemLog(GameMessages.system.stealBlocked));
+          }
           
           result.actionInProgress = null;
           
@@ -155,9 +153,10 @@ export const stealAction: ActionHandler = {
           // This is a third-party challenger who failed (not the target)
           // Complete the steal action immediately instead of showing more response buttons
           const stolenCoins = Math.min(targetPlayer.coins, 2);
+          const target = game.actionInProgress.target ?? 0;
           
           const updatedPlayers = [...game.players];
-          updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
+          updatedPlayers[target].coins -= stolenCoins;
           updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
           
           // Create a custom log with explicit message parts for the steal result
@@ -167,14 +166,14 @@ export const stealAction: ActionHandler = {
             playerColor: actionPlayer.color,
             timestamp: Date.now(),
             playerId: game.actionInProgress.player,
-            targetId: targetId,
+            targetId: target,
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: GameMessages.results.steal(stolenCoins) + ' ' + targetPlayer.name, // Legacy format
+            message: `steals $${stolenCoins}M from ${targetPlayer.name}`,
             messageParts: [
               { type: 'text', content: `steals $${stolenCoins}M from ` },
-              { type: 'player', content: targetPlayer.name, playerId: targetId, color: targetPlayer.color }
+              { type: 'player', content: targetPlayer.name, playerId: target, color: targetPlayer.color }
             ]
           };
           
@@ -236,11 +235,18 @@ export const stealAction: ActionHandler = {
         throw new Error('Only the target can block a steal');
       }
       
+      // Get the appropriate block message based on the card
+      const blockMessage = response.card === 'Mafia' 
+        ? GameMessages.blocks.mafia
+        : response.card === 'Reporter' 
+          ? GameMessages.blocks.reporter
+          : GameMessages.blocks.police;
+          
       result.logs = [loggingService.createLog('block', player, {
         target: actionPlayer.name,
         targetColor: actionPlayer.color,
         card: response.card,
-        message: GameMessages.blocks.generic(response.card)
+        message: blockMessage
       })];
 
       result.actionInProgress = {
@@ -328,7 +334,7 @@ export const stealAction: ActionHandler = {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
           card: blockingCard,
-          message: GameMessages.challenges.blockFail(blockingCard!)
+          message: GameMessages.challenges.fail(blockingCard!)
         })];
 
         result.actionInProgress = {
@@ -344,7 +350,7 @@ export const stealAction: ActionHandler = {
           target: blockingPlayer.name,
           targetColor: blockingPlayer.color,
           card: blockingCard,
-          message: GameMessages.challenges.blockSuccess(blockingCard!)
+          message: GameMessages.challenges.success(blockingCard!)
         })];
 
         result.actionInProgress = {

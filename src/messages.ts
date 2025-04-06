@@ -25,7 +25,7 @@ export const GameMessages = {
     hackBlocked: 'Hacker was blocked by Judge',
     secondCardRequired: (name: string) => `Waiting for ${name} to select a second card to lose`,
     swapAllowed: (name: string) => `${name} must select a card to swap`,
-    exchangeSelecting: (name: string) => `${name} selecting cards to keep..`,
+    exchangeSelecting: (name: string) => `Waiting for ${name} to select cards to keep`,
     loseInfluence: (name: string) => `Waiting for ${name} to select a card to lose`,
     selectCardToShow: (name: string) => `Waiting for ${name} to select a card to show`,    
     decideInvestigation: (name: string) => `Waiting for ${name} to make a decision about the card`,
@@ -74,7 +74,9 @@ export const GameMessages = {
   // Challenges [C]
   challenges: {
     success: (card: string) => `challenges ${card} claim. Success!`,
-    fail: (card: string) => `challenges ${card} claim. Fails!`
+    fail: (card: string) => `challenges ${card} claim. Fails!`,
+    blockSuccess: (card: string) => `challenges ${card} block. Success!`,
+    blockFail: (card: string) => `challenges ${card} block. Fails!`
   },
 
   // Player responses [P]
