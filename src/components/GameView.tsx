@@ -453,7 +453,7 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
 
       {/* Your Turn Banner */}
       {visible && (
-        <div className="absolute top-2/4 left-0 right-0 z-30 pointer-events-none flex justify-center items-center">
+        <div className="absolute top-[25%] left-0 right-0 z-30 pointer-events-none flex justify-center items-center">
           <img
             src={yourTurnImage}
             alt="Your Turn"
