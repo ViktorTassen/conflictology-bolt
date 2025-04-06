@@ -71,20 +71,20 @@
 
 
 // HACKER MESSAGES:
-// Scenario 1
+// Scenario 1 +
 [A] Player A pays $3M to hack Player B
 [P] Player B allows Hack
 [R] Player A completed the Hacker attack on Player B
 [S] Waiting for Player B to select a card to lose
 [R] Player B lost 1 influence card
 
-// Scenario 2
+// Scenario 2 +
 [A] Player A pays $3M to hack Player B
 [C] Player B challenges Hacker claim. Success!
 [S] Waiting for Player A to select a card to lose
 [R] Player A lost 1 influence card
 
-// Scenario 3
+// Scenario 3 +
 [A] Player A pays $3M to hack Player B
 [C] Player B challenges Hacker claim. Fails!
 [S] Waiting for Player B to select a card to lose
@@ -92,7 +92,7 @@
 [R] Player A completed the Hacker attack on Player B
 [R] Player B lost 1 influence card
 
-// Scenario 4
+// Scenario 4 +
 [A] Player A pays $3M to hack Player B
 [C] Player C challenges Hacker claim. Fails!
 [S] Waiting for Player C to select a card to lose
@@ -101,13 +101,13 @@
 [S] Waiting for Player B to select a card to lose
 [R] Player B lost 1 influence card
 
-// Scenario 5
+// Scenario 5 +
 [A] Player A pays $3M to hack Player B
 [C] Player C challenges Hacker claim. Success!
 [S] Waiting for Player A to select a card to lose
 [R] Player A lost 1 influence card
 
-// Scenario 6
+// Scenario 6 +
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player A challenges Judge claim. Fails!
@@ -115,7 +115,7 @@
 [R] Player A lost 1 influence card
 [S] Hacker was blocked by Judge
 
-// Scenario 7
+// Scenario 7 
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player C challenges Judge claim. Fails!
@@ -123,7 +123,7 @@
 [R] Player C lost 1 influence card
 [S] Hacker was blocked by Judge
 
-// Scenario 8
+// Scenario 8 +
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player A challenges Judge claim. Success!
@@ -133,7 +133,7 @@
 [S] Waiting for Player B to select a card to lose
 [R] Player B lost 1 influence card
 
-// Scenario 9 
+// Scenario 9 +
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
 [C] Player C challenges Judge claim. Success!
@@ -146,7 +146,7 @@
 
 
 // MAFIA MESSAGES:
-// Scenario 1
+// Scenario 1 +
 [A] Player A claims Mafia to Steal from Player B
 [P] Player B allows Steal
 [R] Player A steals $2M from Player B

@@ -19,7 +19,7 @@ interface GameLogProps {
 
 
 // Format message with highlighting for special terms and player names
-const formatMessage = (message: string, playerId?: number, targetId?: number, players?: Array<{id: number, name: string, color: string}>) => {
+const formatMessage = (message: string) => {
   const keywords = [
     'Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police',
     'Income', 'Foreign Aid', 'Tax', 'Steal', 'Exchange', 'Hack',
@@ -145,7 +145,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                   if (part.type === 'text') {
                     return (
                       <span key={partIndex} className={`text-[10px] ${getMessageTypeClass(log.type)}`}>
-                        {formatMessage(part.content, log.playerId, log.targetId, game.players)}
+                        {formatMessage(part.content)}
                       </span>
                     );
                   } else if (part.type === 'player') {

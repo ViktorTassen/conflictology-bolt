@@ -115,12 +115,24 @@ export const stealAction: ActionHandler = {
         updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
         updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
         
-        result.logs.push(loggingService.createLog('steal', actionPlayer, {
+        // Create a custom log for steal with explicit target
+        const stealLog = {
+          type: 'steal',
+          player: actionPlayer.name,
+          playerColor: actionPlayer.color,
+          timestamp: Date.now(),
+          playerId: game.actionInProgress.player,
+          targetId: game.actionInProgress.target ?? 0,
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins)
-        }));
+          message: `steals $${stolenCoins}M from ${targetPlayer.name}`,
+          messageParts: [
+            { type: 'text', content: `steals $${stolenCoins}M from ` },
+            { type: 'player', content: targetPlayer.name, playerId: game.actionInProgress.target ?? 0, color: targetPlayer.color }
+          ]
+        };
+        result.logs.push(stealLog);
         
         result.players = updatedPlayers;
       }
@@ -148,12 +160,25 @@ export const stealAction: ActionHandler = {
           updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
           updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
           
-          result.logs.push(loggingService.createLog('steal', actionPlayer, {
+          // Create a custom log with explicit message parts for the steal result
+          const stealLog = {
+            type: 'steal',
+            player: actionPlayer.name,
+            playerColor: actionPlayer.color,
+            timestamp: Date.now(),
+            playerId: game.actionInProgress.player,
+            targetId: targetId,
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: GameMessages.results.steal(stolenCoins)
-          }));
+            message: GameMessages.results.steal(stolenCoins) + ' ' + targetPlayer.name, // Legacy format
+            messageParts: [
+              { type: 'text', content: `steals $${stolenCoins}M from ` },
+              { type: 'player', content: targetPlayer.name, playerId: targetId, color: targetPlayer.color }
+            ]
+          };
+          
+          result.logs.push(stealLog);
           
           result.players = updatedPlayers;
           result.actionInProgress = null; // Immediately resolve the action
@@ -171,12 +196,24 @@ export const stealAction: ActionHandler = {
         updatedPlayers[game.actionInProgress.target ?? 0].coins -= stolenCoins;
         updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
         
-        result.logs.push(loggingService.createLog('steal', actionPlayer, {
+        // Create a custom log for steal with explicit target
+        const stealLog = {
+          type: 'steal',
+          player: actionPlayer.name,
+          playerColor: actionPlayer.color,
+          timestamp: Date.now(),
+          playerId: game.actionInProgress.player,
+          targetId: game.actionInProgress.target ?? 0,
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins)
-        }));
+          message: `steals $${stolenCoins}M from ${targetPlayer.name}`,
+          messageParts: [
+            { type: 'text', content: `steals $${stolenCoins}M from ` },
+            { type: 'player', content: targetPlayer.name, playerId: game.actionInProgress.target ?? 0, color: targetPlayer.color }
+          ]
+        };
+        result.logs.push(stealLog);
         
         result.players = updatedPlayers;
       }
@@ -370,12 +407,24 @@ export const stealAction: ActionHandler = {
           message: GameMessages.responses.allowSteal
         })];
 
-        result.logs.push(loggingService.createLog('steal', actionPlayer, {
+        // Create a custom log for steal with explicit target
+        const stealLog = {
+          type: 'steal',
+          player: actionPlayer.name,
+          playerColor: actionPlayer.color,
+          timestamp: Date.now(),
+          playerId: game.actionInProgress.player,
+          targetId: targetId,
           target: targetPlayer.name,
           targetColor: targetPlayer.color,
           coins: stolenCoins,
-          message: GameMessages.results.steal(stolenCoins)
-        }));
+          message: `steals $${stolenCoins}M from ${targetPlayer.name}`,
+          messageParts: [
+            { type: 'text', content: `steals $${stolenCoins}M from ` },
+            { type: 'player', content: targetPlayer.name, playerId: targetId, color: targetPlayer.color }
+          ]
+        };
+        result.logs.push(stealLog);
 
         result.players = updatedPlayers;
         result.actionInProgress = null;
@@ -414,12 +463,24 @@ export const stealAction: ActionHandler = {
           updatedPlayers[targetId].coins -= stolenCoins;
           updatedPlayers[game.actionInProgress.player].coins += stolenCoins;
 
-          result.logs = [loggingService.createLog('steal', actionPlayer, {
+          // Create a custom log for steal with explicit target
+          const stealLog = {
+            type: 'steal',
+            player: actionPlayer.name,
+            playerColor: actionPlayer.color,
+            timestamp: Date.now(),
+            playerId: game.actionInProgress.player,
+            targetId: targetId,
             target: targetPlayer.name,
             targetColor: targetPlayer.color,
             coins: stolenCoins,
-            message: GameMessages.results.steal(stolenCoins)
-          })];
+            message: `steals $${stolenCoins}M from ${targetPlayer.name}`,
+            messageParts: [
+              { type: 'text', content: `steals $${stolenCoins}M from ` },
+              { type: 'player', content: targetPlayer.name, playerId: targetId, color: targetPlayer.color }
+            ]
+          };
+          result.logs = [stealLog];
 
           result.players = updatedPlayers;
           result.actionInProgress = null;

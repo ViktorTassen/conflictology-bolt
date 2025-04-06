@@ -73,6 +73,33 @@ export class LoggingService implements ILoggingService {
         break;
         
       case 'steal':
+        // Special handling for steal results
+        if (data?.coins && data?.target && data?.targetId !== undefined) {
+          // This is a successful steal result: "Player A steals $2M from Player B"
+          log.messageParts = [
+            { type: 'text', content: message },
+            { type: 'player', content: data.target, playerId: data.targetId, color: data.targetColor || '#FFFFFF' }
+          ];
+          
+          // Also update the legacy message
+          log.message = message + data.target;
+        } else if (data?.target && data?.targetId !== undefined) {
+          // This is a steal attempt: "Player A claims Mafia to Steal from Player B"
+          log.messageParts = [
+            { type: 'text', content: message },
+            { type: 'player', content: data.target, playerId: data.targetId, color: data.targetColor || '#FFFFFF' }
+          ];
+          
+          // Also update the legacy message
+          log.message = message + data.target;
+        } else {
+          // Fallback for any other steal message
+          log.messageParts = [
+            { type: 'text', content: message }
+          ];
+        }
+        break;
+        
       case 'hack':
       case 'income':
       case 'foreign-aid':
