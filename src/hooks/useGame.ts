@@ -386,7 +386,6 @@ export function useGame(gameId?: string, playerId?: number) {
         logs: [loggingService.createSystemLog(newMatchLogMessage)]
       });
       
-      console.log(`Game reset completed - new match started with ${firstPlayerName} going first`);
     } catch (err) {
       console.error('Failed to start new match', err);
       setError('Failed to start new match');

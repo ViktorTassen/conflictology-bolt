@@ -218,8 +218,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       }
 
       await respondToAction(playerIndex, responseData);
-
-      console.log(`Player ${currentPlayer.name} (index ${playerIndex}) responded with ${response}`);
     } catch (error) {
       console.error('Failed to respond:', error);
     } finally {
@@ -411,8 +409,6 @@ export function GameView({ gameId, playerId, onReturnToLobby }: GameViewProps) {
       // The position array maps to: [middle left, top left, top center, top right, middle right]
       positionMap = [3, 4, 0, 1, 2];
     }
-    
-    console.log(`Total players: ${activePlayers}, Total opponents: ${totalOpponents}, Position map:`, positionMap);
     
     // Assign positions based on available players
     for (let i = 0; i < Math.min(otherPlayers.length, positionMap.length); i++) {

@@ -22,16 +22,38 @@ const isSystemMessage = (logType: string): boolean => {
   return logType === 'system';
 };
 
-// Format message with highlighting for special terms
-const formatMessage = (message: string, isSystem: boolean = false) => {
-  if (isSystem) return message;
-
+// Format message with highlighting for special terms and player names
+const formatMessage = (message: string, isSystem: boolean = false, playerColors?: Record<string, string>) => {
   const keywords = [
     'Banker', 'Hacker', 'Mafia', 'Reporter', 'Judge', 'Police',
     'Income', 'Foreign Aid', 'Tax', 'Steal', 'Exchange', 'Hack',
     'Investigation', 'Scandal'
   ];
   
+  // If it's a system message and we have player colors, we want to highlight player names
+  if (isSystem && playerColors) {
+    const playerNames = Object.keys(playerColors);
+    // Sort player names by length (longest first) to avoid partial matches
+    const sortedPlayerNames = playerNames.sort((a, b) => b.length - a.length);
+    
+    // Create a regex that matches any player name
+    const regex = new RegExp(`(${sortedPlayerNames.map(name => 
+      name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+    
+    const parts = message.split(regex);
+    return parts.map((part, index) => {
+      if (playerNames.includes(part)) {
+        return (
+          <span key={index} className="font-semibold" style={{ color: playerColors[part] }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  }
+  
+  // For action messages, highlight keywords
   const parts = message.split(new RegExp(`(${keywords.join('|')})`, 'g'));
   return parts.map((part, index) => {
     if (keywords.includes(part)) {
@@ -77,6 +99,12 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
   const truncateName = (name: string) => {
     return name.length > 14 ? `${name.slice(0, 13)}…` : name;
   };
+
+  // Create a map of player names to colors for text highlighting
+  const playerColorMap = game.players.reduce((map, player) => {
+    map[player.name] = player.color;
+    return map;
+  }, {} as Record<string, string>);
 
   // Function to get the CSS class for different message types for visual styling
   const getMessageTypeClass = (logType: string, isSystemMsg: boolean = false): string => {
@@ -126,7 +154,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
               className="flex flex-wrap items-center px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
               style={{
                 animationDelay: `${index * 50}ms`,
-                opacity: index === 0 ? 1 : index === 1 ? 1 : index === 2 ? 0.5 : 0.25,
+                opacity: index === 0 ? 1 : index === 1 ? 0.9 : index === 2 ? 0.7 : 0.2,
               }}
             >
               <div className="flex flex-wrap items-center gap-1 text-[11px] w-full">
@@ -219,7 +247,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                 ) : (
                   <div className="flex flex-wrap items-center gap-1">
                     <span className={`break-words ${getMessageTypeClass(log.type)}`}>
-                      {formatMessage(log.message || '', isSystemMessage(log.type))}
+                      {formatMessage(log.message || '', isSystemMessage(log.type), isSystemMessage(log.type) ? playerColorMap : undefined)}
                     </span>
                     {/* Show target name for all action types that have targets except special cases */}
                     {log.target && !isSystemMessage(log.type) && ['investigate', 'show-card'].includes(log.type) && (
