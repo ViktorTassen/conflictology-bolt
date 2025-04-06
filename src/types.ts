@@ -90,7 +90,7 @@ export type LogType =
 
 export interface GameLogEntry {
   type: LogType;
-  player: string;
+  player: string
   playerColor: string;
   target?: string;
   targetColor?: string;

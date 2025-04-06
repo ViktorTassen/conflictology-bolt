@@ -32,7 +32,7 @@ export class LoggingService implements ILoggingService {
   createSystemLog(message: string): GameLogEntry {
     return {
       type: 'system',
-      player: 'System',
+      player: "",
       playerColor: '#9CA3AF',
       timestamp: Date.now(),
       message
