@@ -15,12 +15,12 @@ export const GameMessages = {
     stealBlocked: 'The Steal was blocked',
     foreignAidBlocked: 'The Foreign Aid was blocked',
     hackBlocked: 'Hacker was blocked by Judge',
-    secondCardRequired: (name: string) => `${name} selecting a second card to lose..`,
-    swapAllowed: (name: string) => `${name} selecting card to swap..`,
-    exchangeSelecting: (name: string) => `${name} selecting cards to keep..`,
-    loseInfluence: (name: string) => `${name} selecting a card to lose..`,
-    selectCardToShow: (name: string) => `${name} selecting a card to show..`,
-    decideInvestigation: (name: string) => `${name} making a decision about the card..`
+    secondCardRequired: (name: string) => `Waiting for ${name} to select a second card to lose`,
+    swapAllowed: (name: string) => `Waiting for ${name} to select a card to swap`,
+    exchangeSelecting: (name: string) => `Waiting for ${name} to select cards to keep`,
+    loseInfluence: (name: string) => `Waiting for ${name} to select a card to lose`,
+    selectCardToShow: (name: string) => `Waiting for ${name} to select a card to show`,    
+    decideInvestigation: (name: string) => `Waiting for ${name} to make a decision about the card`
   },
 
   // Action claims
@@ -60,10 +60,10 @@ export const GameMessages = {
   // Challenges
   challenges: {
     generic: 'challenges',
-    success: (card: string) => `challenges ${card} claim... Success!`,
-    fail: (card: string) => `challenges ${card} claim... Fails!`,
-    blockSuccess: (card: string) => `challenges ${card} block... Success!`,
-    blockFail: (card: string) => `challenges ${card} block... Fails!`
+    success: (card: string) => `challenges ${card} claim. Success!`,
+    fail: (card: string) => `challenges ${card} claim. Fails!`,
+    blockSuccess: (card: string) => `challenges ${card} block. Success!`,
+    blockFail: (card: string) => `challenges ${card} block. Fails!`
   },
 
   // Player responses

@@ -23,7 +23,7 @@ export function PlayerCard({
   cards
 }: PlayerCardProps) {
   const truncateName = (name: string) => {
-    return name.length > 13 ? `${name.slice(0, 12)}...` : name;
+    return name.length > 11 ? `${name.slice(0, 10)}…` : name;
   };
 
   // Get player's active (non-revealed) cards using cardService

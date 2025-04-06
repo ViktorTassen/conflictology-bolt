@@ -36,7 +36,7 @@
 // Scenario 3 +
 [A] Player A claims Foreign Aid
 [B] Player B claims Banker to block
-[C] Player A challenges Banker claim... Success!
+[C] Player A challenges Banker claim. Success!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A received Foreign Aid (+$2M)
@@ -44,7 +44,7 @@
 // Scenario 4 +
 [A] Player A claims Foreign Aid
 [B] Player B claims Banker to block
-[C] Player A challenges Banker claim... Fails!
+[C] Player A challenges Banker claim. Fails!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 [S] The Foreign Aid was blocked
@@ -59,13 +59,13 @@
 
 // Scenario 2 +
 [A] Player A claims Banker to collect Tax
-[C] Player B challenges Banker claim... Success!
+[C] Player B challenges Banker claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 3 +
 [A] Player A claims Banker to collect Tax
-[C] Player B challenges Banker claim... Fails!
+[C] Player B challenges Banker claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A collected Tax with Banker (+$3M)
@@ -82,13 +82,13 @@
 
 // Scenario 2 +
 [A] Player A pays $3M to hack Player B
-[C] Player B challenges Hacker claim... Success!
+[C] Player B challenges Hacker claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 3 +
 [A] Player A pays $3M to hack Player B
-[C] Player B challenges Hacker claim... Fails!
+[C] Player B challenges Hacker claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A completed the Hacker attack on Player B
@@ -96,7 +96,7 @@
 
 // Scenario 4 +
 [A] Player A pays $3M to hack Player B
-[C] Player C challenges Hacker claim... Fails!
+[C] Player C challenges Hacker claim. Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
 [R]  Player A completed the Hacker attack on Player B
@@ -105,14 +105,14 @@
 
 // Scenario 5 +
 [A] Player A pays $3M to hack Player B
-[C] Player C challenges Hacker claim... Success!
+[C] Player C challenges Hacker claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 6 +
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
-[C] Player A challenges Judge claim... Fails!
+[C] Player A challenges Judge claim. Fails!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 [S] Hacker was blocked by Judge
@@ -120,7 +120,7 @@
 // Scenario 7 +
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
-[C] Player C challenges Judge claim... Fails!
+[C] Player C challenges Judge claim. Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
 [S] Hacker was blocked by Judge
@@ -128,7 +128,7 @@
 // Scenario 8 +
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
-[C] Player A challenges Judge claim... Success!
+[C] Player A challenges Judge claim. Success!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A completed the Hacker attack on Player B
@@ -138,7 +138,7 @@
 // Scenario 9 
 [A] Player A pays $3M to hack Player B
 [B] Player B claims Judge to block
-[C] Player C challenges Judge claim... Success!
+[C] Player C challenges Judge claim. Success!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A completed the Hacker attack on Player B
@@ -155,34 +155,34 @@
 
 // Scenario 2 +
 [A] Player A claims Mafia to Steal from Player B
-[C] Player B challenges Mafia claim... Fails!
+[C] Player B challenges Mafia claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A steals $2M from Player B
 
 // Scenario 3 +
 [A] Player A claims Mafia to Steal from Player B
-[C] Player C challenges Mafia claim... Fails!
+[C] Player C challenges Mafia claim. Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
 [R] Player A steals $2M from Player B
 
 // Scenario 4 +
 [A] Player A claims Mafia to Steal from Player B
-[C] Player B challenges Mafia claim... Success!
+[C] Player B challenges Mafia claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 5 +
 [A] Player A claims Mafia to Steal from Player B
-[C] Player C challenges Mafia claim... Success!
+[C] Player C challenges Mafia claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 6 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
-[C] Player A challenges Mafia claim... Fails!
+[C] Player A challenges Mafia claim. Fails!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 [S] "The Steal was blocked"
@@ -190,7 +190,7 @@
 // Scenario 7 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
-[C] Player A challenges Mafia claim... Success!
+[C] Player A challenges Mafia claim. Success!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A steals $2M from Player B
@@ -198,7 +198,7 @@
 // Scenario 8 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
-[C] Player C challenges Mafia claim... Fails!
+[C] Player C challenges Mafia claim. Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
 [S] The Steal was blocked
@@ -206,7 +206,7 @@
 // Scenario 9 (Block by Mafia/Reporter/Police) +
 [A] Player A claims Mafia to Steal from Player B
 [B] Player B claims Mafia to block
-[C] Player C challenges Mafia claim... Success!
+[C] Player C challenges Mafia claim. Success!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [R] Player A steals $2M from Player B
@@ -222,13 +222,13 @@
 
 // Scenario 2 +
 [A] Player A claims Reporter to Exchange
-[C] Player B challenges Reporter claim... Success!
+[C] Player B challenges Reporter claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 3  +
 [A] Player A claims Reporter to Exchange
-[C] Player B challenges Reporter claim... Fails!
+[C] Player B challenges Reporter claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [S] Player A selecting cards to keep..
@@ -255,19 +255,19 @@
 
 // Scenario 3 (Investigate) +
 [A] Player A claims Police to Investigate Player B
-[C] Player B challenges Police claim... Success!
+[C] Player B challenges Police claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 4 (Investigate) +
 [A] Player A claims Police to Investigate Player B
-[C] Player C challenges Police claim... Success!
+[C] Player C challenges Police claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 5 (Investigate)  +
 [A] Player A claims Police to Investigate Player B
-[C] Player B challenges Police claim... Fails!
+[C] Player B challenges Police claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [S] Player B selecting a card to show..
@@ -277,7 +277,7 @@
 
 // Scenario 6 (Investigate) +
 [A] Player A claims Police to Investigate Player B
-[C] Player B challenges Police claim... Fails!
+[C] Player B challenges Police claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [S] Player B selecting a card to show..
@@ -287,7 +287,7 @@
 
 // Scenario 7 (Investigate) +
 [A] Player A claims Police to Investigate Player B
-[C] Player C challenges Police claim... Fails!
+[C] Player C challenges Police claim. Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
 [S] Player B selecting a card to show..
@@ -297,7 +297,7 @@
 
 // Scenario 8 (Investigate) +
 [A] Player A claims Police to Investigate Player B
-[C] Player C challenges Police claim... Fails!
+[C] Player C challenges Police claim. Fails!
 [S] Player C selecting a card to lose..
 [R] Player C lost 1 influence card
 [S] Player B selecting a card to show..
@@ -313,13 +313,13 @@
 
 // Scenario 10 (Swap)  +
 [A] Player A claims Police to Swap one card
-[C] Player B challenges Police claim... Success!
+[C] Player B challenges Police claim. Success!
 [S] Player A selecting a card to lose..
 [R] Player A lost 1 influence card
 
 // Scenario 11 (Swap) 
 [A] Player A claims Police to Swap one card
-[C] Player B challenges Police claim... Fails!
+[C] Player B challenges Police claim. Fails!
 [S] Player B selecting a card to lose..
 [R] Player B lost 1 influence card
 [S] Player A must select a card to swap

@@ -63,10 +63,10 @@ const getStateMessage = (state: GameState, selectedAction?: string): string => {
 
 export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps) {
   const currentTurnPlayer = game.players[game.currentTurn];
-  const lastThreeLogs = [...logs].reverse().slice(0, 3);
+  const lastFourLogs = [...logs].reverse().slice(0, 4);
 
   const truncateName = (name: string) => {
-    return name.length > 14 ? `${name.slice(0, 13)}...` : name;
+    return name.length > 14 ? `${name.slice(0, 13)}…` : name;
   };
 
   // Function to get the CSS class for different message types for visual styling
@@ -98,7 +98,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
               className="text-xs font-medium animate-pulse"
               style={{ color: currentTurnPlayer.color }}
             >
-              {truncateName(currentTurnPlayer.name)}'s Turn
+              {currentTurnPlayer.name}'s Turn
             </span>
           </div>
           {gameState && (
@@ -113,12 +113,13 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
       {/* Game log */}
       <div className="p-1.5 bg-[#2a2a2a]/80">
         <div className="space-y-1">
-          {lastThreeLogs.map((log, index) => (
+          {lastFourLogs.map((log, index) => (
             <div 
               key={index} 
               className="flex flex-wrap items-center px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
               style={{
                 animationDelay: `${index * 50}ms`,
+                opacity: index === 0 ? 1 : index === 1 ? 0.9 : index === 2 ? 0.7 : 0.2,
               }}
             >
               <div className="flex flex-wrap items-center gap-1 text-[11px] w-full">
