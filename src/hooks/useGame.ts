@@ -102,7 +102,8 @@ export function useGame(gameId?: string, playerId?: number) {
         status: 'waiting',
         actionInProgress: null,
         responses: {},
-        actionUsedThisTurn: false
+        actionUsedThisTurn: false,
+        createdAt: Date.now() // Add timestamp for when game was created
       };
 
       await setDoc(doc(db, 'games', newGameId), initialGame);

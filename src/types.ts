@@ -120,6 +120,7 @@ export interface Game {
   logs: GameLogEntry[];
   status: GameStatus;
   actionUsedThisTurn?: boolean;
+  createdAt?: number; // Timestamp when the game was created
   actionInProgress?: {
     type: ActionType;
     player: number;
