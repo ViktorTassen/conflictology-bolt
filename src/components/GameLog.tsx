@@ -84,6 +84,8 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
     
     // Visual styling based on message type
     switch (logType) {
+      case 'system':
+        return 'text-gray-400 italic';
       case 'challenge':
       case 'challenge-success':
       case 'challenge-fail':
