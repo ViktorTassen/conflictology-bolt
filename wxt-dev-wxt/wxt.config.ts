@@ -16,6 +16,12 @@ export default defineConfig({
     },
     side_panel: {
       default_path: 'sidepanel.html'
-    }
+    },
+    web_accessible_resources: [
+      {
+        resources: ['sidepanel/*', 'standalone.html'],
+        matches: ['<all_urls>']
+      }
+    ]
   },
 });

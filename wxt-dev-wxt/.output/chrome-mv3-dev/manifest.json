@@ -22,6 +22,17 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidepanel/*",
+        "standalone.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "commands": {
     "wxt:reload-extension": {
       "description": "Reload the extension during development",
