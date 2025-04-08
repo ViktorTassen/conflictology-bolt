@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Users, ArrowLeft, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 import capitolBg from '../assets/images/capitol-bg.png';
+import { getPlayerName, savePlayerName } from '../utils/storage';
 
 interface MainMenuProps {
   onGameStart: (gameId: string) => void;
@@ -26,6 +27,18 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   const [error, setError] = useState<string | null>(null);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
+  
+  // Load player name from storage on component mount
+  useEffect(() => {
+    const loadPlayerName = async () => {
+      const savedName = await getPlayerName();
+      if (savedName) {
+        setPlayerName(savedName);
+      }
+    };
+    
+    loadPlayerName();
+  }, []);
 
   // Avatar color based on player ID
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
@@ -141,7 +154,11 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
               <input
                 type="text"
                 value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  setPlayerName(newName);
+                  savePlayerName(newName);
+                }}
                 placeholder="Your name"
                 maxLength={15}
                 className="bg-black/60 border border-zinc-800/80 rounded-md px-3 py-2.5 text-zinc-200 flex-1 focus:outline-none focus:ring-1 focus:ring-zinc-700/50 placeholder-zinc-600 text-sm font-medium"
