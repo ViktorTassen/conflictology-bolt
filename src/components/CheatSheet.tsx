@@ -185,7 +185,7 @@ export function CheatSheet() {
 
 
               <div>
-                <p className="text-[10px] text-slate-300 leading-tight">
+                <p className="text-[11px] text-slate-300 leading-tight">
                   {action.description1}
                 </p>
 
@@ -198,7 +198,7 @@ export function CheatSheet() {
                       <div className="flex-grow border-t border-slate-400"></div>
                     </div>
 
-                    <p className="text-[10px] text-slate-300 leading-tight">
+                    <p className="text-[11px] text-slate-300 leading-tight">
                       {action.description2}
                     </p>
                   </>

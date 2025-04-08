@@ -73,7 +73,10 @@ const getStateMessage = (state: GameState, selectedAction?: string): string => {
 
 export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps) {
   const currentTurnPlayer = game.players[game.currentTurn];
-  const lastFourLogs = [...logs].reverse().slice(0, 4);
+
+  // if window height less than 700px, show only the last 3 logs
+
+  const lastLogs = [...logs].reverse().slice(0, 4);
 
   const truncateName = (name: string) => {
     return name.length > 12 ? `${name.slice(0, 10)}…` : name;
@@ -113,7 +116,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
           {gameState && (
             <div className="flex items-center gap-1.5">
               <Clock className="w-3 h-3 text-slate-400" />
-              <span className="text-[10px] text-slate-400">{getStateMessage(gameState, selectedAction)}</span>
+              <span className="text-[12px] text-slate-400">{getStateMessage(gameState, selectedAction)}</span>
             </div>
           )}
         </div>
@@ -122,7 +125,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
       {/* Game log */}
       <div className="p-1.5 bg-gradient-to-b from-[#2a2a2a]/80 to-transparent">
         <div className="space-y-1">
-          {lastFourLogs.map((log, index) => (
+          {lastLogs.map((log, index) => (
             <div 
               key={index} 
               className="flex flex-wrap items-center px-2 py-1 rounded bg-[#3a3a3a]/50 animate-in fade-in slide-in-from-bottom-2"
@@ -131,7 +134,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                 opacity: index === 0 ? 1 : index === 1 ? 0.95 : index === 2 ? 0.5 : 0.2,
               }}
             >
-              <div className="flex flex-wrap gap-1 items-center text-[11px] w-full">
+              <div className="flex flex-wrap gap-1 items-center text-[12px] w-full">
 
                 {/* if log.type is not 'system', show the player name */}
                 {log.type !== 'system' && (
@@ -146,7 +149,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
                 {log.messageParts && log.messageParts.map((part, partIndex) => {
                   if (part.type === 'text') {
                     return (
-                      <span key={partIndex} className={`text-[10px] ${getMessageTypeClass(log.type)}`}>
+                      <span key={partIndex} className={`text-[12px] ${getMessageTypeClass(log.type)}`}>
                         {formatMessage(part.content)}
                       </span>
                     );

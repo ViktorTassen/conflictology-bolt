@@ -100,7 +100,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
   return (
     <div className="backdrop-blur-sm rounded-lg shadow-lg w-full overflow-hidden">
       {/* Turn indicator */}
-      <div className="bg-[#333333] border-b border-white/5 p-1.5">
+      <div className="bg-[#333333] border-b border-white/5 p-1.5 sticky top-0 z-10">
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center gap-2">
             <span 
@@ -120,7 +120,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
       </div>
 
       {/* Game log */}
-      <div className="p-1.5 bg-gradient-to-b from-[#2a2a2a]/80 to-transparent">
+      <div className="p-1.5 bg-gradient-to-b from-[#2a2a2a]/80 to-transparent max-h-[200px] overflow-y-auto">
         <div className="space-y-1">
           {lastFourLogs.map((log, index) => (
             <div 
