@@ -44,6 +44,7 @@ const globals = {
   "injectScript": true,
   "storage": true,
   "useAppConfig": true,
+  "useAuth": true,
   "useCallback": true,
   "useContext": true,
   "useEffect": true,

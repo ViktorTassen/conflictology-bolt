@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, Users, ArrowLeft, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
+import { useAuth } from '../hooks/useAuth';
 import capitolBg from '../assets/images/capitol-bg.png';
 import { getPlayerName, savePlayerName } from '../utils/storage';
+import { SignInButton } from './SignInButton';
 
 interface MainMenuProps {
   onGameStart: (gameId: string) => void;
@@ -21,6 +23,7 @@ const PLAYER_COLORS = [
 
 export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   const { createGame, joinGame } = useGame();
+  const { user, error: authError } = useAuth();
   const [joiningId, setJoiningId] = useState('');
   const [playerName, setPlayerName] = useState(`Player ${playerId % 1000}`);
   const [view, setView] = useState<'main' | 'join'>('main');
@@ -39,6 +42,14 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
     
     loadPlayerName();
   }, []);
+  
+  // Update player name when user signs in
+  useEffect(() => {
+    if (user?.displayName) {
+      setPlayerName(user.displayName);
+      savePlayerName(user.displayName);
+    }
+  }, [user]);
 
   // Avatar color based on player ID
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
@@ -131,9 +142,9 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
 
         {/* Main content */}
         <div className="flex-1 p-4 pt-0 space-y-5 flex flex-col justify-center relative z-20">
-          {error && (
+          {(error || authError) && (
             <div className="bg-red-500/20 text-red-400 p-3 rounded-lg text-sm mb-4 animate-in fade-in slide-in-from-top-2">
-              {error}
+              {error || authError}
             </div>
           )}
           
@@ -165,6 +176,8 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
               />
             </div>
             
+            {/* Google Sign-in */}
+            <SignInButton />
           </div>
           
           <div className="space-y-1">
@@ -288,9 +301,9 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
          
         </div>
         
-        {error && (
+        {(error || authError) && (
           <div className="bg-red-500/20 text-red-400 p-3 rounded-lg text-sm mb-4 animate-in fade-in slide-in-from-top-2 relative z-20">
-            {error}
+            {error || authError}
           </div>
         )}
 
