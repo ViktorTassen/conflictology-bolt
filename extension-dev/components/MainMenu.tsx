@@ -46,26 +46,38 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
   
   // Update player name when user authentication state changes
   useEffect(() => {
-    if (user?.displayName) {
-      setPlayerName(user.displayName);
-      savePlayerName(user.displayName);
-    } else if (!user) {
-      // Reset to default player name when user signs out
-      const defaultName = `Player ${playerId % 1000}`;
-      setPlayerName(defaultName);
-    }
+    const loadPlayerName = async () => {
+      const savedName = await getPlayerName();
+      
+      if (!user) {
+        // Reset to default player name when user signs out
+        const defaultName = `Player ${playerId % 1000}`;
+        setPlayerName(defaultName);
+      } else if (user?.displayName && !savedName) {
+        // Only use user.displayName if there's no saved custom name
+        setPlayerName(user.displayName);
+        savePlayerName(user.displayName);
+      } else if (savedName) {
+        // If there's a saved name, make sure we're using it
+        setPlayerName(savedName);
+      }
+    };
+    
+    loadPlayerName();
   }, [user, playerId]);
 
   // Avatar color based on player ID
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
 
-  const createPlayerData = () => ({
-    id: playerId,
-    name: playerName || `Player ${playerId % 1000}`,
-    coins: 2,
-    color: playerColor,
-    avatar: '' // We'll use the color + first initial fallback instead
-  });
+  const createPlayerData = () => {
+    return {
+      id: playerId,
+      name: playerName || `Player ${playerId % 1000}`,
+      coins: 2,
+      color: playerColor,
+      avatar: '' // We'll use the color + first initial fallback instead
+    };
+  };
 
   const handleCreateGame = async () => {
     if (isCreatingGame) return;
@@ -74,7 +86,13 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
       setError(null);
       setIsCreatingGame(true);
       const gameId = await createGame();
+      // Make sure we're using the latest player name
+      const savedName = await getPlayerName();
+      if (savedName && savedName !== playerName) {
+        setPlayerName(savedName);
+      }
       const playerData = createPlayerData();
+      console.log("Creating game with player name:", playerData.name);
       await joinGame(gameId, playerData);
       onGameStart(gameId);
       // No need to reset state as component unmounts
@@ -98,7 +116,13 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
     try {
       setError(null);
       setIsJoiningGame(true);
+      // Make sure we're using the latest player name
+      const savedName = await getPlayerName();
+      if (savedName && savedName !== playerName) {
+        setPlayerName(savedName);
+      }
       const playerData = createPlayerData();
+      console.log("Joining game with player name:", playerData.name);
       await joinGame(joiningId, playerData);
       onGameStart(joiningId);
       // No need to reset state as component unmounts

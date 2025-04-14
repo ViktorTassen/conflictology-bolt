@@ -46,13 +46,24 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
     return () => unsubscribe();
   }, []);
 
-  const createPlayerData = () => ({
-    id: playerId,
-    name: `Player ${playerId % 1000}`, // Use modulo to get a smaller display number
-    coins: 2,
-    color: PLAYER_COLORS[playerId % PLAYER_COLORS.length],
-    avatar: '' // We'll use the color + first initial fallback instead
-  });
+  const createPlayerData = async () => {
+    // Get the saved player name from storage if possible
+    let playerName;
+    try {
+      const storage = await import('../utils/storage');
+      playerName = await storage.getPlayerName();
+    } catch (err) {
+      console.error('Failed to get saved player name:', err);
+    }
+
+    return {
+      id: playerId,
+      name: playerName || `Player ${playerId % 1000}`, // Use saved name or default
+      coins: 2,
+      color: PLAYER_COLORS[playerId % PLAYER_COLORS.length],
+      avatar: '' // We'll use the color + first initial fallback instead
+    };
+  };
 
   const handleCreateGame = async () => {
     if (isCreatingGame) return;
@@ -67,7 +78,7 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
       setError(null);
       setIsCreatingGame(true);
       const gameId = await createGame();
-      const playerData = createPlayerData();
+      const playerData = await createPlayerData();
       await joinGame(gameId, playerData);
       onGameStart(gameId);
       // We don't reset isCreatingGame here because the component will unmount
@@ -92,7 +103,7 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
     try {
       setError(null);
       setIsJoiningGame(true);
-      const playerData = createPlayerData();
+      const playerData = await createPlayerData();
       await joinGame(joiningId, playerData);
       onGameStart(joiningId);
       // We don't reset isJoiningGame here because the component will unmount

@@ -41,9 +41,12 @@ export function useAuth() {
           error: null
         }));
         
-        // Update player name if user is logged in
+        // Update player name only if there isn't a custom name saved
         if (event.user && event.user.displayName) {
-          savePlayerName(event.user.displayName);
+          const savedName = await getPlayerName();
+          if (!savedName) {
+            savePlayerName(event.user.displayName);
+          }
         }
         
         // Manually fetch custom token for this context and sign in to Firebase
