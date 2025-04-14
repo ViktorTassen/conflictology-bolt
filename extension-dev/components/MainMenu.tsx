@@ -177,18 +177,20 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
             </div>
             
             {/* Google Sign-in */}
-            <SignInButton />
+            
           </div>
           
           <div className="space-y-1">
+          <SignInButton />
             <button
               onClick={handleCreateGame}
-              disabled={isCreatingGame}
+              disabled={isCreatingGame || !user}
               className={`
                 w-full bg-[#111111]/80 
-                ${!isCreatingGame ? 'hover:bg-[#151515]' : ''} 
+                ${!isCreatingGame && user ? 'hover:bg-[#151515]' : ''} 
                 text-white rounded-md p-4 flex items-center justify-between group 
                 transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40
+                ${!user ? 'opacity-50 cursor-not-allowed' : ''}
               `}
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#850c09] to-[#850c09]/20 group-hover:opacity-100 opacity-70"></div>
@@ -217,7 +219,14 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
 
             <button
               onClick={() => setView('join')}
-              className="w-full bg-[#111111]/80 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
+              disabled={!user}
+              className={`
+                w-full bg-[#111111]/80 
+                ${user ? 'hover:bg-[#151515]' : ''} 
+                text-white rounded-md p-4 flex items-center justify-between group 
+                transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40
+                ${!user ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-700 to-blue-700/20 group-hover:opacity-100 opacity-70"></div>
               <div className="absolute inset-y-0 left-0 w-1 bg-blue-700"></div>
@@ -337,9 +346,9 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           
           <button
             onClick={handleJoinGame}
-            disabled={joiningId.length !== 6 || isJoiningGame}
+            disabled={joiningId.length !== 6 || isJoiningGame || !user}
             className={`w-full py-3.5 rounded-lg font-medium text-md flex items-center justify-center gap-2 transition-all ${
-              joiningId.length === 6 && !isJoiningGame
+              joiningId.length === 6 && !isJoiningGame && user
                 ? 'bg-gradient-to-br from-zinc-800 to-zinc-900 hover:from-zinc-700 hover:to-zinc-800 text-white border border-zinc-700/30 shadow-lg'
                 : isJoiningGame 
                   ? 'bg-gradient-to-br from-zinc-700 to-zinc-800 text-white border border-zinc-700/30 shadow-lg'
