@@ -23,8 +23,12 @@ export default defineConfig({
         matches: ['<all_urls>']
       }
     ],
+    host_permissions: [
+      "https://conflictology-web.vercel.app/*",
+      "https://conflictologygames.com/*",
+    ],
     oauth2: {
-      client_id: "205495071119-9pj26njnj1p9ucj2mh5jbv43ib3t26ld.apps.googleusercontent.com",
+      client_id: "205495071119-pd719c75qidt7j9mg5hanpvldbohs3aq.apps.googleusercontent.com",
       scopes: [
         "https://www.googleapis.com/auth/userinfo.email",
         "https://www.googleapis.com/auth/userinfo.profile"

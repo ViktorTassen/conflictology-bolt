@@ -115,7 +115,7 @@ export function InfluenceCards({ playerId, cards }: InfluenceCardsProps) {
         const isAnimating = card.position !== null && animationState.animatingPositions.includes(card.position);
         
         // Get card image URL
-        const cardImage = new URL(`../assets/images/${card.name.toLowerCase()}.png`, import.meta.url).href;
+        const cardImage = new URL(`../images/${card.name.toLowerCase()}.png`, import.meta.url).href;
         
         return (
           <div
@@ -159,7 +159,7 @@ export function InfluenceCards({ playerId, cards }: InfluenceCardsProps) {
               >
                 {/* Get the previous card's image */}
                 <img
-                  src={new URL(`../assets/images/${animationState.outgoingCards.get(card.position)?.name.toLowerCase() || 'back'}.png`, import.meta.url).href}
+                  src={new URL(`../images/${animationState.outgoingCards.get(card.position)?.name.toLowerCase() || 'back'}.png`, import.meta.url).href}
                   alt="Previous card"
                   className="w-full h-full object-cover"
                 />

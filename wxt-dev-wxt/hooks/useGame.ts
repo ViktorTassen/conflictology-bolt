@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { db } from '../firebase';
+import { db, auth } from '../firebase/firebaseClient';
 import { 
   doc, 
   setDoc, 
@@ -9,6 +9,7 @@ import {
   getDoc,
   runTransaction
 } from 'firebase/firestore';
+import { browser } from 'wxt/browser';
 import { GameMessages } from '../messages';
 import { nanoid } from 'nanoid';
 import { Game, Player, GameAction } from '../types';
@@ -92,6 +93,29 @@ export function useGame(gameId?: string, playerId?: number) {
       const newGameId = nanoid(6);
       const cards = cardService.createDeck();
       
+      // Debug logging to check authentication state
+      console.log("Creating game with ID:", newGameId);
+      
+      // Get user from storage if auth is not available
+      const user = auth.currentUser;
+      let uid = user?.uid;
+      
+      // If Firebase auth is not initialized, try to get user from localStorage
+      if (!uid) {
+        try {
+          const storageData = await browser.storage.local.get('user');
+          uid = storageData.user?.uid;
+          console.log("Using UID from local storage:", uid);
+        } catch (err) {
+          console.error("Failed to get user from local storage:", err);
+        }
+      }
+      
+      // Check if user is signed in
+      if (!uid) {
+        throw new Error("User not authenticated. Please sign in first.");
+      }
+      
       const initialGame: Game = {
         id: newGameId,
         players: [],
@@ -103,12 +127,20 @@ export function useGame(gameId?: string, playerId?: number) {
         actionInProgress: null,
         responses: {},
         actionUsedThisTurn: false,
-        createdAt: Date.now() // Add timestamp for when game was created
+        createdAt: Date.now(), // Add timestamp for when game was created
+        createdBy: uid // Add creator's UID to match security rules
       };
 
-      await setDoc(doc(db, 'games', newGameId), initialGame);
-      return newGameId;
+      try {
+        await setDoc(doc(db, 'games', newGameId), initialGame);
+        console.log("Game created successfully!");
+        return newGameId;
+      } catch (error) {
+        console.error("Firestore error details:", error);
+        throw error;
+      }
     } catch (err) {
+      console.error("Create game error:", err);
       setError('Failed to create game');
       throw err;
     }

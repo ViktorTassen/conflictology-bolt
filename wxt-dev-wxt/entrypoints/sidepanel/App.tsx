@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useGame } from './hooks/useGame';
-import { MainMenu } from './components/MainMenu';
-import { GameView } from './components/GameView';
-import { getPlayerId, savePlayerId } from './utils/storage';
+import { useGame } from '../../hooks/useGame';
+import { MainMenu } from '../../components/MainMenu';
+import { GameView } from '../../components/GameView';
+import { getPlayerId, savePlayerId } from '../../utils/storage';
 
 function App() {
   const [view, setView] = useState<'lobby' | 'game'>('lobby');

@@ -1,0 +1,43 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Base function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Function to check if the user is accessing their own data
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{imageId} {
+      // Users can upload and view their own profile images
+      allow read: if isAuthenticated();
+      allow write: if isUser(userId);
+    }
+    
+    // Game assets
+    match /games/{gameId}/{document=**} {
+      // Game assets can be read by anyone but only written by admins
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/roles/admin);
+    }
+    
+    // Public assets
+    match /public/{document=**} {
+      // Anyone can read public assets
+      allow read: if true;
+      // Only admins can write to public assets
+      allow write: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/roles/admin);
+    }
+    
+    // Deny access to all other files
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

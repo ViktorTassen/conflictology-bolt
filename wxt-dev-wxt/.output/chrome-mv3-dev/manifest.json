@@ -36,8 +36,14 @@
       ]
     }
   ],
+  "host_permissions": [
+    "https://conflictology-web.vercel.app/*",
+    "https://conflictologygames.com/*",
+    "*://*.google.com/*",
+    "http://localhost/*"
+  ],
   "oauth2": {
-    "client_id": "205495071119-9pj26njnj1p9ucj2mh5jbv43ib3t26ld.apps.googleusercontent.com",
+    "client_id": "205495071119-pd719c75qidt7j9mg5hanpvldbohs3aq.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile"
@@ -54,10 +60,6 @@
   "background": {
     "service_worker": "background.js"
   },
-  "host_permissions": [
-    "*://*.google.com/*",
-    "http://localhost/*"
-  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval' http://localhost:3000; object-src 'self';",
     "sandbox": "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:3000; sandbox allow-scripts allow-forms allow-popups allow-modals; child-src 'self';"

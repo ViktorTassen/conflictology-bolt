@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { Game, GameState, CardType, ResponseOptions } from '../types';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../firebase/firebaseClient';
 import { loggingService } from '../services/LoggingService';
 import { GameMessages } from '../messages';
 

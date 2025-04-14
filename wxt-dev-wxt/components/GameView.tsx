@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Info, Skull, X, LoaderPinwheel } from 'lucide-react';
-import yourTurnImage from '../assets/images/your-turn.png';
+import yourTurnImage from '../images/your-turn.png';
 import { ActionButton } from './ActionButton';
 import { GameAction, GameState, CardType } from '../types';
 import { GameLog } from './GameLog';
@@ -22,9 +22,9 @@ import { useGame } from '../hooks/useGame';
 import { useGameState } from '../hooks/useGameState';
 import { TargetSelectionOverlay } from './TargetSelectionOverlay';
 import { cardService } from '../services/CardService';
-import deskBg from '../assets/images/desk-bg-2.png';
+import deskBg from '../images/desk-bg-2.png';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../firebase/firebaseClient';
 
 interface GameViewProps {
   gameId: string;

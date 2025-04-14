@@ -71,6 +71,11 @@ browser.runtime.onMessage.addListener((
     console.log('Sending initAuth message to iframe');
     if (iframe.contentWindow) {
       iframe.contentWindow.postMessage({initAuth: true}, HOSTING_URL);
+      
+      // Set timeout to notify if authentication takes too long
+      setTimeout(() => {
+        console.log('Authentication is taking longer than expected. The iframe may not be responding.');
+      }, 5000);
     } else {
       console.error('iframe.contentWindow is not available');
       sendResponse({ error: 'iframe.contentWindow is not available' });

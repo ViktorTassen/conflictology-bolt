@@ -4,12 +4,12 @@ import { Shuffle, LoaderPinwheel } from 'lucide-react';
 import { cardService } from '../services/CardService';
 
 // Import card images
-import reporterImg from '../assets/images/reporter.png';
-import hackerImg from '../assets/images/hacker.png';
-import mafiaImg from '../assets/images/mafia.png';
-import judgeImg from '../assets/images/judge.png';
-import bankerImg from '../assets/images/banker.png';
-import policeImg from '../assets/images/police.png';
+import reporterImg from '../images/reporter.png';
+import hackerImg from '../images/hacker.png';
+import mafiaImg from '../images/mafia.png';
+import judgeImg from '../images/judge.png';
+import bankerImg from '../images/banker.png';
+import policeImg from '../images/police.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {

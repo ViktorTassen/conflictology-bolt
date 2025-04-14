@@ -1,8 +1,8 @@
 import { Copy, Users, PlayCircle, ArrowLeft, Trophy, X } from 'lucide-react';
 import { Game } from '../types';
-import lobbyBg from '../assets/images/lobby-bg.png';
+import lobbyBg from '../images/lobby-bg.png';
 import { useGame } from '../hooks/useGame';
-import { db } from '../firebase';
+import { db } from '../firebase/firebaseClient';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 

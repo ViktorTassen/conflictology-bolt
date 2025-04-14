@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Users, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
+import { auth } from '../../../firebase/firebaseClient';
 
 interface GameCreationProps {
   onGameStart: (gameId: string) => void;
@@ -24,6 +25,26 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
   const [error, setError] = useState<string | null>(null);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isJoiningGame, setIsJoiningGame] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = auth.currentUser;
+      setIsAuthenticated(!!user && !!user.uid);
+      console.log("Auth state in GameCreation:", !!user && !!user.uid ? "Authenticated" : "Not authenticated");
+    };
+    
+    checkAuth();
+    
+    // Listen for auth state changes
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user && !!user.uid);
+      console.log("Auth state changed:", !!user && !!user.uid ? "Authenticated" : "Not authenticated");
+    });
+    
+    return () => unsubscribe();
+  }, []);
 
   const createPlayerData = () => ({
     id: playerId,
@@ -35,6 +56,12 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
 
   const handleCreateGame = async () => {
     if (isCreatingGame) return;
+    
+    // First check if the user is authenticated
+    if (!isAuthenticated) {
+      setError('You must be signed in to create a game. Please sign in first.');
+      return;
+    }
     
     try {
       setError(null);
@@ -53,6 +80,12 @@ export function GameCreation({ onGameStart, playerId }: GameCreationProps) {
   const handleJoinGame = async () => {
     if (!joiningId || isJoiningGame) {
       setError('Please enter a game ID');
+      return;
+    }
+    
+    // First check if the user is authenticated
+    if (!isAuthenticated) {
+      setError('You must be signed in to join a game. Please sign in first.');
       return;
     }
     

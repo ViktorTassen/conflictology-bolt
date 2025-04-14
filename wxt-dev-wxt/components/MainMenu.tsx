@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Users, ArrowLeft, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
 import { useAuth } from '../hooks/useAuth';
-import capitolBg from '../assets/images/capitol-bg.png';
+import capitolBg from '../images/capitol-bg.png';
 import { getPlayerName, savePlayerName } from '../utils/storage';
 import { SignInButton } from './SignInButton';
 

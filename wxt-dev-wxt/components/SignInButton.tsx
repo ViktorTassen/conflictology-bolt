@@ -2,14 +2,23 @@ import { LoaderPinwheel, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export function SignInButton() {
-  const { user, isLoading, signIn, signOut } = useAuth();
-  
+  const { user, isLoading, signIn, signOut, error } = useAuth();
+
+  const handleSignIn = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    signIn().catch(err => {
+      console.error('Sign in error:', err);
+    });
+  };
+
   if (!user) {
     return (
       <button
-        onClick={signIn}
+        onClick={handleSignIn}
         disabled={isLoading}
-        className="w-full mt-3 flex items-center justify-center gap-2 bg-[#1a1a1a] border border-[#333] hover:bg-[#222] text-white rounded-md py-2 px-3 text-sm font-medium transition-colors duration-200"
+        className="w-full mt-3 flex items-center justify-center gap-2 bg-[#1a1a1a] border border-[#333] hover:bg-[#222] text-white rounded-md py-2 px-3 text-sm font-medium transition-colors duration-200 cursor-pointer"
+        style={{ position: 'relative', zIndex: 50 }}
       >
         {isLoading ? (
           <LoaderPinwheel className="w-4 h-4 text-white animate-spin" />
@@ -24,7 +33,9 @@ export function SignInButton() {
             <span>Sign in with Google</span>
           </>
         )}
+        
       </button>
+      
     );
   }
   
@@ -42,6 +53,7 @@ export function SignInButton() {
         onClick={signOut}
         className="text-zinc-500 hover:text-zinc-300 p-1 rounded transition-colors"
         title="Sign out"
+        style={{ position: 'relative', zIndex: 50 }}
       >
         <LogOut size={14} />
       </button>

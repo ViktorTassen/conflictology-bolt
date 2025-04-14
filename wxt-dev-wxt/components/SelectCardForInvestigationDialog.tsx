@@ -3,12 +3,12 @@ import { Eye, LoaderPinwheel } from 'lucide-react';
 import { useState } from 'react';
 
 // Import card images
-import bankerImg from '../assets/images/banker.png';
-import hackerImg from '../assets/images/hacker.png';
-import mafiaImg from '../assets/images/mafia.png';
-import judgeImg from '../assets/images/judge.png';
-import reporterImg from '../assets/images/reporter.png';
-import policeImg from '../assets/images/police.png';
+import bankerImg from '../images/banker.png';
+import hackerImg from '../images/hacker.png';
+import mafiaImg from '../images/mafia.png';
+import judgeImg from '../images/judge.png';
+import reporterImg from '../images/reporter.png';
+import policeImg from '../images/police.png';
 
 // Card image mapping
 const cardImages: Record<CardType, string> = {

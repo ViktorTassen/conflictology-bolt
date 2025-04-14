@@ -1,12 +1,12 @@
 import { CardType } from '../types';
 import { DollarSign, Skull, Euro, Shield, Swords, ExternalLink } from 'lucide-react';
 
-import bankerImage from '../assets/images/banker.png';
-import hackerImage from '../assets/images/hacker.png';
-import mafiaImage from '../assets/images/mafia.png';
-import reporterImage from '../assets/images/reporter.png';
-import judgeImage from '../assets/images/judge.png';
-import policeImage from '../assets/images/police.png';
+import bankerImage from '../images/banker.png';
+import hackerImage from '../images/hacker.png';
+import mafiaImage from '../images/mafia.png';
+import reporterImage from '../images/reporter.png';
+import judgeImage from '../images/judge.png';
+import policeImage from '../images/police.png';
 
 interface ActionInfo {
   name: string;

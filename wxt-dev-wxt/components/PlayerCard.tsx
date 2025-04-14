@@ -1,6 +1,6 @@
 import { DollarSign, Skull } from 'lucide-react';
 import { Player, Card } from '../types';
-import backImage from '../assets/images/back-2.png';
+import backImage from '../images/back-2.png';
 import { cardService } from '../services/CardService';
 
 interface PlayerCardProps {

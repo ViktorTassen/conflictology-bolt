@@ -121,6 +121,7 @@ export interface Game {
   status: GameStatus;
   actionUsedThisTurn?: boolean;
   createdAt?: number; // Timestamp when the game was created
+  createdBy?: string; // UID of the user who created the game
   actionInProgress?: {
     type: ActionType;
     player: number;

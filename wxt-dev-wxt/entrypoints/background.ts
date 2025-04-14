@@ -8,14 +8,20 @@ export default defineBackground(() => {
     const hasSidePanelSupport = !!(browser as any).sidePanel && !!(browser as any).sidePanel.open;
 
     // Open side panel when extension icon is clicked
-    browser.action.onClicked.addListener(() => {
+    browser.action.onClicked.addListener((tab) => {
       if (hasSidePanelSupport) {
         // Use side panel if supported
-        browser.windows.getCurrent({ populate: true }).then((window) => {
-          if (window.id) {
-            (browser as any).sidePanel.open({ windowId: window.id });
+        // Open synchronously to preserve user gesture context
+        try {
+          const windowId = tab.windowId;
+          if (windowId) {
+            (browser as any).sidePanel.open({ windowId });
           }
-        });
+        } catch (error) {
+          console.error("Error opening side panel:", error);
+          // Fallback if side panel fails to open
+          browser.tabs.create({ url: 'standalone.html' });
+        }
       } else {
         // Fallback: open standalone version in a new tab
         browser.tabs.create({ url: 'standalone.html' });
@@ -86,26 +92,38 @@ export default defineBackground(() => {
     if (message.action === "signIn") {
       getAuthFromOffscreen()
         .then(async (user: User) => {
+          if (!user || !user.uid) {
+            console.error("Failed to get valid user from auth flow");
+            sendResponse({ error: "Authentication failed" });
+            return;
+          }
+          
+          console.log("Authentication successful for:", user.email || user.uid);
+
           const minimalUser = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName
           };
-          
-          // Authenticate Firebase with the access token
+
+          console.log("Minimal user object:", minimalUser);
+
           if (user.uid) {
-            await authenticateWithFirebase(user.uid);
+            const res = await authenticateWithFirebase(user.uid)
+            console.log("Firebase authentication response:", res);
           }
 
+          
+          // Store user data
           await browser.storage.local.set({ user: minimalUser });
           
-          // Notify any open popups about the authentication change
+          // Notify about authentication
           browser.runtime.sendMessage({ 
             type: 'AUTH_STATE_CHANGED',
             user: minimalUser
           });
           
-          sendResponse({ user: user });
+          sendResponse({ user: minimalUser });
         })
         .catch(error => {
           console.error("Authentication error:", error);
