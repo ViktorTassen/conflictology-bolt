@@ -69,6 +69,7 @@ const globals = {
   "getPlayerName": true,
   "getUser": true,
   "injectScript": true,
+  "removePlayerName": true,
   "savePlayerId": true,
   "savePlayerName": true,
   "saveUser": true,

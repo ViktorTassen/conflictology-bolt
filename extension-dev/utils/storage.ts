@@ -38,5 +38,9 @@ export async function saveUser(user: User): Promise<void> {
 }
 
 export async function clearUser(): Promise<void> {
-  await storage.removeItem('local:user');
+  await storage.removeItems(['local:user']);
+}
+
+export async function removePlayerName(): Promise<void> {
+  await storage.removeItems(['local:playerName']);
 }

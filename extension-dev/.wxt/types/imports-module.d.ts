@@ -42,5 +42,5 @@ declare module '#imports' {
   export { useAuth, AuthState } from '../hooks/useAuth';
   export { useGame } from '../hooks/useGame';
   export { useGameState } from '../hooks/useGameState';
-  export { savePlayerName, getPlayerName, savePlayerId, getPlayerId, getUser, saveUser, clearUser, User } from '../utils/storage';
+  export { savePlayerName, getPlayerName, savePlayerId, getPlayerId, getUser, saveUser, clearUser, removePlayerName, User } from '../utils/storage';
 }

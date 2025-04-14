@@ -131,6 +131,32 @@ export default defineBackground(() => {
         });
       return true; // Keeps the message channel open for async response
     }
+    
+    if (message.action === "signOut") {
+      // Handle sign out
+      (async () => {
+        try {
+          console.log("Processing sign out request");
+          
+          // Clear user data from browser storage
+          await browser.storage.local.remove('user');
+          
+          // Notify all listening components about auth state change
+          browser.runtime.sendMessage({ 
+            type: 'AUTH_STATE_CHANGED',
+            user: null
+          });
+          
+          console.log("Sign out complete");
+          sendResponse({ success: true });
+        } catch (error) {
+          console.error("Error during sign out:", error);
+          sendResponse({ error: String(error) });
+        }
+      })();
+      return true; // Keeps the message channel open for async response
+    }
+    
     return false;
   });
 

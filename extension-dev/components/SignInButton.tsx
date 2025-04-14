@@ -2,7 +2,7 @@ import { LoaderPinwheel, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export function SignInButton() {
-  const { user, isLoading, signIn, signOut, error } = useAuth();
+  const { user, isLoading, signIn, error } = useAuth();
 
   const handleSignIn = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -12,6 +12,7 @@ export function SignInButton() {
     });
   };
 
+  // Only show the sign-in button if the user is not signed in
   if (!user) {
     return (
       <button
@@ -56,24 +57,6 @@ export function SignInButton() {
     );
   }
   
-  return (
-    <div className="mt-3 flex items-center justify-between text-zinc-400 text-xs">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center bg-green-900/20 text-green-500 rounded-full p-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <span>Signed in as {user.displayName || user.email}</span>
-      </div>
-      <button 
-        onClick={signOut}
-        className="text-zinc-500 hover:text-zinc-300 p-1 rounded transition-colors"
-        title="Sign out"
-        style={{ position: 'relative', zIndex: 50 }}
-      >
-        <LogOut size={14} />
-      </button>
-    </div>
-  );
+  // Don't render anything if user is already signed in
+  return null;
 }

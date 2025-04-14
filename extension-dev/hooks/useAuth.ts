@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, getUser, saveUser, clearUser, savePlayerName } from '../utils/storage';
+import { User, getUser, saveUser, clearUser, savePlayerName, removePlayerName } from '../utils/storage';
 import { browser } from 'wxt/browser';
 
 export interface AuthState {
@@ -135,12 +135,30 @@ export function useAuth() {
       // Clear user data from storage
       await clearUser();
       
+      // Clear player name from storage
+      await removePlayerName();
+      
+      // Notify background script about logout
+      await browser.runtime.sendMessage({ 
+        action: "signOut"
+      });
+      
       // Update state
       setAuthState({
         user: null,
         isLoading: false,
         error: null
       });
+      
+      // If there's an active Firebase user, sign them out
+      try {
+        const { auth } = await import('../firebase/firebaseClient');
+        const { signOut: firebaseSignOut } = await import('firebase/auth/web-extension');
+        await firebaseSignOut(auth);
+        console.log("Firebase sign out complete");
+      } catch (error) {
+        console.error("Error signing out of Firebase:", error);
+      }
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign out';

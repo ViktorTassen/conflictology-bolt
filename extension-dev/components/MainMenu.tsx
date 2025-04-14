@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import capitolBg from '../images/capitol-bg.png';
 import { getPlayerName, savePlayerName } from '../utils/storage';
 import { SignInButton } from './SignInButton';
+import { UserStatus } from './UserStatus';
 
 interface MainMenuProps {
   onGameStart: (gameId: string) => void;
@@ -43,13 +44,17 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
     loadPlayerName();
   }, []);
   
-  // Update player name when user signs in
+  // Update player name when user authentication state changes
   useEffect(() => {
     if (user?.displayName) {
       setPlayerName(user.displayName);
       savePlayerName(user.displayName);
+    } else if (!user) {
+      // Reset to default player name when user signs out
+      const defaultName = `Player ${playerId % 1000}`;
+      setPlayerName(defaultName);
     }
-  }, [user]);
+  }, [user, playerId]);
 
   // Avatar color based on player ID
   const playerColor = PLAYER_COLORS[playerId % PLAYER_COLORS.length];
@@ -149,39 +154,39 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
           )}
           
           {/* Customize section */}
+
+          {user && (
           <div className="bg-[#111111]/80 rounded-md p-4 border border-zinc-800/40 shadow-lg relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10"></div>
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#850c09]/10 to-transparent rounded-full blur-2xl transform translate-x-16 -translate-y-16 opacity-30"></div>
-            
-            
-            <div className="flex items-center gap-3 relative">
-              <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md relative overflow-hidden border border-zinc-800/60" 
-                style={{ backgroundColor: "#232720", color:"white" }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-                {playerName.substring(0, 1).toUpperCase()}
+              <div className="flex items-center gap-3 relative">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md relative overflow-hidden border border-zinc-800/60" 
+                  style={{ backgroundColor: "#232720", color:"white" }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                  {playerName.substring(0, 1).toUpperCase()}
+                </div>
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    setPlayerName(newName);
+                    savePlayerName(newName);
+                  }}
+                  placeholder="Your name"
+                  maxLength={15}
+                  className="bg-black/60 border border-zinc-800/80 rounded-md px-3 py-2.5 text-zinc-200 flex-1 focus:outline-none focus:ring-1 focus:ring-zinc-700/50 placeholder-zinc-600 text-sm font-medium"
+                />
               </div>
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => {
-                  const newName = e.target.value;
-                  setPlayerName(newName);
-                  savePlayerName(newName);
-                }}
-                placeholder="Your name"
-                maxLength={15}
-                className="bg-black/60 border border-zinc-800/80 rounded-md px-3 py-2.5 text-zinc-200 flex-1 focus:outline-none focus:ring-1 focus:ring-zinc-700/50 placeholder-zinc-600 text-sm font-medium"
-              />
-            </div>
-            
-            {/* Google Sign-in */}
-            
           </div>
+
+        )}
           
           <div className="space-y-1">
           <SignInButton />
+          
             <button
               onClick={handleCreateGame}
               disabled={isCreatingGame || !user}
@@ -271,6 +276,9 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
                 ›
               </div>
             </button>
+            
+            {/* User Status Component */}
+            <UserStatus />
           </div>
         </div>
         

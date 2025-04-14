@@ -40,6 +40,7 @@ declare global {
   const getPlayerName: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['getPlayerName']
   const getUser: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['getUser']
   const injectScript: typeof import('wxt/utils/inject-script')['injectScript']
+  const removePlayerName: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['removePlayerName']
   const savePlayerId: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['savePlayerId']
   const savePlayerName: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['savePlayerName']
   const saveUser: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['saveUser']
