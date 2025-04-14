@@ -50,6 +50,7 @@ const globals = {
   "StorageItemKey": true,
   "TargetSelectionOverlay": true,
   "User": true,
+  "UserStatus": true,
   "WxtAppConfig": true,
   "WxtStorage": true,
   "WxtStorageItem": true,

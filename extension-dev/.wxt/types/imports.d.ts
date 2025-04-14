@@ -25,6 +25,7 @@ declare global {
   const SelectCardForInvestigationDialog: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/components/SelectCardForInvestigationDialog')['SelectCardForInvestigationDialog']
   const SignInButton: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/components/SignInButton')['SignInButton']
   const TargetSelectionOverlay: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/components/TargetSelectionOverlay')['TargetSelectionOverlay']
+  const UserStatus: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/components/UserStatus')['UserStatus']
   const browser: typeof import('wxt/browser')['browser']
   const clearUser: typeof import('/Users/viktortassen/Documents/Projects/conflictology-bolt/extension-dev/utils/storage')['clearUser']
   const createIframeUi: typeof import('wxt/utils/content-script-ui/iframe')['createIframeUi']

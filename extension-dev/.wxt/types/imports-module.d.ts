@@ -39,6 +39,7 @@ declare module '#imports' {
   export { SelectCardForInvestigationDialog } from '../components/SelectCardForInvestigationDialog';
   export { SignInButton } from '../components/SignInButton';
   export { TargetSelectionOverlay } from '../components/TargetSelectionOverlay';
+  export { UserStatus } from '../components/UserStatus';
   export { useAuth, AuthState } from '../hooks/useAuth';
   export { useGame } from '../hooks/useGame';
   export { useGameState } from '../hooks/useGameState';
