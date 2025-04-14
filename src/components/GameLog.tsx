@@ -74,12 +74,11 @@ const getStateMessage = (state: GameState, selectedAction?: string): string => {
 export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps) {
   const currentTurnPlayer = game.players[game.currentTurn];
 
-  // if window height less than 700px, show only the last 3 logs
 
   const lastLogs = [...logs].reverse().slice(0, 4);
 
   const truncateName = (name: string) => {
-    return name.length > 12 ? `${name.slice(0, 10)}…` : name;
+    return name.length > 14 ? `${name.slice(0, 12)}…` : name;
   };
 
   // Function to get the CSS class for different message types for visual styling

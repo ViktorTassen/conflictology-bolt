@@ -76,7 +76,7 @@ export function GameLog({ logs, gameState, selectedAction, game }: GameLogProps)
   const lastFourLogs = [...logs].reverse().slice(0, 4);
 
   const truncateName = (name: string) => {
-    return name.length > 12 ? `${name.slice(0, 10)}…` : name;
+    return name.length > 14 ? `${name.slice(0, 12)}…` : name;
   };
 
   // Function to get the CSS class for different message types for visual styling
