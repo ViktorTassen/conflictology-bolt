@@ -173,13 +173,32 @@ export function useGame(gameId?: string, playerId?: number) {
         throw new Error('Player already in game');
       }
 
+      // Check if player already has cards assigned (might have left and rejoined)
+      const existingPlayerCards = game.cards.filter(card => 
+        card.playerId === player.id && card.location === 'player'
+      );
+
       // Validate and fix card counts if needed
       if (!cardService.validateCardCounts(game.cards)) {
         game.cards = cardService.createDeck();
       }
 
-      // Deal cards to the new player
-      const updatedCards = cardService.dealCards(game.cards, [player.id]);
+      let updatedCards = [...game.cards];
+      
+      // Check how many cards the player has
+      if (existingPlayerCards.length >= 2) {
+        // Player already has 2 or more cards, no need to deal new ones
+        console.log(`Player ${player.id} already has ${existingPlayerCards.length} cards, using existing cards`);
+      } else if (existingPlayerCards.length === 0) {
+        // Player has no cards, deal them a new set
+        updatedCards = cardService.dealCards(game.cards, [player.id]);
+        console.log(`Dealt new cards to player ${player.id}`);
+      } else {
+        // Player has only one card (unusual scenario), return it and deal 2 new ones
+        updatedCards = cardService.returnCardsToDeck(game.cards, existingPlayerCards.map(c => c.id));
+        updatedCards = cardService.dealCards(updatedCards, [player.id]);
+        console.log(`Player ${player.id} had ${existingPlayerCards.length} card, redealt 2 new cards`);
+      }
 
       // Assign a unique color to the player
       const uniqueColor = assignUniqueColor(game.players);
@@ -441,9 +460,17 @@ export function useGame(gameId?: string, playerId?: number) {
     try {
       const gameRef = doc(db, 'games', game.id);
       
-      // Return player's cards to the deck
+      // Get player's cards but don't return them to the deck right away
+      // This allows them to keep the same cards if they rejoin
       const playerCards = cardService.getPlayerCards(game.cards, playerId);
-      const updatedCards = cardService.returnCardsToDeck(game.cards, playerCards.map(c => c.id));
+      
+      // Only return cards to the deck and shuffle if the game is in playing state
+      // In waiting state (lobby), keep the cards assigned to the player's ID
+      let updatedCards = [...game.cards];
+      if (game.status === 'playing') {
+        // In playing state, return cards to deck as normal
+        updatedCards = cardService.returnCardsToDeck(game.cards, playerCards.map(c => c.id));
+      }
       
       // Get player name before removing
       const playerName = game.players[playerId].name;
