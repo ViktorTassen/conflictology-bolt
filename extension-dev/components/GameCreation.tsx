@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Users, LoaderPinwheel } from 'lucide-react';
 import { useGame } from '../hooks/useGame';
-import { auth } from '../../../firebase/firebaseClient';
+import { auth } from '../firebase/firebaseClient';
 
 interface GameCreationProps {
   onGameStart: (gameId: string) => void;
