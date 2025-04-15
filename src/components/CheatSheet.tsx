@@ -222,7 +222,7 @@ export function CheatSheet() {
         </div>
         <div className="flex flex-wrap items-center justify-center mt-1">
           <a
-            href="https://conflictologygames.com/capitol/rules"
+            href="https://conflictologygames.com/rules"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-blue-500 hover:underline text-[10px]"

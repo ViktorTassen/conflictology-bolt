@@ -207,7 +207,7 @@ export function MainMenu({ onGameStart, playerId }: MainMenuProps) {
             </button>
 
             <button
-              onClick={() => window.open('https://conflictologygames.com/capitol/rules', '_blank')}
+              onClick={() => window.open('https://conflictologygames.com/rules', '_blank')}
               className="w-full bg-[#111111]/80 hover:bg-[#151515] text-white rounded-md p-4 flex items-center justify-between group transition-all duration-200 shadow-lg relative overflow-hidden border border-zinc-800/40"
             >
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-700 to-amber-700/20 group-hover:opacity-100 opacity-70"></div>

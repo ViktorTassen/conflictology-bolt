@@ -38,7 +38,7 @@ export default defineBackground(() => {
 
     if (details.reason === 'install') {
       browser.tabs.create({
-        url: "https://conflictologygames.com/capitol/rules"
+        url: "https://conflictologygames.com/rules"
       });
     }
   });
