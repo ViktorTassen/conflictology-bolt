@@ -30,8 +30,8 @@ export default defineConfig({
       "https://teams.microsoft.com/*",
       "https://*.zoom.us/*",
       "https://*.zoom.com/*",
-      "conflictology-conflict.web.app/*",
-      "conflictology-conflict.firebaseapp.com/*",
+      "https://conflictology-conflict.web.app/*",
+      "https://conflictology-conflict.firebaseapp.com/*",
     ],
     oauth2: {
       client_id: "205495071119-pd719c75qidt7j9mg5hanpvldbohs3aq.apps.googleusercontent.com",
