@@ -7,7 +7,7 @@ export default defineConfig({
     disabled: true,
   }),
   manifest: {
-    name: 'Conflictology: Play on Zoom, Meet, Teams – Virtual Meeting Card Game',
+    name: 'Conflictology: play on Zoom, Meet, Teams – virtual meeting card game',
     description: 'Coup-inspired social deduction card game. A perfect icebreaker for virtual team building or fun remote play with friends.',
     version: '1.0.0',
     permissions: ['storage', 'sidePanel', 'identity', 'offscreen'],
