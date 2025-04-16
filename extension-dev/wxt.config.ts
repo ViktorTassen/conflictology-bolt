@@ -7,8 +7,8 @@ export default defineConfig({
     disabled: true,
   }),
   manifest: {
-    name: 'Conflictology: Play with Friends on Zoom, Meet, Teams – Inspired by Coup',
-    description: 'Bluff, deceive, and outplay in this Coup-style game for Zoom, Meet & Teams. Great for fun team building and remote hangouts.',
+    name: 'Conflictology: Play on Zoom, Meet, Teams – Virtual Meeting Card Game',
+    description: 'Coup-inspired social deduction card game. A perfect icebreaker for virtual team building or fun remote play with friends.',
     version: '1.0.0',
     permissions: ['storage', 'sidePanel', 'identity', 'offscreen'],
     action: {
@@ -26,6 +26,12 @@ export default defineConfig({
     host_permissions: [
       "https://conflictology-web.vercel.app/*",
       "https://conflictologygames.com/*",
+      "https://meet.google.com/*",
+      "https://teams.microsoft.com/*",
+      "https://*.zoom.us/*",
+      "https://*.zoom.com/*",
+      "conflictology-conflict.web.app/*",
+      "conflictology-conflict.firebaseapp.com/*",
     ],
     oauth2: {
       client_id: "205495071119-pd719c75qidt7j9mg5hanpvldbohs3aq.apps.googleusercontent.com",

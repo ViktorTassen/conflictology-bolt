@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Conflictology: Play with Friends on Zoom, Meet, Teams – Inspired by Coup",
-  "description": "Bluff, deceive, and outplay in this Coup-style game for Zoom, Meet & Teams. Great for fun team building and remote hangouts.",
+  "name": "Conflictology: Play on Zoom, Meet, Teams – Virtual Meeting Card Game",
+  "description": "Coup-inspired social deduction card game. A perfect icebreaker for virtual team building or fun remote play with friends.",
   "version": "1.0.0",
   "icons": {
     "192": "icon/192.png"
@@ -35,6 +35,12 @@
   "host_permissions": [
     "https://conflictology-web.vercel.app/*",
     "https://conflictologygames.com/*",
+    "https://meet.google.com/*",
+    "https://teams.microsoft.com/*",
+    "https://*.zoom.us/*",
+    "https://*.zoom.com/*",
+    "conflictology-conflict.web.app/*",
+    "conflictology-conflict.firebaseapp.com/*",
     "*://*.google.com/*",
     "http://localhost/*"
   ],
